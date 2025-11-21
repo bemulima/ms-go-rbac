@@ -34,3 +34,7 @@ func (uc *PermissionUsecase) Get(ctx context.Context, id string) (*repo.Permissi
 func (uc *PermissionUsecase) List(ctx context.Context, params pagination.Params) ([]repo.Permission, int64, error) {
 	return uc.repo.ListPermissions(ctx, params.Offset(), params.PageSize)
 }
+
+func (uc *PermissionUsecase) AssignToRole(ctx context.Context, roleKey, permissionID string) error {
+	return uc.repo.AssignPermissionToRole(ctx, roleKey, permissionID)
+}

@@ -22,8 +22,9 @@ func Bootstrap() (*http.Server, error) {
 	serviceUC := usecase.NewServiceUsecase(repository)
 	roleUC := usecase.NewRoleUsecase(repository)
 	permissionUC := usecase.NewPermissionUsecase(repository)
+	principalUC := usecase.NewPrincipalUsecase(repository)
 
-	srv := server.New(serviceUC, roleUC, permissionUC)
+	srv := server.New(serviceUC, roleUC, permissionUC, principalUC)
 	httpServer := &http.Server{
 		Addr:    cfg.HTTPAddr,
 		Handler: srv,

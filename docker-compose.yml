@@ -1,0 +1,10 @@
+services:
+  msgo-rbac:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      HTTP_ADDR: ":8080"
+      CACHE_TTL_SECONDS: "60"
