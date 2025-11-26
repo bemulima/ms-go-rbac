@@ -23,9 +23,21 @@ type Repository struct {
 	rolePermissions map[string]map[string]struct{}
 }
 
+var defaultRoles = []struct {
+	Key   string
+	Title string
+}{
+	{Key: "admin", Title: "Admin"},
+	{Key: "manager", Title: "Manager"},
+	{Key: "teacher", Title: "Teacher"},
+	{Key: "student", Title: "Student"},
+	{Key: "user", Title: "User"},
+	{Key: "guest", Title: "Guest"},
+}
+
 // New initialises an empty repository.
 func New() *Repository {
-	return &Repository{
+	r := &Repository{
 		services:        make(map[string]Service),
 		roles:           make(map[string]Role),
 		rolesByKey:      make(map[string]string),
@@ -33,6 +45,8 @@ func New() *Repository {
 		principalRoles:  make(map[string]string),
 		rolePermissions: make(map[string]map[string]struct{}),
 	}
+	r.seedDefaultRoles()
+	return r
 }
 
 func (r *Repository) now() time.Time {
@@ -190,6 +204,9 @@ func (r *Repository) ListPermissions(ctx context.Context, offset, limit int) ([]
 func (r *Repository) AssignPrincipalRole(ctx context.Context, principalID, role string) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
+	if _, ok := r.rolesByKey[role]; !ok {
+		return ErrNotFound
+	}
 	r.principalRoles[principalID] = role
 	return nil
 }
@@ -270,4 +287,21 @@ func clamp(v, min, max int) int {
 
 func generateID() string {
 	return time.Now().UTC().Format("20060102150405.000000000")
+}
+
+func (r *Repository) seedDefaultRoles() {
+	now := r.now()
+	for _, item := range defaultRoles {
+		id := generateID()
+		r.roles[id] = Role{
+			ID:    id,
+			Key:   item.Key,
+			Title: item.Title,
+			BaseModel: BaseModel{
+				CreatedAt: now,
+				UpdatedAt: now,
+			},
+		}
+		r.rolesByKey[item.Key] = id
+	}
 }

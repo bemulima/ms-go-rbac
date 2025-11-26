@@ -307,6 +307,10 @@ func (s *Server) handleAssignRole(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := s.principalUC.AssignRole(r.Context(), userID, role); err != nil {
+		if errors.Is(err, repo.ErrNotFound) {
+			writeError(w, http.StatusNotFound, "role not found")
+			return
+		}
 		writeError(w, http.StatusInternalServerError, err.Error())
 		return
 	}

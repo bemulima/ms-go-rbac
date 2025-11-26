@@ -25,3 +25,16 @@ List services:
 ```
 curl http://localhost:8080/admin/service-list
 ```
+
+## Default roles
+
+The service starts with a predefined set of roles:
+
+- `admin`
+- `manager`
+- `teacher`
+- `student`
+- `user`
+- `guest`
+
+Only existing roles can be assigned via `POST /assign_role`. Add new roles through the `/admin/role` endpoint if needed.
