@@ -3,7 +3,7 @@ package usecase
 import (
 	"context"
 
-	"github.com/example/ms-rbac-service/internal/repo"
+	"github.com/example/ms-rbac-service/internal/adapter/postgres"
 	"github.com/example/ms-rbac-service/pkg/pagination"
 )
 

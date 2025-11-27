@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/example/ms-rbac-service/internal/adapter/http"
+	"github.com/example/ms-rbac-service/internal/adapter/postgres"
 	"github.com/example/ms-rbac-service/internal/config"
-	"github.com/example/ms-rbac-service/internal/repo"
-	"github.com/example/ms-rbac-service/internal/server"
 	"github.com/example/ms-rbac-service/internal/usecase"
 )
 
