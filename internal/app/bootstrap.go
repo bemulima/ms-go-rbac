@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/example/ms-rbac-service/internal/adapter/http"
+	natsadapter "github.com/example/ms-rbac-service/internal/adapter/nats"
 	"github.com/example/ms-rbac-service/internal/adapter/postgres"
 	"github.com/example/ms-rbac-service/internal/config"
 	"github.com/example/ms-rbac-service/internal/usecase"
@@ -25,6 +26,18 @@ func Bootstrap() (*http.Server, error) {
 	principalUC := usecase.NewPrincipalUsecase(repository)
 
 	srv := server.New(serviceUC, roleUC, permissionUC, principalUC)
+
+	if cfg.NATSURL != "" {
+		if conn, err := natsadapter.Connect(cfg.NATSURL); err == nil {
+			checker := natsadapter.RoleChecker{
+				Conn:        conn,
+				Subject:     "rbac.checkRole",
+				Queue:       "ms-go-rbac",
+				PrincipalUC: principalUC,
+			}
+			_ = checker.Listen()
+		}
+	}
 	httpServer := &http.Server{
 		Addr:    cfg.HTTPAddr,
 		Handler: srv,
