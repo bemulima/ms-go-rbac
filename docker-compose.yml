@@ -1,5 +1,6 @@
 services:
   msgo-rbac:
+    container_name: ms-rbac-service
     build:
       context: .
       dockerfile: docker/Dockerfile
