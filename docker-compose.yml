@@ -4,9 +4,14 @@ services:
     build:
       context: .
       dockerfile: docker/Dockerfile
-    ports:
-      - "8090:8080"
     environment:
       HTTP_ADDR: ":8080"
       CACHE_TTL_SECONDS: "60"
       NATS_URL: "nats://host.docker.internal:4222"
+    networks:
+      - default
+      - ms-net
+
+networks:
+  ms-net:
+    external: true
