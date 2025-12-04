@@ -7,8 +7,8 @@ This repository provides a lightweight prototype of an RBAC microservice impleme
 - `internal/app` — wiring: config load, use case creation, HTTP server setup.
 - `internal/domain` — entities and domain errors.
 - `internal/usecase` — business logic for services, roles, permissions, principals.
-- `internal/adapter/http` — net/http handlers and routing.
-- `internal/adapter/postgres` — repository layer (currently in-memory structs; swap here for a DB).
+- `internal/adapters/http` — net/http handlers and routing.
+- `internal/adapters/postgres` — repository layer (currently in-memory structs; swap here for a DB).
 
 ## Running locally
 

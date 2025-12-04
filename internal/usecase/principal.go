@@ -4,7 +4,7 @@ import (
 	"context"
 	"strings"
 
-	"github.com/example/ms-rbac-service/internal/adapter/postgres"
+	"github.com/example/ms-rbac-service/internal/adapters/postgres"
 )
 
 // PrincipalUsecase handles user-focused RBAC operations such as role assignment

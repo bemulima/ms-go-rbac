@@ -5,9 +5,10 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/example/ms-rbac-service/internal/adapter/http"
-	natsadapter "github.com/example/ms-rbac-service/internal/adapter/nats"
-	"github.com/example/ms-rbac-service/internal/adapter/postgres"
+	httpadapter "github.com/example/ms-rbac-service/internal/adapters/http"
+	"github.com/example/ms-rbac-service/internal/adapters/http/handlers"
+	natsadapter "github.com/example/ms-rbac-service/internal/adapters/nats"
+	"github.com/example/ms-rbac-service/internal/adapters/postgres"
 	"github.com/example/ms-rbac-service/internal/config"
 	"github.com/example/ms-rbac-service/internal/usecase"
 )
@@ -25,7 +26,17 @@ func Bootstrap() (*http.Server, error) {
 	permissionUC := usecase.NewPermissionUsecase(repository)
 	principalUC := usecase.NewPrincipalUsecase(repository)
 
-	srv := server.New(serviceUC, roleUC, permissionUC, principalUC)
+	adminHandlers := &handlers.AdminHandlers{
+		Service:    serviceUC,
+		Role:       roleUC,
+		Permission: permissionUC,
+		Principal:  principalUC,
+	}
+	apiHandlers := &handlers.APIHandlers{
+		Permission: permissionUC,
+		Principal:  principalUC,
+	}
+	router := httpadapter.NewRouter(adminHandlers, apiHandlers)
 
 	if cfg.NATSURL != "" {
 		if conn, err := natsadapter.Connect(cfg.NATSURL); err == nil {
@@ -40,7 +51,7 @@ func Bootstrap() (*http.Server, error) {
 	}
 	httpServer := &http.Server{
 		Addr:    cfg.HTTPAddr,
-		Handler: srv,
+		Handler: router.Handler(),
 	}
 	return httpServer, nil
 }
