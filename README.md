@@ -20,10 +20,10 @@ The server listens on `HTTP_ADDR` (defaults to `:8080`).
 
 ## Example usage
 
-Create a service:
+Create a service (admin API is versioned under `/admin/v1`):
 
 ```
-curl -X SET http://localhost:8080/admin/service \
+curl -X SET http://localhost:8080/admin/v1/service \
   -H 'Content-Type: application/json' \
   -d '{"key":"example","title":"Example Service"}'
 ```
@@ -31,7 +31,7 @@ curl -X SET http://localhost:8080/admin/service \
 List services:
 
 ```
-curl http://localhost:8080/admin/service-list
+curl http://localhost:8080/admin/v1/service-list
 ```
 
 ## Default roles
@@ -46,3 +46,7 @@ The service starts with a predefined set of roles:
 - `guest`
 
 Only existing roles can be assigned via `POST /assign_role`. Add new roles through the `/admin/role` endpoint if needed.
+
+## Testing
+- Integration-style HTTP contract tests (in-memory repo): `GOCACHE=../.gocache go test ./...`
+- Covers role/permission creation, assignment, permission lookup, and default `user` role assignment helper.

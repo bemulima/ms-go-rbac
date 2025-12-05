@@ -8,14 +8,14 @@ import (
 
 // RegisterRoutes wires admin endpoints onto a mux.
 func RegisterRoutes(mux *http.ServeMux, h *handlers.AdminHandlers) {
-	mux.HandleFunc("/admin/service", h.HandleService)
-	mux.HandleFunc("/admin/service/", h.HandleService)
-	mux.HandleFunc("/admin/service-list", h.HandleServiceList)
-	mux.HandleFunc("/admin/role", h.HandleRole)
-	mux.HandleFunc("/admin/role/", h.HandleRole)
-	mux.HandleFunc("/admin/role-list", h.HandleRoleList)
-	mux.HandleFunc("/admin/permission", h.HandlePermission)
-	mux.HandleFunc("/admin/permission/", h.HandlePermission)
-	mux.HandleFunc("/admin/permission-list", h.HandlePermissionList)
-	mux.HandleFunc("/admin/role-permission", h.HandleRolePermission)
+	mux.HandleFunc("/service", h.HandleService)
+	mux.HandleFunc("/service/", h.HandleService)
+	mux.HandleFunc("/service-list", h.HandleServiceList)
+	mux.HandleFunc("/role", h.HandleRole)
+	mux.HandleFunc("/role/", h.HandleRole)
+	mux.HandleFunc("/role-list", h.HandleRoleList)
+	mux.HandleFunc("/permission", h.HandlePermission)
+	mux.HandleFunc("/permission/", h.HandlePermission)
+	mux.HandleFunc("/permission-list", h.HandlePermissionList)
+	mux.HandleFunc("/role-permission", h.HandleRolePermission)
 }

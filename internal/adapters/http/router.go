@@ -19,7 +19,14 @@ func NewRouter(adminHandlers *handlers.AdminHandlers, apiHandlers *handlers.APIH
 
 func (r *Router) Handler() http.Handler {
 	mux := http.NewServeMux()
-	adminv1.RegisterRoutes(mux, r.adminHandlers)
-	apiv1.RegisterRoutes(mux, r.apiHandlers)
+
+	apiMux := http.NewServeMux()
+	apiv1.RegisterRoutes(apiMux, r.apiHandlers)
+	mux.Handle("/api/v1/", http.StripPrefix("/api/v1", apiMux))
+
+	adminMux := http.NewServeMux()
+	adminv1.RegisterRoutes(adminMux, r.adminHandlers)
+	mux.Handle("/admin/v1/", http.StripPrefix("/admin/v1", adminMux))
+
 	return mux
 }

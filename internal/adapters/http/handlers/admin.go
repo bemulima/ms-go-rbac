@@ -19,7 +19,7 @@ type AdminHandlers struct {
 }
 
 func (h *AdminHandlers) HandleService(w http.ResponseWriter, r *http.Request) {
-	path := strings.TrimPrefix(r.URL.Path, "/admin/service")
+	path := strings.TrimPrefix(r.URL.Path, "/service")
 	switch {
 	case r.Method == "SET" && (path == "" || path == "/"):
 		var payload createServiceRequest
@@ -69,7 +69,7 @@ func (h *AdminHandlers) HandleServiceList(w http.ResponseWriter, r *http.Request
 }
 
 func (h *AdminHandlers) HandleRole(w http.ResponseWriter, r *http.Request) {
-	path := strings.TrimPrefix(r.URL.Path, "/admin/role")
+	path := strings.TrimPrefix(r.URL.Path, "/role")
 	switch {
 	case r.Method == "SET" && (path == "" || path == "/"):
 		var payload createRoleRequest
@@ -119,7 +119,7 @@ func (h *AdminHandlers) HandleRoleList(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *AdminHandlers) HandlePermission(w http.ResponseWriter, r *http.Request) {
-	path := strings.TrimPrefix(r.URL.Path, "/admin/permission")
+	path := strings.TrimPrefix(r.URL.Path, "/permission")
 	switch {
 	case r.Method == "SET" && (path == "" || path == "/"):
 		var payload createPermissionRequest
