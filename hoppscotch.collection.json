@@ -1,0 +1,407 @@
+{
+  "name": "ms-go-rbac (direct)",
+  "v": 1,
+  "folders": [],
+  "requests": [
+    {
+      "v": "1",
+      "name": "Assign role",
+      "method": "POST",
+      "endpoint": "<<RBAC_BASE_URL>>/api/v1/assign_role",
+      "params": [],
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "auth": {
+        "authType": "inherit",
+        "authActive": true
+      },
+      "preRequestScript": "",
+      "testScript": "",
+      "body": {
+        "contentType": "application/json",
+        "body": "{\n  \"value\": {\n    \"user_id\": \"user-uuid\",\n    \"role\": \"student\"\n  }\n}"
+      },
+      "requestVariables": [],
+      "responses": {}
+    },
+    {
+      "v": "1",
+      "name": "Get role by user",
+      "method": "GET",
+      "endpoint": "<<RBAC_BASE_URL>>/api/v1/get_role_by_user_id?user_id=:userId",
+      "params": [],
+      "headers": [],
+      "auth": {
+        "authType": "inherit",
+        "authActive": true
+      },
+      "preRequestScript": "",
+      "testScript": "",
+      "body": {
+        "contentType": "application/json",
+        "body": ""
+      },
+      "requestVariables": [],
+      "responses": {}
+    },
+    {
+      "v": "1",
+      "name": "Get permissions by user",
+      "method": "GET",
+      "endpoint": "<<RBAC_BASE_URL>>/api/v1/get_permissions_by_user_id_for_role?user_id=:userId",
+      "params": [],
+      "headers": [],
+      "auth": {
+        "authType": "inherit",
+        "authActive": true
+      },
+      "preRequestScript": "",
+      "testScript": "",
+      "body": {
+        "contentType": "application/json",
+        "body": ""
+      },
+      "requestVariables": [],
+      "responses": {}
+    },
+    {
+      "v": "1",
+      "name": "Check role by user",
+      "method": "GET",
+      "endpoint": "<<RBAC_BASE_URL>>/api/v1/check_role_by_user_id?user_id=:userId&role=:role",
+      "params": [],
+      "headers": [],
+      "auth": {
+        "authType": "inherit",
+        "authActive": true
+      },
+      "preRequestScript": "",
+      "testScript": "",
+      "body": {
+        "contentType": "application/json",
+        "body": ""
+      },
+      "requestVariables": [],
+      "responses": {}
+    },
+    {
+      "v": "1",
+      "name": "Check permission by user",
+      "method": "GET",
+      "endpoint": "<<RBAC_BASE_URL>>/api/v1/check_permission_by_user_id?user_id=:userId&permission=:permission",
+      "params": [],
+      "headers": [],
+      "auth": {
+        "authType": "inherit",
+        "authActive": true
+      },
+      "preRequestScript": "",
+      "testScript": "",
+      "body": {
+        "contentType": "application/json",
+        "body": ""
+      },
+      "requestVariables": [],
+      "responses": {}
+    },
+    {
+      "v": "1",
+      "name": "Create service",
+      "method": "SET",
+      "endpoint": "<<RBAC_BASE_URL>>/admin/v1/service",
+      "params": [],
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "auth": {
+        "authType": "inherit",
+        "authActive": true
+      },
+      "preRequestScript": "",
+      "testScript": "",
+      "body": {
+        "contentType": "application/json",
+        "body": "{\n  \"key\": \"auth\",\n  \"title\": \"Auth service\"\n}"
+      },
+      "requestVariables": [],
+      "responses": {}
+    },
+    {
+      "v": "1",
+      "name": "Update service",
+      "method": "PUT",
+      "endpoint": "<<RBAC_BASE_URL>>/admin/v1/service/:id",
+      "params": [],
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "auth": {
+        "authType": "inherit",
+        "authActive": true
+      },
+      "preRequestScript": "",
+      "testScript": "",
+      "body": {
+        "contentType": "application/json",
+        "body": "{\n  \"title\": \"Updated title\"\n}"
+      },
+      "requestVariables": [],
+      "responses": {}
+    },
+    {
+      "v": "1",
+      "name": "Get service",
+      "method": "GET",
+      "endpoint": "<<RBAC_BASE_URL>>/admin/v1/service/:id",
+      "params": [],
+      "headers": [],
+      "auth": {
+        "authType": "inherit",
+        "authActive": true
+      },
+      "preRequestScript": "",
+      "testScript": "",
+      "body": {
+        "contentType": "application/json",
+        "body": ""
+      },
+      "requestVariables": [],
+      "responses": {}
+    },
+    {
+      "v": "1",
+      "name": "List services",
+      "method": "GET",
+      "endpoint": "<<RBAC_BASE_URL>>/admin/v1/service-list?page=1&page_size=20",
+      "params": [],
+      "headers": [],
+      "auth": {
+        "authType": "inherit",
+        "authActive": true
+      },
+      "preRequestScript": "",
+      "testScript": "",
+      "body": {
+        "contentType": "application/json",
+        "body": ""
+      },
+      "requestVariables": [],
+      "responses": {}
+    },
+    {
+      "v": "1",
+      "name": "Create role",
+      "method": "SET",
+      "endpoint": "<<RBAC_BASE_URL>>/admin/v1/role",
+      "params": [],
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "auth": {
+        "authType": "inherit",
+        "authActive": true
+      },
+      "preRequestScript": "",
+      "testScript": "",
+      "body": {
+        "contentType": "application/json",
+        "body": "{\n  \"key\": \"student\",\n  \"title\": \"Student\"\n}"
+      },
+      "requestVariables": [],
+      "responses": {}
+    },
+    {
+      "v": "1",
+      "name": "Update role",
+      "method": "PUT",
+      "endpoint": "<<RBAC_BASE_URL>>/admin/v1/role/:id",
+      "params": [],
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "auth": {
+        "authType": "inherit",
+        "authActive": true
+      },
+      "preRequestScript": "",
+      "testScript": "",
+      "body": {
+        "contentType": "application/json",
+        "body": "{\n  \"title\": \"Updated role\"\n}"
+      },
+      "requestVariables": [],
+      "responses": {}
+    },
+    {
+      "v": "1",
+      "name": "Get role",
+      "method": "GET",
+      "endpoint": "<<RBAC_BASE_URL>>/admin/v1/role/:id",
+      "params": [],
+      "headers": [],
+      "auth": {
+        "authType": "inherit",
+        "authActive": true
+      },
+      "preRequestScript": "",
+      "testScript": "",
+      "body": {
+        "contentType": "application/json",
+        "body": ""
+      },
+      "requestVariables": [],
+      "responses": {}
+    },
+    {
+      "v": "1",
+      "name": "List roles",
+      "method": "GET",
+      "endpoint": "<<RBAC_BASE_URL>>/admin/v1/role-list?page=1&page_size=20",
+      "params": [],
+      "headers": [],
+      "auth": {
+        "authType": "inherit",
+        "authActive": true
+      },
+      "preRequestScript": "",
+      "testScript": "",
+      "body": {
+        "contentType": "application/json",
+        "body": ""
+      },
+      "requestVariables": [],
+      "responses": {}
+    },
+    {
+      "v": "1",
+      "name": "Create permission",
+      "method": "SET",
+      "endpoint": "<<RBAC_BASE_URL>>/admin/v1/permission",
+      "params": [],
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "auth": {
+        "authType": "inherit",
+        "authActive": true
+      },
+      "preRequestScript": "",
+      "testScript": "",
+      "body": {
+        "contentType": "application/json",
+        "body": "{\n  \"action\": \"read\",\n  \"resource_kind\": \"course\"\n}"
+      },
+      "requestVariables": [],
+      "responses": {}
+    },
+    {
+      "v": "1",
+      "name": "Update permission",
+      "method": "PUT",
+      "endpoint": "<<RBAC_BASE_URL>>/admin/v1/permission/:id",
+      "params": [],
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "auth": {
+        "authType": "inherit",
+        "authActive": true
+      },
+      "preRequestScript": "",
+      "testScript": "",
+      "body": {
+        "contentType": "application/json",
+        "body": "{\n  \"action\": \"write\"\n}"
+      },
+      "requestVariables": [],
+      "responses": {}
+    },
+    {
+      "v": "1",
+      "name": "Get permission",
+      "method": "GET",
+      "endpoint": "<<RBAC_BASE_URL>>/admin/v1/permission/:id",
+      "params": [],
+      "headers": [],
+      "auth": {
+        "authType": "inherit",
+        "authActive": true
+      },
+      "preRequestScript": "",
+      "testScript": "",
+      "body": {
+        "contentType": "application/json",
+        "body": ""
+      },
+      "requestVariables": [],
+      "responses": {}
+    },
+    {
+      "v": "1",
+      "name": "List permissions",
+      "method": "GET",
+      "endpoint": "<<RBAC_BASE_URL>>/admin/v1/permission-list?page=1&page_size=20",
+      "params": [],
+      "headers": [],
+      "auth": {
+        "authType": "inherit",
+        "authActive": true
+      },
+      "preRequestScript": "",
+      "testScript": "",
+      "body": {
+        "contentType": "application/json",
+        "body": ""
+      },
+      "requestVariables": [],
+      "responses": {}
+    },
+    {
+      "v": "1",
+      "name": "Bind permission to role",
+      "method": "POST",
+      "endpoint": "<<RBAC_BASE_URL>>/admin/v1/role-permission",
+      "params": [],
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "auth": {
+        "authType": "inherit",
+        "authActive": true
+      },
+      "preRequestScript": "",
+      "testScript": "",
+      "body": {
+        "contentType": "application/json",
+        "body": "{\n  \"role_key\": \"student\",\n  \"permission_id\": \"perm-id\"\n}"
+      },
+      "requestVariables": [],
+      "responses": {}
+    }
+  ]
+}
