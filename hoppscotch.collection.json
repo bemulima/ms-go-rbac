@@ -137,7 +137,7 @@
       "v": "1",
       "name": "Update service",
       "method": "PUT",
-      "endpoint": "<<RBAC_BASE_URL>>/admin/v1/service/:id",
+      "endpoint": "<<RBAC_BASE_URL>>/admin/v1/service/<<id>>",
       "params": [],
       "headers": [
         {
@@ -162,7 +162,7 @@
       "v": "1",
       "name": "Get service",
       "method": "GET",
-      "endpoint": "<<RBAC_BASE_URL>>/admin/v1/service/:id",
+      "endpoint": "<<RBAC_BASE_URL>>/admin/v1/service/<<id>>",
       "params": [],
       "headers": [],
       "auth": {
@@ -227,7 +227,7 @@
       "v": "1",
       "name": "Update role",
       "method": "PUT",
-      "endpoint": "<<RBAC_BASE_URL>>/admin/v1/role/:id",
+      "endpoint": "<<RBAC_BASE_URL>>/admin/v1/role/<<id>>",
       "params": [],
       "headers": [
         {
@@ -252,7 +252,7 @@
       "v": "1",
       "name": "Get role",
       "method": "GET",
-      "endpoint": "<<RBAC_BASE_URL>>/admin/v1/role/:id",
+      "endpoint": "<<RBAC_BASE_URL>>/admin/v1/role/<<id>>",
       "params": [],
       "headers": [],
       "auth": {
@@ -317,7 +317,7 @@
       "v": "1",
       "name": "Update permission",
       "method": "PUT",
-      "endpoint": "<<RBAC_BASE_URL>>/admin/v1/permission/:id",
+      "endpoint": "<<RBAC_BASE_URL>>/admin/v1/permission/<<id>>",
       "params": [],
       "headers": [
         {
@@ -342,7 +342,7 @@
       "v": "1",
       "name": "Get permission",
       "method": "GET",
-      "endpoint": "<<RBAC_BASE_URL>>/admin/v1/permission/:id",
+      "endpoint": "<<RBAC_BASE_URL>>/admin/v1/permission/<<id>>",
       "params": [],
       "headers": [],
       "auth": {
