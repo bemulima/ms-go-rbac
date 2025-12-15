@@ -9,6 +9,6 @@ WHERE principal_id IN (
     '00000000-0000-0000-0000-0000000000c1'
 );
 
-DELETE FROM role WHERE key IN ('admin','manager','teacher','student','user','guest');
+DELETE FROM role WHERE key IN ('admin','moderator','teacher','student','user','guest');
 
 DELETE FROM service WHERE key = 'core';

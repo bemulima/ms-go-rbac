@@ -3,7 +3,7 @@
 INSERT INTO role (key, title)
 VALUES
     ('admin', 'Admin'),
-    ('manager', 'Manager'),
+    ('moderator', 'Moderator'),
     ('teacher', 'Teacher'),
     ('student', 'Student'),
     ('user', 'User'),
@@ -17,12 +17,12 @@ WITH svc AS (
     RETURNING id
 ),
 role_ids AS (
-    SELECT key, id FROM role WHERE key IN ('admin','manager','teacher','student','user')
+    SELECT key, id FROM role WHERE key IN ('admin','moderator','teacher','student','user')
 ),
 assignments AS (
     SELECT * FROM (VALUES
         ('00000000-0000-0000-0000-0000000000a1'::uuid, 'admin'),
-        ('00000000-0000-0000-0000-0000000000a2'::uuid, 'manager'),
+        ('00000000-0000-0000-0000-0000000000a2'::uuid, 'moderator'),
         ('00000000-0000-0000-0000-0000000000a3'::uuid, 'teacher'),
         ('00000000-0000-0000-0000-0000000000b1'::uuid, 'student'),
         ('00000000-0000-0000-0000-0000000000b2'::uuid, 'student'),

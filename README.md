@@ -39,7 +39,7 @@ curl http://localhost:8080/admin/v1/service-list
 The service starts with a predefined set of roles:
 
 - `admin`
-- `manager`
+- `moderator`
 - `teacher`
 - `student`
 - `user`

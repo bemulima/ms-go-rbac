@@ -19,12 +19,12 @@ func TestRBACHTTPFlow(t *testing.T) {
 	ts := newTestServer(t)
 
 	permID := createPermission(t, ts, "read", "course")
-	assignPermissionToRole(t, ts, "manager", permID)
+	assignPermissionToRole(t, ts, "moderator", permID)
 
 	userID := "user-123"
-	assignRole(t, ts, userID, "manager")
+	assignRole(t, ts, userID, "moderator")
 
-	assertCheckRole(t, ts, userID, "manager", true)
+	assertCheckRole(t, ts, userID, "moderator", true)
 	assertPermissionsList(t, ts, userID, []string{"read:course"})
 	assertCheckPermission(t, ts, userID, "read:course", true)
 }
