@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"log"
 	"net/http"
 	"time"
 
@@ -40,13 +41,27 @@ func Bootstrap() (*http.Server, error) {
 
 	if cfg.NATSURL != "" {
 		if conn, err := natsadapter.Connect(cfg.NATSURL); err == nil {
+			assigner := natsadapter.RoleAssigner{
+				Conn:        conn,
+				Subject:     "rbac.assign-role",
+				Queue:       "ms-go-rbac",
+				PrincipalUC: principalUC,
+			}
+			if err := assigner.Listen(); err != nil {
+				log.Printf("nats subscribe failed (rbac.assign-role): %v", err)
+			}
+
 			checker := natsadapter.RoleChecker{
 				Conn:        conn,
 				Subject:     "rbac.checkRole",
 				Queue:       "ms-go-rbac",
 				PrincipalUC: principalUC,
 			}
-			_ = checker.Listen()
+			if err := checker.Listen(); err != nil {
+				log.Printf("nats subscribe failed (rbac.checkRole): %v", err)
+			}
+		} else {
+			log.Printf("nats connect failed: %v", err)
 		}
 	}
 	httpServer := &http.Server{
