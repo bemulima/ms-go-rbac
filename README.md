@@ -1,6 +1,6 @@
 # ms-rbac-service
 
-This repository provides a lightweight prototype of an RBAC microservice implemented in Go. The current implementation focuses on administrative HTTP endpoints for managing services, roles, and permissions. Data is stored in-memory, which keeps the prototype simple while allowing the high-level API shape to be exercised.
+This repository provides a lightweight RBAC microservice implemented in Go. The service exposes administrative HTTP endpoints for managing services, roles, permissions, and principal assignments. Data is stored in Postgres via the migrations in `migrations/`, which keeps role assignments persistent across restarts.
 
 ## Architecture
 - `cmd/ms-rbac-service` — entrypoint that boots the HTTP server.
@@ -8,15 +8,22 @@ This repository provides a lightweight prototype of an RBAC microservice impleme
 - `internal/domain` — entities and domain errors.
 - `internal/usecase` — business logic for services, roles, permissions, principals.
 - `internal/adapters/http` — net/http handlers and routing.
-- `internal/adapters/postgres` — repository layer (currently in-memory structs; swap here for a DB).
+- `internal/adapters/postgres` — Postgres repository layer.
 
 ## Running locally
 
 ```
+docker compose up -d
+task migrate-up
 go run ./cmd/ms-rbac-service
 ```
 
-The server listens on `HTTP_ADDR` (defaults to `:8080`).
+The server listens on `HTTP_ADDR` (defaults to `:8080`). The DB connection is configured via `DB_DSN`.
+
+Example `DB_DSN`:
+```
+postgres://rbac:rbac_password@postgres:5432/rbacdb?sslmode=disable
+```
 
 ## Example usage
 
@@ -36,7 +43,7 @@ curl http://localhost:8080/admin/v1/service-list
 
 ## Default roles
 
-The service starts with a predefined set of roles:
+Default roles are seeded via migrations:
 
 - `admin`
 - `moderator`
@@ -45,8 +52,8 @@ The service starts with a predefined set of roles:
 - `user`
 - `guest`
 
-Only existing roles can be assigned via `POST /assign_role`. Add new roles through the `/admin/role` endpoint if needed.
+Only existing roles can be assigned via `POST /assign_role`. Add new roles through the `/admin/role` endpoint if needed, then run migrations for seeds.
 
 ## Testing
-- Integration-style HTTP contract tests (in-memory repo): `GOCACHE=../.gocache go test ./...`
+- Integration-style HTTP contract tests (requires `DB_DSN`): `GOCACHE=../.gocache go test ./...`
 - Covers role/permission creation, assignment, permission lookup, and default `user` role assignment helper.

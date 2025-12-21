@@ -1,4 +1,14 @@
 services:
+  postgres:
+    container_name: ms-rbac-postgres
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: rbac
+      POSTGRES_PASSWORD: rbac_password
+      POSTGRES_DB: rbacdb
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
   msgo-rbac:
     container_name: ms-rbac-service
     build:
@@ -8,9 +18,15 @@ services:
       HTTP_ADDR: ":8080"
       CACHE_TTL_SECONDS: "60"
       NATS_URL: "nats://nats:4222"
+      DB_DSN: "postgres://rbac:rbac_password@postgres:5432/rbacdb?sslmode=disable"
+    depends_on:
+      - postgres
     networks:
       - default
       - ms-net
+
+volumes:
+  pgdata:
 
 networks:
   ms-net:

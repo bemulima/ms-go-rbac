@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -12,7 +13,10 @@ import (
 	"github.com/example/ms-rbac-service/internal/adapters/postgres"
 	"github.com/example/ms-rbac-service/internal/config"
 	"github.com/example/ms-rbac-service/internal/usecase"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
+
+var dbPool *pgxpool.Pool
 
 // Bootstrap wires dependencies and returns an HTTP server instance.
 func Bootstrap() (*http.Server, error) {
@@ -21,7 +25,21 @@ func Bootstrap() (*http.Server, error) {
 		return nil, err
 	}
 
-	repository := repo.New()
+	if cfg.DBDSN == "" {
+		return nil, fmt.Errorf("DB_DSN is required")
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	pool, err := pgxpool.New(ctx, cfg.DBDSN)
+	if err != nil {
+		return nil, err
+	}
+	if err := pool.Ping(ctx); err != nil {
+		pool.Close()
+		return nil, err
+	}
+	dbPool = pool
+	repository := repo.New(pool)
 	serviceUC := usecase.NewServiceUsecase(repository)
 	roleUC := usecase.NewRoleUsecase(repository)
 	permissionUC := usecase.NewPermissionUsecase(repository)
@@ -75,5 +93,11 @@ func Bootstrap() (*http.Server, error) {
 func Shutdown(ctx context.Context, srv *http.Server) error {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
-	return srv.Shutdown(ctx)
+	if err := srv.Shutdown(ctx); err != nil {
+		return err
+	}
+	if dbPool != nil {
+		dbPool.Close()
+	}
+	return nil
 }

@@ -3,463 +3,489 @@ package repo
 import (
 	"context"
 	"errors"
-	"sort"
-	"sync"
-	"time"
 
 	"github.com/example/ms-rbac-service/internal/domain/model"
 	domainpdp "github.com/example/ms-rbac-service/internal/domain/pdp"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-// Repository provides in-memory storage for RBAC entities.
+const (
+	defaultTenantID   = "00000000-0000-0000-0000-000000000000"
+	defaultServiceID  = "00000000-0000-0000-0000-000000000100"
+	defaultResourceID = "00000000-0000-0000-0000-000000000000"
+	defaultScopeKind  = "global"
+	defaultRoleKind   = model.PrincipalKindUser
+)
+
+// Repository provides Postgres-backed storage for RBAC entities.
 type Repository struct {
-	mu sync.RWMutex
-
-	services           map[string]Service
-	roles              map[string]Role
-	rolesByKey         map[string]string
-	permissions        map[string]Permission
-	principalRoles     map[string]string
-	rolePermissions    map[string]map[string]struct{}
-	superadminPrincipals map[string]model.PrincipalKind // key: principalID
-	principalOverrides    []PrincipalOverrideStub       // for PDP
-	principalRoleScopes   map[string]PrincipalRoleScope // key: principalID+roleID
+	pool *pgxpool.Pool
 }
 
-type PrincipalOverrideStub struct {
-	PrincipalID   string
-	PrincipalKind model.PrincipalKind
-	PermissionID  string
-	Effect        model.OverrideEffect
-	TenantID      *string
-	ServiceID     *string
-	ResourceKind  *string
-	ResourceID    *string
+func New(pool *pgxpool.Pool) *Repository {
+	return &Repository{pool: pool}
 }
 
-type PrincipalRoleScope struct {
-	PrincipalID   string
-	PrincipalKind model.PrincipalKind
-	RoleID        string
-	TenantID      *string
-	ServiceID     *string
-	ResourceKind  *string
-	ResourceID    *string
-	ServiceIDs    []string
-}
-
-var defaultRoles = []struct {
-	Key   string
-	Title string
-}{
-	{Key: "admin", Title: "Admin"},
-	{Key: "moderator", Title: "Moderator"},
-	{Key: "teacher", Title: "Teacher"},
-	{Key: "student", Title: "Student"},
-	{Key: "user", Title: "User"},
-	{Key: "guest", Title: "Guest"},
-}
-
-// New initialises an empty repository.
-func New() *Repository {
-	r := &Repository{
-		services:             make(map[string]Service),
-		roles:                make(map[string]Role),
-		rolesByKey:           make(map[string]string),
-		permissions:          make(map[string]Permission),
-		principalRoles:       make(map[string]string),
-		rolePermissions:      make(map[string]map[string]struct{}),
-		superadminPrincipals: make(map[string]model.PrincipalKind),
-		principalOverrides:    make([]PrincipalOverrideStub, 0),
-		principalRoleScopes:   make(map[string]PrincipalRoleScope),
+func (r *Repository) Close() {
+	if r.pool != nil {
+		r.pool.Close()
 	}
-	r.seedDefaultRoles()
-	return r
-}
-
-func (r *Repository) now() time.Time {
-	return time.Now().UTC()
 }
 
 func (r *Repository) CreateService(ctx context.Context, service *Service) error {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	service.ID = generateID()
-	service.CreatedAt = r.now()
-	service.UpdatedAt = service.CreatedAt
-	r.services[service.ID] = *service
-	return nil
+	query := `INSERT INTO service (key, title) VALUES ($1, $2) RETURNING id::text`
+	return r.pool.QueryRow(ctx, query, service.Key, service.Title).Scan(&service.ID)
 }
 
 func (r *Repository) UpdateService(ctx context.Context, id string, title string) error {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	svc, ok := r.services[id]
-	if !ok {
+	cmd, err := r.pool.Exec(ctx, `UPDATE service SET title=$2 WHERE id::text=$1`, id, title)
+	if err != nil {
+		return err
+	}
+	if cmd.RowsAffected() == 0 {
 		return ErrNotFound
 	}
-	svc.Title = title
-	svc.UpdatedAt = r.now()
-	r.services[id] = svc
 	return nil
 }
 
 func (r *Repository) GetService(ctx context.Context, id string) (*Service, error) {
-	r.mu.RLock()
-	defer r.mu.RUnlock()
-	svc, ok := r.services[id]
-	if !ok {
-		return nil, ErrNotFound
+	var svc Service
+	row := r.pool.QueryRow(ctx, `SELECT id::text, key, title FROM service WHERE id::text=$1`, id)
+	if err := row.Scan(&svc.ID, &svc.Key, &svc.Title); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrNotFound
+		}
+		return nil, err
 	}
-	cp := svc
-	return &cp, nil
+	return &svc, nil
 }
 
 func (r *Repository) ListServices(ctx context.Context, offset, limit int) ([]Service, int64, error) {
-	r.mu.RLock()
-	defer r.mu.RUnlock()
-	items := make([]Service, 0, len(r.services))
-	for _, svc := range r.services {
+	var total int64
+	if err := r.pool.QueryRow(ctx, `SELECT count(*) FROM service`).Scan(&total); err != nil {
+		return nil, 0, err
+	}
+	rows, err := r.pool.Query(ctx, `SELECT id::text, key, title FROM service ORDER BY key LIMIT $1 OFFSET $2`, limit, offset)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer rows.Close()
+	items := make([]Service, 0)
+	for rows.Next() {
+		var svc Service
+		if err := rows.Scan(&svc.ID, &svc.Key, &svc.Title); err != nil {
+			return nil, 0, err
+		}
 		items = append(items, svc)
 	}
-	total := int64(len(items))
-	start := clamp(offset, 0, len(items))
-	end := clamp(offset+limit, start, len(items))
-	return items[start:end], total, nil
+	return items, total, rows.Err()
 }
 
 func (r *Repository) CreateRole(ctx context.Context, role *Role) error {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	role.ID = generateID()
-	role.CreatedAt = r.now()
-	role.UpdatedAt = role.CreatedAt
-	r.roles[role.ID] = *role
-	r.rolesByKey[role.Key] = role.ID
-	return nil
+	query := `INSERT INTO role (key, title) VALUES ($1, $2) RETURNING id::text`
+	return r.pool.QueryRow(ctx, query, role.Key, role.Title).Scan(&role.ID)
 }
 
 func (r *Repository) UpdateRole(ctx context.Context, id string, title string) error {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	rl, ok := r.roles[id]
-	if !ok {
+	cmd, err := r.pool.Exec(ctx, `UPDATE role SET title=$2 WHERE id::text=$1`, id, title)
+	if err != nil {
+		return err
+	}
+	if cmd.RowsAffected() == 0 {
 		return ErrNotFound
 	}
-	rl.Title = title
-	rl.UpdatedAt = r.now()
-	r.roles[id] = rl
 	return nil
 }
 
 func (r *Repository) GetRole(ctx context.Context, id string) (*Role, error) {
-	r.mu.RLock()
-	defer r.mu.RUnlock()
-	rl, ok := r.roles[id]
-	if !ok {
-		return nil, ErrNotFound
+	var role Role
+	row := r.pool.QueryRow(ctx, `SELECT id::text, key, title FROM role WHERE id::text=$1`, id)
+	if err := row.Scan(&role.ID, &role.Key, &role.Title); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrNotFound
+		}
+		return nil, err
 	}
-	cp := rl
-	return &cp, nil
+	return &role, nil
 }
 
 func (r *Repository) ListRoles(ctx context.Context, offset, limit int) ([]Role, int64, error) {
-	r.mu.RLock()
-	defer r.mu.RUnlock()
-	items := make([]Role, 0, len(r.roles))
-	for _, rl := range r.roles {
-		items = append(items, rl)
+	var total int64
+	if err := r.pool.QueryRow(ctx, `SELECT count(*) FROM role`).Scan(&total); err != nil {
+		return nil, 0, err
 	}
-	total := int64(len(items))
-	start := clamp(offset, 0, len(items))
-	end := clamp(offset+limit, start, len(items))
-	return items[start:end], total, nil
+	rows, err := r.pool.Query(ctx, `SELECT id::text, key, title FROM role ORDER BY key LIMIT $1 OFFSET $2`, limit, offset)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer rows.Close()
+	items := make([]Role, 0)
+	for rows.Next() {
+		var role Role
+		if err := rows.Scan(&role.ID, &role.Key, &role.Title); err != nil {
+			return nil, 0, err
+		}
+		items = append(items, role)
+	}
+	return items, total, rows.Err()
 }
 
 func (r *Repository) CreatePermission(ctx context.Context, p *Permission) error {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	p.ID = generateID()
-	p.CreatedAt = r.now()
-	p.UpdatedAt = p.CreatedAt
-	r.permissions[p.ID] = *p
-	return nil
+	query := `INSERT INTO permission (action, resource_kind) VALUES ($1, $2) RETURNING id::text`
+	return r.pool.QueryRow(ctx, query, p.Action, p.ResourceKind).Scan(&p.ID)
 }
 
 func (r *Repository) UpdatePermission(ctx context.Context, id string, attrs map[string]interface{}) error {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	item, ok := r.permissions[id]
-	if !ok {
-		return ErrNotFound
+	var current Permission
+	row := r.pool.QueryRow(ctx, `SELECT id::text, action, resource_kind FROM permission WHERE id::text=$1`, id)
+	if err := row.Scan(&current.ID, &current.Action, &current.ResourceKind); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrNotFound
+		}
+		return err
 	}
 	if v, ok := attrs["action"].(string); ok {
-		item.Action = v
+		current.Action = v
 	}
 	if v, ok := attrs["resource_kind"].(string); ok {
-		item.ResourceKind = v
+		current.ResourceKind = v
 	}
-	item.UpdatedAt = r.now()
-	r.permissions[id] = item
+	cmd, err := r.pool.Exec(ctx, `UPDATE permission SET action=$2, resource_kind=$3 WHERE id::text=$1`, id, current.Action, current.ResourceKind)
+	if err != nil {
+		return err
+	}
+	if cmd.RowsAffected() == 0 {
+		return ErrNotFound
+	}
 	return nil
 }
 
 func (r *Repository) GetPermission(ctx context.Context, id string) (*Permission, error) {
-	r.mu.RLock()
-	defer r.mu.RUnlock()
-	item, ok := r.permissions[id]
-	if !ok {
-		return nil, ErrNotFound
+	var item Permission
+	row := r.pool.QueryRow(ctx, `SELECT id::text, action, resource_kind FROM permission WHERE id::text=$1`, id)
+	if err := row.Scan(&item.ID, &item.Action, &item.ResourceKind); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrNotFound
+		}
+		return nil, err
 	}
-	cp := item
-	return &cp, nil
+	return &item, nil
 }
 
 func (r *Repository) ListPermissions(ctx context.Context, offset, limit int) ([]Permission, int64, error) {
-	r.mu.RLock()
-	defer r.mu.RUnlock()
-	items := make([]Permission, 0, len(r.permissions))
-	for _, p := range r.permissions {
-		items = append(items, p)
+	var total int64
+	if err := r.pool.QueryRow(ctx, `SELECT count(*) FROM permission`).Scan(&total); err != nil {
+		return nil, 0, err
 	}
-	total := int64(len(items))
-	start := clamp(offset, 0, len(items))
-	end := clamp(offset+limit, start, len(items))
-	return items[start:end], total, nil
+	rows, err := r.pool.Query(ctx, `SELECT id::text, action, resource_kind FROM permission ORDER BY action, resource_kind LIMIT $1 OFFSET $2`, limit, offset)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer rows.Close()
+	items := make([]Permission, 0)
+	for rows.Next() {
+		var item Permission
+		if err := rows.Scan(&item.ID, &item.Action, &item.ResourceKind); err != nil {
+			return nil, 0, err
+		}
+		items = append(items, item)
+	}
+	return items, total, rows.Err()
 }
 
 // Principal role helpers.
 func (r *Repository) AssignPrincipalRole(ctx context.Context, principalID, role string) error {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	if _, ok := r.rolesByKey[role]; !ok {
-		return ErrNotFound
+	roleID, err := r.roleIDByKey(ctx, role)
+	if err != nil {
+		return err
 	}
-	r.principalRoles[principalID] = role
-	return nil
+	return r.withTx(ctx, func(tx pgx.Tx) error {
+		_, err := tx.Exec(ctx, `DELETE FROM principal_role
+			WHERE principal_id=$1 AND principal_kind=$2 AND tenant_id=$3 AND service_id=$4 AND resource_kind=$5 AND resource_id=$6`,
+			principalID, string(defaultRoleKind), defaultTenantID, defaultServiceID, defaultScopeKind, defaultResourceID)
+		if err != nil {
+			return err
+		}
+		_, err = tx.Exec(ctx, `INSERT INTO principal_role
+			(principal_id, principal_kind, role_id, tenant_id, service_id, resource_kind, resource_id)
+			VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+			principalID, string(defaultRoleKind), roleID, defaultTenantID, defaultServiceID, defaultScopeKind, defaultResourceID)
+		return err
+	})
 }
 
 func (r *Repository) GetPrincipalRole(ctx context.Context, principalID string) (string, error) {
-	r.mu.RLock()
-	defer r.mu.RUnlock()
-	return r.principalRoles[principalID], nil
+	var roleKey string
+	row := r.pool.QueryRow(ctx, `SELECT r.key
+		FROM principal_role pr
+		JOIN role r ON r.id = pr.role_id
+		WHERE pr.principal_id=$1 AND pr.principal_kind=$2
+			AND pr.tenant_id=$3 AND pr.service_id=$4 AND pr.resource_kind=$5 AND pr.resource_id=$6
+		LIMIT 1`,
+		principalID, string(defaultRoleKind), defaultTenantID, defaultServiceID, defaultScopeKind, defaultResourceID)
+	if err := row.Scan(&roleKey); err == nil {
+		return roleKey, nil
+	} else if !errors.Is(err, pgx.ErrNoRows) {
+		return "", err
+	}
+
+	row = r.pool.QueryRow(ctx, `SELECT r.key
+		FROM principal_role pr
+		JOIN role r ON r.id = pr.role_id
+		WHERE pr.principal_id=$1 AND pr.principal_kind=$2
+		ORDER BY r.key
+		LIMIT 1`, principalID, string(defaultRoleKind))
+	if err := row.Scan(&roleKey); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return "", nil
+		}
+		return "", err
+	}
+	return roleKey, nil
 }
 
 // Role permission helpers.
 func (r *Repository) AssignPermissionToRole(ctx context.Context, roleKey, permissionID string) error {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	if _, ok := r.rolesByKey[roleKey]; !ok {
-		return ErrNotFound
+	roleID, err := r.roleIDByKey(ctx, roleKey)
+	if err != nil {
+		return err
 	}
-	if _, ok := r.permissions[permissionID]; !ok {
-		return ErrNotFound
+	if err := r.ensurePermissionExists(ctx, permissionID); err != nil {
+		return err
 	}
-	if _, ok := r.rolePermissions[roleKey]; !ok {
-		r.rolePermissions[roleKey] = make(map[string]struct{})
-	}
-	r.rolePermissions[roleKey][permissionID] = struct{}{}
-	return nil
+	_, err = r.pool.Exec(ctx, `INSERT INTO role_permission (role_id, permission_id, resource_id)
+		VALUES ($1, $2, $3) ON CONFLICT DO NOTHING`, roleID, permissionID, defaultResourceID)
+	return err
 }
 
 func (r *Repository) ListPermissionsForRole(ctx context.Context, roleKey string) ([]Permission, error) {
-	r.mu.RLock()
-	defer r.mu.RUnlock()
-	ids, ok := r.rolePermissions[roleKey]
-	if !ok || len(ids) == 0 {
-		return nil, nil
+	rows, err := r.pool.Query(ctx, `SELECT p.id::text, p.action, p.resource_kind
+		FROM role_permission rp
+		JOIN role r ON r.id = rp.role_id
+		JOIN permission p ON p.id = rp.permission_id
+		WHERE r.key=$1
+		ORDER BY p.action, p.resource_kind`, roleKey)
+	if err != nil {
+		return nil, err
 	}
-	perms := make([]Permission, 0, len(ids))
-	for id := range ids {
-		if perm, ok := r.permissions[id]; ok {
-			perms = append(perms, perm)
+	defer rows.Close()
+	items := make([]Permission, 0)
+	for rows.Next() {
+		var perm Permission
+		if err := rows.Scan(&perm.ID, &perm.Action, &perm.ResourceKind); err != nil {
+			return nil, err
 		}
+		items = append(items, perm)
 	}
-	sort.Slice(perms, func(i, j int) bool {
-		return perms[i].ID < perms[j].ID
-	})
-	return perms, nil
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
-// PDP contracts implementation for in-memory repository.
+// PDP contracts implementation for Postgres-backed repository.
 
 // IsSuperAdmin checks if principal is a superadmin.
 func (r *Repository) IsSuperAdmin(principalID string, kind model.PrincipalKind) (bool, error) {
-	r.mu.RLock()
-	defer r.mu.RUnlock()
-	storedKind, exists := r.superadminPrincipals[principalID]
-	if !exists {
-		return false, nil
+	var exists bool
+	row := r.pool.QueryRow(context.Background(), `SELECT EXISTS(
+		SELECT 1 FROM superadmin_principal WHERE principal_id=$1 AND principal_kind=$2
+	)`, principalID, string(kind))
+	if err := row.Scan(&exists); err != nil {
+		return false, err
 	}
-	return storedKind == kind, nil
+	return exists, nil
 }
 
 // FindMostSpecificOverride finds the most specific override matching the request.
-// Specificity order: tenant_id > service_id > resource_kind > resource_id
 func (r *Repository) FindMostSpecificOverride(req domainpdp.CheckRequest) (*domainpdp.OverrideMatch, error) {
-	r.mu.RLock()
-	defer r.mu.RUnlock()
+	rows, err := r.pool.Query(context.Background(), `SELECT
+		po.permission_id::text,
+		po.effect,
+		po.tenant_id::text,
+		po.service_id::text,
+		po.resource_kind,
+		po.resource_id::text,
+		p.action,
+		p.resource_kind
+		FROM principal_override po
+		JOIN permission p ON p.id = po.permission_id
+		WHERE po.principal_id=$1 AND po.principal_kind=$2`, req.PrincipalID, string(req.PrincipalKind))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
 
-	var bestMatch *PrincipalOverrideStub
+	var bestMatch *domainpdp.OverrideMatch
 	bestScore := -1
 
-	for _, override := range r.principalOverrides {
-		if override.PrincipalID != req.PrincipalID || override.PrincipalKind != req.PrincipalKind {
+	for rows.Next() {
+		var permissionID, effect, tenantID, serviceID, resourceKind, resourceID, action, permResourceKind string
+		if err := rows.Scan(&permissionID, &effect, &tenantID, &serviceID, &resourceKind, &resourceID, &action, &permResourceKind); err != nil {
+			return nil, err
+		}
+		if action != req.Action || permResourceKind != req.ResourceKind {
 			continue
 		}
-		// Check if override matches request scope
-		if !r.overrideMatches(override, req) {
+		scope := normalizeScope(tenantID, serviceID, resourceKind, resourceID)
+		if !scopeMatchesOverride(scope, req) {
 			continue
 		}
-		// Calculate specificity score (higher = more specific)
-		score := r.calculateSpecificity(override)
+		score := calculateSpecificity(scope)
 		if score > bestScore {
 			bestScore = score
-			bestMatch = &override
+			bestMatch = &domainpdp.OverrideMatch{
+				Effect:       model.OverrideEffect(effect),
+				PermissionID: permissionID,
+				Scope:        scope,
+			}
 		}
 	}
-
-	if bestMatch == nil {
-		return nil, nil
+	if err := rows.Err(); err != nil {
+		return nil, err
 	}
-
-	return &domainpdp.OverrideMatch{
-		Effect:       bestMatch.Effect,
-		PermissionID: bestMatch.PermissionID,
-		Scope: domainpdp.OverrideScope{
-			TenantID:     bestMatch.TenantID,
-			ServiceID:    bestMatch.ServiceID,
-			ResourceKind: bestMatch.ResourceKind,
-			ResourceID:   bestMatch.ResourceID,
-		},
-	}, nil
+	return bestMatch, nil
 }
 
 // ResolveRoles returns all roles for a principal with their scopes.
 func (r *Repository) ResolveRoles(req domainpdp.CheckRequest) ([]domainpdp.RoleWithScope, error) {
-	r.mu.RLock()
-	defer r.mu.RUnlock()
-
-	var result []domainpdp.RoleWithScope
-	key := req.PrincipalID + ":" + string(req.PrincipalKind)
-
-	// Check simple role assignment (no scope)
-	if roleKey, ok := r.principalRoles[key]; ok {
-		if roleID, ok := r.rolesByKey[roleKey]; ok {
-			if role, ok := r.roles[roleID]; ok {
-				result = append(result, domainpdp.RoleWithScope{
-					RoleID:  role.ID,
-					RoleKey: role.Key,
-					Scope:   domainpdp.OverrideScope{},
-				})
-			}
-		}
+	rows, err := r.pool.Query(context.Background(), `SELECT
+		r.id::text,
+		r.key,
+		pr.tenant_id::text,
+		pr.service_id::text,
+		pr.resource_kind,
+		pr.resource_id::text
+		FROM principal_role pr
+		JOIN role r ON r.id = pr.role_id
+		WHERE pr.principal_id=$1 AND pr.principal_kind=$2`, req.PrincipalID, string(req.PrincipalKind))
+	if err != nil {
+		return nil, err
 	}
+	defer rows.Close()
 
-	// Check scoped roles
-	for _, scope := range r.principalRoleScopes {
-		if scope.PrincipalID != req.PrincipalID || scope.PrincipalKind != req.PrincipalKind {
+	roles := make([]domainpdp.RoleWithScope, 0)
+	for rows.Next() {
+		var roleID, roleKey, tenantID, serviceID, resourceKind, resourceID string
+		if err := rows.Scan(&roleID, &roleKey, &tenantID, &serviceID, &resourceKind, &resourceID); err != nil {
+			return nil, err
+		}
+		scope := normalizeScope(tenantID, serviceID, resourceKind, resourceID)
+		if !scopeMatches(scope, req) {
 			continue
 		}
-		if !r.scopeMatchesRequest(scope, req) {
-			continue
-		}
-		if role, ok := r.roles[scope.RoleID]; ok {
-			result = append(result, domainpdp.RoleWithScope{
-				RoleID:  role.ID,
-				RoleKey: role.Key,
-				Scope: domainpdp.OverrideScope{
-					TenantID:     scope.TenantID,
-					ServiceID:    scope.ServiceID,
-					ResourceKind: scope.ResourceKind,
-					ResourceID:   scope.ResourceID,
-				},
-				ServiceIDs: scope.ServiceIDs,
-			})
-		}
+		roles = append(roles, domainpdp.RoleWithScope{RoleID: roleID, RoleKey: roleKey, Scope: scope})
 	}
-
-	return result, nil
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return roles, nil
 }
 
 // ListPermissionsForRoles returns all permissions for given role IDs.
 func (r *Repository) ListPermissionsForRoles(roleIDs []string) ([]domainpdp.RolePermissionItem, error) {
-	r.mu.RLock()
-	defer r.mu.RUnlock()
-
-	var result []domainpdp.RolePermissionItem
-	roleIDSet := make(map[string]bool)
-	for _, id := range roleIDs {
-		roleIDSet[id] = true
+	if len(roleIDs) == 0 {
+		return nil, nil
 	}
-
-	for roleID, permIDs := range r.rolePermissions {
-		if !roleIDSet[roleID] {
-			continue
-		}
-		role, ok := r.roles[roleID]
-		if !ok {
-			continue
-		}
-		for permID := range permIDs {
-			perm, ok := r.permissions[permID]
-			if !ok {
-				continue
-			}
-			result = append(result, domainpdp.RolePermissionItem{
-				RoleID:       role.ID,
-				RoleKey:      role.Key,
-				PermissionID: perm.ID,
-				Action:       perm.Action,
-				ResourceKind: perm.ResourceKind,
-				ResourceID:   nil, // In-memory doesn't track resource_id per permission
-			})
-		}
+	rows, err := r.pool.Query(context.Background(), `SELECT
+		rp.role_id::text,
+		r.key,
+		p.id::text,
+		p.action,
+		p.resource_kind,
+		rp.resource_id::text
+		FROM role_permission rp
+		JOIN role r ON r.id = rp.role_id
+		JOIN permission p ON p.id = rp.permission_id
+		WHERE rp.role_id = ANY($1::uuid[])`, roleIDs)
+	if err != nil {
+		return nil, err
 	}
-
-	return result, nil
+	defer rows.Close()
+	items := make([]domainpdp.RolePermissionItem, 0)
+	for rows.Next() {
+		var roleID, roleKey, permID, action, resourceKind, resourceID string
+		if err := rows.Scan(&roleID, &roleKey, &permID, &action, &resourceKind, &resourceID); err != nil {
+			return nil, err
+		}
+		item := domainpdp.RolePermissionItem{
+			RoleID:       roleID,
+			RoleKey:      roleKey,
+			PermissionID: permID,
+			Action:       action,
+			ResourceKind: resourceKind,
+		}
+		if resourceID != "" && resourceID != defaultResourceID {
+			item.ResourceID = strPtr(resourceID)
+		}
+		items = append(items, item)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
-// Helper methods
-
-func (r *Repository) overrideMatches(override PrincipalOverrideStub, req domainpdp.CheckRequest) bool {
-	// Check if override's permission matches request
-	perm, ok := r.permissions[override.PermissionID]
-	if !ok {
-		return false
-	}
-	if perm.Action != req.Action || perm.ResourceKind != req.ResourceKind {
-		return false
-	}
-	// Check scope matching
-	return r.scopeMatchesOverride(override, req)
+// AddSuperadmin adds a principal to superadmin list (helper for testing/setup).
+func (r *Repository) AddSuperadmin(principalID string, kind model.PrincipalKind) {
+	_, _ = r.pool.Exec(context.Background(), `INSERT INTO superadmin_principal (principal_id, principal_kind)
+		VALUES ($1, $2) ON CONFLICT DO NOTHING`, principalID, string(kind))
 }
 
-func (r *Repository) scopeMatchesOverride(override PrincipalOverrideStub, req domainpdp.CheckRequest) bool {
-	if override.TenantID != nil {
-		if req.TenantID == nil || *override.TenantID != *req.TenantID {
-			return false
+var (
+	ErrNotFound       = errors.New("record not found")
+	ErrNotImplemented = errors.New("not implemented")
+)
+
+func (r *Repository) roleIDByKey(ctx context.Context, roleKey string) (string, error) {
+	var roleID string
+	row := r.pool.QueryRow(ctx, `SELECT id::text FROM role WHERE key=$1`, roleKey)
+	if err := row.Scan(&roleID); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return "", ErrNotFound
 		}
+		return "", err
 	}
-	if override.ServiceID != nil {
-		if req.ServiceID == nil || *override.ServiceID != *req.ServiceID {
-			return false
-		}
-	}
-	if override.ResourceKind != nil {
-		if *override.ResourceKind != req.ResourceKind {
-			return false
-		}
-	}
-	if override.ResourceID != nil {
-		if req.ResourceID == nil || *override.ResourceID != *req.ResourceID {
-			return false
-		}
-	}
-	return true
+	return roleID, nil
 }
 
-func (r *Repository) scopeMatchesRequest(scope PrincipalRoleScope, req domainpdp.CheckRequest) bool {
+func (r *Repository) ensurePermissionExists(ctx context.Context, permissionID string) error {
+	var exists bool
+	row := r.pool.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM permission WHERE id::text=$1)`, permissionID)
+	if err := row.Scan(&exists); err != nil {
+		return err
+	}
+	if !exists {
+		return ErrNotFound
+	}
+	return nil
+}
+
+func (r *Repository) withTx(ctx context.Context, fn func(pgx.Tx) error) error {
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		_ = tx.Rollback(ctx)
+	}()
+	if err := fn(tx); err != nil {
+		return err
+	}
+	return tx.Commit(ctx)
+}
+
+func normalizeScope(tenantID, serviceID, resourceKind, resourceID string) domainpdp.OverrideScope {
+	return domainpdp.OverrideScope{
+		TenantID:     ptrIfNotDefault(tenantID, defaultTenantID),
+		ServiceID:    ptrIfNotDefault(serviceID, defaultServiceID),
+		ResourceKind: ptrIfNotDefault(resourceKind, defaultScopeKind),
+		ResourceID:   ptrIfNotDefault(resourceID, defaultResourceID),
+	}
+}
+
+func scopeMatchesOverride(scope domainpdp.OverrideScope, req domainpdp.CheckRequest) bool {
 	if scope.TenantID != nil {
 		if req.TenantID == nil || *scope.TenantID != *req.TenantID {
 			return false
@@ -483,62 +509,56 @@ func (r *Repository) scopeMatchesRequest(scope PrincipalRoleScope, req domainpdp
 	return true
 }
 
-func (r *Repository) calculateSpecificity(override PrincipalOverrideStub) int {
+func scopeMatches(scope domainpdp.OverrideScope, req domainpdp.CheckRequest) bool {
+	if scope.TenantID != nil {
+		if req.TenantID == nil || *scope.TenantID != *req.TenantID {
+			return false
+		}
+	}
+	if scope.ServiceID != nil {
+		if req.ServiceID == nil || *scope.ServiceID != *req.ServiceID {
+			return false
+		}
+	}
+	if scope.ResourceKind != nil {
+		if *scope.ResourceKind != req.ResourceKind {
+			return false
+		}
+	}
+	if scope.ResourceID != nil {
+		if req.ResourceID == nil || *scope.ResourceID != *req.ResourceID {
+			return false
+		}
+	}
+	return true
+}
+
+func calculateSpecificity(scope domainpdp.OverrideScope) int {
 	score := 0
-	if override.TenantID != nil {
+	if scope.TenantID != nil {
 		score += 1000
 	}
-	if override.ServiceID != nil {
+	if scope.ServiceID != nil {
 		score += 100
 	}
-	if override.ResourceKind != nil {
+	if scope.ResourceKind != nil {
 		score += 10
 	}
-	if override.ResourceID != nil {
+	if scope.ResourceID != nil {
 		score += 1
 	}
 	return score
 }
 
-// AddSuperadmin adds a principal to superadmin list (helper for testing/setup).
-func (r *Repository) AddSuperadmin(principalID string, kind model.PrincipalKind) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	r.superadminPrincipals[principalID] = kind
+func ptrIfNotDefault(value, defaultValue string) *string {
+	if value == "" || value == defaultValue {
+		return nil
+	}
+	v := value
+	return &v
 }
 
-var (
-	ErrNotFound       = errors.New("record not found")
-	ErrNotImplemented = errors.New("not implemented")
-)
-
-func clamp(v, min, max int) int {
-	if v < min {
-		return min
-	}
-	if v > max {
-		return max
-	}
-	return v
-}
-
-func generateID() string {
-	return time.Now().UTC().Format("20060102150405.000000000")
-}
-
-func (r *Repository) seedDefaultRoles() {
-	now := r.now()
-	for _, item := range defaultRoles {
-		id := generateID()
-		r.roles[id] = Role{
-			ID:    id,
-			Key:   item.Key,
-			Title: item.Title,
-			BaseModel: BaseModel{
-				CreatedAt: now,
-				UpdatedAt: now,
-			},
-		}
-		r.rolesByKey[item.Key] = id
-	}
+func strPtr(value string) *string {
+	v := value
+	return &v
 }

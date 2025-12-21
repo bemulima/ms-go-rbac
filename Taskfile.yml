@@ -1,59 +1,57 @@
 version: '3'
 
-dotenv: ['.env', '../ms-go-user/.env']
+dotenv: ['.env']
 
 vars:
-  COMPOSE_FILE: '../ms-go-user/docker-compose.yml'
   DB_CONTAINER: postgres
-  DB_USER: '{{.DB_USER | default "app"}}'
-  DB_PASSWORD: '{{.DB_PASSWORD | default "app_password"}}'
-  DB_NAME: '{{.RBAC_DB_NAME | default "rbacdb"}}'
-  DB_SSLMODE: '{{.DB_SSLMODE | default "disable"}}'
+  DB_USER: '{{.DB_USER | default "rbac"}}'
+  DB_PASSWORD: '{{.DB_PASSWORD | default "rbac_password"}}'
+  DB_NAME: '{{.DB_NAME | default "rbacdb"}}'
 
 tasks:
-  create-db:
-    desc: Create the RBAC database in shared Postgres (uses ms-go-user docker-compose)
+  up:
+    desc: Start containers
     cmds:
-      - |
-        existing=$(docker compose -f {{.COMPOSE_FILE}} exec -T {{.DB_CONTAINER}} psql -U {{.DB_USER}} -d postgres -tAc "SELECT 1 FROM pg_database WHERE datname='{{.DB_NAME}}'")
-        if [ -z "$existing" ]; then
-          docker compose -f {{.COMPOSE_FILE}} exec -T {{.DB_CONTAINER}} psql -U {{.DB_USER}} -d postgres -v ON_ERROR_STOP=1 -c "CREATE DATABASE {{.DB_NAME}}"
-        fi
+      - docker compose up -d
+
+  down:
+    desc: Stop containers
+    cmds:
+      - docker compose down
 
   migrate-up:
-    desc: Apply RBAC migrations in order against the shared Postgres
+    desc: Apply all migrations
     cmds:
-      - task: create-db
       - |
         set -euo pipefail
-        if [ -f migrations/001_init.sql ]; then
-          echo "==> running migrations/001_init.sql"
-          cat migrations/001_init.sql | docker compose -f {{.COMPOSE_FILE}} exec -T {{.DB_CONTAINER}} psql -U {{.DB_USER}} -d {{.DB_NAME}}
-        fi
-        for f in $(ls migrations/*up.sql | sort); do
-          echo "==> running $f"
-          cat "$f" | docker compose -f {{.COMPOSE_FILE}} exec -T {{.DB_CONTAINER}} psql -U {{.DB_USER}} -d {{.DB_NAME}}
+        for f in $(ls migrations/*.sql 2>/dev/null | grep -v '\.up\.sql$' | grep -v '\.down\.sql$' | sort); do
+          echo "==> applying $f"
+          cat "$f" | docker compose exec -T {{.DB_CONTAINER}} psql -U {{.DB_USER}} -d {{.DB_NAME}} -v ON_ERROR_STOP=1
+        done
+        for f in $(ls migrations/*.up.sql 2>/dev/null | sort); do
+          echo "==> applying $f"
+          cat "$f" | docker compose exec -T {{.DB_CONTAINER}} psql -U {{.DB_USER}} -d {{.DB_NAME}} -v ON_ERROR_STOP=1
         done
 
   migrate-down:
-    desc: Roll back RBAC migrations in reverse order
+    desc: Rollback all migrations in reverse order
     cmds:
       - |
         set -euo pipefail
-        for f in $(ls migrations/*down.sql | sort -r); do
-          echo "==> running $f"
-          cat "$f" | docker compose -f {{.COMPOSE_FILE}} exec -T {{.DB_CONTAINER}} psql -U {{.DB_USER}} -d {{.DB_NAME}}
+        for f in $(ls migrations/*.down.sql 2>/dev/null | sort -r); do
+          echo "==> rolling back $f"
+          cat "$f" | docker compose exec -T {{.DB_CONTAINER}} psql -U {{.DB_USER}} -d {{.DB_NAME}} -v ON_ERROR_STOP=1
         done
 
   migrate-status:
     desc: Show migration status (list tables)
     cmds:
-      - docker compose -f {{.COMPOSE_FILE}} exec -T {{.DB_CONTAINER}} psql -U {{.DB_USER}} -d {{.DB_NAME}} -c "SELECT tablename FROM pg_tables WHERE schemaname = 'public';"
+      - docker compose exec -T {{.DB_CONTAINER}} psql -U {{.DB_USER}} -d {{.DB_NAME}} -c "SELECT tablename FROM pg_tables WHERE schemaname = 'public';"
 
   run:
     desc: Run service locally
     cmds:
-      - go run ./cmd/ms-go-rbac
+      - go run ./cmd/ms-rbac-service
 
   test:
     desc: Run tests

@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 
 	"github.com/example/ms-rbac-service/internal/app"
@@ -21,7 +22,7 @@ func TestRBACHTTPFlow(t *testing.T) {
 	permID := createPermission(t, ts, "read", "course")
 	assignPermissionToRole(t, ts, "moderator", permID)
 
-	userID := "user-123"
+	userID := "11111111-1111-1111-1111-111111111111"
 	assignRole(t, ts, userID, "moderator")
 
 	assertCheckRole(t, ts, userID, "moderator", true)
@@ -31,7 +32,7 @@ func TestRBACHTTPFlow(t *testing.T) {
 
 func TestAssignsUserRoleForNewPrincipal(t *testing.T) {
 	ts := newTestServer(t)
-	userID := "new-user-001"
+	userID := "22222222-2222-2222-2222-222222222222"
 
 	assignRole(t, ts, userID, "user")
 
@@ -47,6 +48,9 @@ type testServer struct {
 
 func newTestServer(t *testing.T) testServer {
 	t.Helper()
+	if os.Getenv("DB_DSN") == "" {
+		t.Skip("DB_DSN is required for integration tests")
+	}
 	srv, err := app.Bootstrap()
 	if err != nil {
 		t.Fatalf("bootstrap failed: %v", err)
