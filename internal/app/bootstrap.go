@@ -39,21 +39,28 @@ func Bootstrap() (*http.Server, error) {
 		return nil, err
 	}
 	dbPool = pool
-	repository := repo.New(pool)
-	serviceUC := usecase.NewServiceUsecase(repository)
-	roleUC := usecase.NewRoleUsecase(repository)
-	permissionUC := usecase.NewPermissionUsecase(repository)
-	principalUC := usecase.NewPrincipalUsecase(repository)
+	serviceRepo := repo.NewServiceRepository(pool)
+	roleRepo := repo.NewRoleRepository(pool)
+	permissionRepo := repo.NewPermissionRepository(pool)
+	principalRoleRepo := repo.NewPrincipalRoleRepository(pool)
+	rolePermissionRepo := repo.NewRolePermissionRepository(pool)
+
+	serviceUC := usecase.NewServiceUsecase(serviceRepo)
+	roleUC := usecase.NewRoleUsecase(roleRepo)
+	permissionUC := usecase.NewPermissionUsecase(permissionRepo)
+	rolePermissionUC := usecase.NewRolePermissionUsecase(rolePermissionRepo)
+	principalRoleUC := usecase.NewPrincipalRoleUsecase(principalRoleRepo)
+	principalPermissionUC := usecase.NewPrincipalPermissionUsecase(principalRoleRepo, rolePermissionRepo)
 
 	adminHandlers := &handlers.AdminHandlers{
-		Service:    serviceUC,
-		Role:       roleUC,
-		Permission: permissionUC,
-		Principal:  principalUC,
+		Service:        &handlers.ServiceHandler{Usecase: serviceUC},
+		Role:           &handlers.RoleHandler{Usecase: roleUC},
+		Permission:     &handlers.PermissionHandler{Usecase: permissionUC},
+		RolePermission: &handlers.RolePermissionHandler{Usecase: rolePermissionUC},
 	}
 	apiHandlers := &handlers.APIHandlers{
-		Permission: permissionUC,
-		Principal:  principalUC,
+		PrincipalRole:       &handlers.PrincipalRoleHandler{Usecase: principalRoleUC},
+		PrincipalPermission: &handlers.PrincipalPermissionHandler{Usecase: principalPermissionUC},
 	}
 	router := httpadapter.NewRouter(adminHandlers, apiHandlers)
 
@@ -63,7 +70,7 @@ func Bootstrap() (*http.Server, error) {
 				Conn:        conn,
 				Subject:     "rbac.assign-role",
 				Queue:       "ms-go-rbac",
-				PrincipalUC: principalUC,
+				PrincipalUC: principalRoleUC,
 			}
 			if err := assigner.Listen(); err != nil {
 				log.Printf("nats subscribe failed (rbac.assign-role): %v", err)
@@ -73,7 +80,7 @@ func Bootstrap() (*http.Server, error) {
 				Conn:        conn,
 				Subject:     "rbac.checkRole",
 				Queue:       "ms-go-rbac",
-				PrincipalUC: principalUC,
+				PrincipalUC: principalRoleUC,
 			}
 			if err := checker.Listen(); err != nil {
 				log.Printf("nats subscribe failed (rbac.checkRole): %v", err)

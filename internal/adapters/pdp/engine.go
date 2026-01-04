@@ -22,7 +22,7 @@ func NewEngine(repo domainpdp.Repository) *Engine {
 // Check executes a single PDP decision.
 func (e *Engine) Check(ctx context.Context, req domainpdp.CheckRequest) (domainpdp.CheckResult, error) {
 	// Rule 1: superadmin
-	isSuper, err := e.repo.IsSuperAdmin(req.PrincipalID, req.PrincipalKind)
+	isSuper, err := e.repo.GetByPrincipal(req.PrincipalID, req.PrincipalKind)
 	if err != nil {
 		return domainpdp.CheckResult{}, err
 	}
@@ -31,7 +31,7 @@ func (e *Engine) Check(ctx context.Context, req domainpdp.CheckRequest) (domainp
 	}
 
 	// Rule 2: overrides with specificity ordering
-	override, err := e.repo.FindMostSpecificOverride(req)
+	override, err := e.repo.GetByRequest(req)
 	if err != nil {
 		return domainpdp.CheckResult{}, err
 	}
@@ -44,7 +44,7 @@ func (e *Engine) Check(ctx context.Context, req domainpdp.CheckRequest) (domainp
 		return domainpdp.CheckResult{Allow: allow, Decision: decision, CorrelationID: req.CorrelationID}, nil
 	}
 
-	roles, err := e.repo.ResolveRoles(req)
+	roles, err := e.repo.List(req)
 	if err != nil {
 		return domainpdp.CheckResult{}, err
 	}
@@ -59,7 +59,7 @@ func (e *Engine) Check(ctx context.Context, req domainpdp.CheckRequest) (domainp
 		roleKeys = append(roleKeys, r.RoleKey)
 	}
 
-	perms, err := e.repo.ListPermissionsForRoles(roleIDs)
+	perms, err := e.repo.ListByRoleIDs(roleIDs)
 	if err != nil {
 		return domainpdp.CheckResult{}, err
 	}

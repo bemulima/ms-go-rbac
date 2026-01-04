@@ -7,30 +7,51 @@ import (
 	"github.com/example/ms-rbac-service/internal/adapters/postgres"
 )
 
-// PrincipalUsecase handles user-focused RBAC operations such as role assignment
-// and lookup that are required by ms-go-user.
-type PrincipalUsecase struct {
-	repo *repo.Repository
+// PrincipalRoleUsecase handles principal role assignments.
+type PrincipalRoleUsecase struct {
+	repo *repo.PrincipalRoleRepository
 }
 
-// NewPrincipalUsecase constructs a new PrincipalUsecase instance.
-func NewPrincipalUsecase(r *repo.Repository) *PrincipalUsecase {
-	return &PrincipalUsecase{repo: r}
+// NewPrincipalRoleUsecase constructs a new PrincipalRoleUsecase instance.
+func NewPrincipalRoleUsecase(r *repo.PrincipalRoleRepository) *PrincipalRoleUsecase {
+	return &PrincipalRoleUsecase{repo: r}
 }
 
-// AssignRole associates a role key with a principal identifier.
-func (uc *PrincipalUsecase) AssignRole(ctx context.Context, principalID, role string) error {
-	return uc.repo.AssignPrincipalRole(ctx, principalID, role)
+// Update updates the principal's role assignment.
+func (uc *PrincipalRoleUsecase) Update(ctx context.Context, principalID string, input repo.PrincipalRoleUpdate) error {
+	input.RoleKey = strings.TrimSpace(input.RoleKey)
+	return uc.repo.Update(ctx, principalID, input)
 }
 
-// GetRole returns the role key associated with the principal.
-func (uc *PrincipalUsecase) GetRole(ctx context.Context, principalID string) (string, error) {
-	return uc.repo.GetPrincipalRole(ctx, principalID)
+// Get returns the role key associated with the principal.
+func (uc *PrincipalRoleUsecase) Get(ctx context.Context, principalID string) (string, error) {
+	return uc.repo.Get(ctx, principalID)
 }
 
-// GetPermissions returns the formatted permission strings assigned to the principal's current role.
-func (uc *PrincipalUsecase) GetPermissions(ctx context.Context, principalID string) ([]string, error) {
-	role, err := uc.GetRole(ctx, principalID)
+// GetByRole checks whether the principal has the provided role.
+func (uc *PrincipalRoleUsecase) GetByRole(ctx context.Context, principalID, role string) (bool, error) {
+	current, err := uc.Get(ctx, principalID)
+	if err != nil {
+		return false, err
+	}
+	role = strings.TrimSpace(role)
+	return current == role && current != "", nil
+}
+
+// PrincipalPermissionUsecase resolves permissions for principals.
+type PrincipalPermissionUsecase struct {
+	roleRepo       *repo.PrincipalRoleRepository
+	permissionRepo *repo.RolePermissionRepository
+}
+
+// NewPrincipalPermissionUsecase constructs a new PrincipalPermissionUsecase instance.
+func NewPrincipalPermissionUsecase(roleRepo *repo.PrincipalRoleRepository, permissionRepo *repo.RolePermissionRepository) *PrincipalPermissionUsecase {
+	return &PrincipalPermissionUsecase{roleRepo: roleRepo, permissionRepo: permissionRepo}
+}
+
+// List returns the permission identifiers for the principal's current role.
+func (uc *PrincipalPermissionUsecase) List(ctx context.Context, principalID string) ([]string, error) {
+	role, err := uc.roleRepo.Get(ctx, principalID)
 	if err != nil {
 		return nil, err
 	}
@@ -38,7 +59,7 @@ func (uc *PrincipalUsecase) GetPermissions(ctx context.Context, principalID stri
 	if role == "" {
 		return []string{}, nil
 	}
-	perms, err := uc.repo.ListPermissionsForRole(ctx, role)
+	perms, err := uc.permissionRepo.ListByRoleKey(ctx, role)
 	if err != nil {
 		return nil, err
 	}
@@ -56,18 +77,9 @@ func (uc *PrincipalUsecase) GetPermissions(ctx context.Context, principalID stri
 	return result, nil
 }
 
-// CheckRole returns true if the principal has the requested role key.
-func (uc *PrincipalUsecase) CheckRole(ctx context.Context, principalID, role string) (bool, error) {
-	current, err := uc.GetRole(ctx, principalID)
-	if err != nil {
-		return false, err
-	}
-	return current == role && current != "", nil
-}
-
-// CheckPermission always returns false for now because permission tracking is a TODO.
-func (uc *PrincipalUsecase) CheckPermission(ctx context.Context, principalID, permission string) (bool, error) {
-	perms, err := uc.GetPermissions(ctx, principalID)
+// GetByPermission checks whether the principal has the requested permission.
+func (uc *PrincipalPermissionUsecase) GetByPermission(ctx context.Context, principalID, permission string) (bool, error) {
+	perms, err := uc.List(ctx, principalID)
 	if err != nil {
 		return false, err
 	}

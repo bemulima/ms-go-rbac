@@ -8,33 +8,29 @@ import (
 )
 
 type PermissionUsecase struct {
-	repo *repo.Repository
+	repo *repo.PermissionRepository
 }
 
-func NewPermissionUsecase(r *repo.Repository) *PermissionUsecase {
+func NewPermissionUsecase(r *repo.PermissionRepository) *PermissionUsecase {
 	return &PermissionUsecase{repo: r}
 }
 
 func (uc *PermissionUsecase) Create(ctx context.Context, action, resourceKind string) (*repo.Permission, error) {
 	item := &repo.Permission{Action: action, ResourceKind: resourceKind}
-	if err := uc.repo.CreatePermission(ctx, item); err != nil {
+	if err := uc.repo.Create(ctx, item); err != nil {
 		return nil, err
 	}
 	return item, nil
 }
 
 func (uc *PermissionUsecase) Update(ctx context.Context, id string, attrs map[string]interface{}) error {
-	return uc.repo.UpdatePermission(ctx, id, attrs)
+	return uc.repo.Update(ctx, id, attrs)
 }
 
 func (uc *PermissionUsecase) Get(ctx context.Context, id string) (*repo.Permission, error) {
-	return uc.repo.GetPermission(ctx, id)
+	return uc.repo.Get(ctx, id)
 }
 
 func (uc *PermissionUsecase) List(ctx context.Context, params pagination.Params) ([]repo.Permission, int64, error) {
-	return uc.repo.ListPermissions(ctx, params.Offset(), params.PageSize)
-}
-
-func (uc *PermissionUsecase) AssignToRole(ctx context.Context, roleKey, permissionID string) error {
-	return uc.repo.AssignPermissionToRole(ctx, roleKey, permissionID)
+	return uc.repo.List(ctx, params.Offset(), params.PageSize)
 }

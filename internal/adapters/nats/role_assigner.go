@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"strings"
 
+	repo "github.com/example/ms-rbac-service/internal/adapters/postgres"
 	natsgo "github.com/nats-io/nats.go"
 
 	"github.com/example/ms-rbac-service/internal/usecase"
@@ -15,7 +16,7 @@ type RoleAssigner struct {
 	Conn        *natsgo.Conn
 	Subject     string
 	Queue       string
-	PrincipalUC *usecase.PrincipalUsecase
+	PrincipalUC *usecase.PrincipalRoleUsecase
 }
 
 type assignRoleRequest struct {
@@ -45,7 +46,7 @@ func (c RoleAssigner) Listen() error {
 			_ = msg.Respond(marshal(assignRoleResponse{OK: false, Error: "user_id and role are required"}))
 			return
 		}
-		if err := c.PrincipalUC.AssignRole(context.Background(), req.UserID, req.Role); err != nil {
+		if err := c.PrincipalUC.Update(context.Background(), req.UserID, repo.PrincipalRoleUpdate{RoleKey: req.Role}); err != nil {
 			_ = msg.Respond(marshal(assignRoleResponse{OK: false, Error: err.Error()}))
 			return
 		}

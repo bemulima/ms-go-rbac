@@ -14,7 +14,7 @@ type RoleChecker struct {
 	Conn        *natsgo.Conn
 	Subject     string
 	Queue       string
-	PrincipalUC *usecase.PrincipalUsecase
+	PrincipalUC *usecase.PrincipalRoleUsecase
 }
 
 type roleCheckRequest struct {
@@ -38,7 +38,7 @@ func (c RoleChecker) Listen() error {
 			_ = msg.Respond(marshal(roleCheckResponse{OK: false, Error: "invalid payload"}))
 			return
 		}
-		ok, err := c.PrincipalUC.CheckRole(context.Background(), req.UserID, req.Role)
+		ok, err := c.PrincipalUC.GetByRole(context.Background(), req.UserID, req.Role)
 		if err != nil {
 			_ = msg.Respond(marshal(roleCheckResponse{OK: false, Error: err.Error()}))
 			return

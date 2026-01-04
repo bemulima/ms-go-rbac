@@ -31,10 +31,10 @@ type ExplainResult struct {
 
 // Repository is the contract required by the PDP engine for loading state.
 type Repository interface {
-	IsSuperAdmin(principalID string, kind model.PrincipalKind) (bool, error)
-	FindMostSpecificOverride(req CheckRequest) (*OverrideMatch, error)
-	ResolveRoles(req CheckRequest) ([]RoleWithScope, error)
-	ListPermissionsForRoles(roleIDs []string) ([]RolePermissionItem, error)
+	GetByPrincipal(principalID string, kind model.PrincipalKind) (bool, error)
+	GetByRequest(req CheckRequest) (*OverrideMatch, error)
+	List(req CheckRequest) ([]RoleWithScope, error)
+	ListByRoleIDs(roleIDs []string) ([]RolePermissionItem, error)
 }
 
 type OverrideMatch struct {
