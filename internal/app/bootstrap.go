@@ -14,6 +14,7 @@ import (
 	"github.com/example/ms-rbac-service/internal/config"
 	"github.com/example/ms-rbac-service/internal/usecase"
 	"github.com/jackc/pgx/v5/pgxpool"
+	natsgo "github.com/nats-io/nats.go"
 )
 
 var dbPool *pgxpool.Pool
@@ -65,28 +66,30 @@ func Bootstrap() (*http.Server, error) {
 	router := httpadapter.NewRouter(adminHandlers, apiHandlers)
 
 	if cfg.NATSURL != "" {
-		if conn, err := natsadapter.Connect(cfg.NATSURL); err == nil {
-			assigner := natsadapter.RoleAssigner{
-				Conn:        conn,
-				Subject:     "rbac.assign-role",
-				Queue:       "ms-go-rbac",
-				PrincipalUC: principalRoleUC,
-			}
-			if err := assigner.Listen(); err != nil {
-				log.Printf("nats subscribe failed (rbac.assign-role): %v", err)
-			}
+		conn, err := connectNATSWithRetry(cfg.NATSURL)
+		if err != nil {
+			pool.Close()
+			return nil, err
+		}
 
-			checker := natsadapter.RoleChecker{
-				Conn:        conn,
-				Subject:     "rbac.checkRole",
-				Queue:       "ms-go-rbac",
-				PrincipalUC: principalRoleUC,
-			}
-			if err := checker.Listen(); err != nil {
-				log.Printf("nats subscribe failed (rbac.checkRole): %v", err)
-			}
-		} else {
-			log.Printf("nats connect failed: %v", err)
+		assigner := natsadapter.RoleAssigner{
+			Conn:        conn,
+			Subject:     "rbac.assign-role",
+			Queue:       "ms-go-rbac",
+			PrincipalUC: principalRoleUC,
+		}
+		if err := assigner.Listen(); err != nil {
+			log.Printf("nats subscribe failed (rbac.assign-role): %v", err)
+		}
+
+		checker := natsadapter.RoleChecker{
+			Conn:        conn,
+			Subject:     "rbac.checkRole",
+			Queue:       "ms-go-rbac",
+			PrincipalUC: principalRoleUC,
+		}
+		if err := checker.Listen(); err != nil {
+			log.Printf("nats subscribe failed (rbac.checkRole): %v", err)
 		}
 	}
 	httpServer := &http.Server{
@@ -107,4 +110,28 @@ func Shutdown(ctx context.Context, srv *http.Server) error {
 		dbPool.Close()
 	}
 	return nil
+}
+
+func connectNATSWithRetry(url string) (*natsgo.Conn, error) {
+	const (
+		maxAttempts = 30
+		retryDelay  = 2 * time.Second
+	)
+
+	var lastErr error
+	for attempt := 1; attempt <= maxAttempts; attempt++ {
+		conn, err := natsadapter.Connect(url)
+		if err == nil {
+			return conn, nil
+		}
+
+		lastErr = err
+		log.Printf("nats connect attempt %d/%d failed: %v", attempt, maxAttempts, err)
+
+		if attempt < maxAttempts {
+			time.Sleep(retryDelay)
+		}
+	}
+
+	return nil, fmt.Errorf("nats connect failed after retries: %w", lastErr)
 }
