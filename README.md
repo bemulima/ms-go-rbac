@@ -52,7 +52,7 @@ Default roles are seeded via migrations:
 - `user`
 - `guest`
 
-Only existing roles can be assigned via `POST /assign_role`. Add new roles through the `/admin/role` endpoint if needed, then run migrations for seeds.
+Only existing roles can be assigned via `PATCH /api/v1/principal-role/update`. Add new roles through the `/admin/role` endpoint if needed, then run migrations for seeds.
 
 ## Testing
 - Integration-style HTTP contract tests (requires `DB_DSN`): `GOCACHE=../.gocache go test ./...`

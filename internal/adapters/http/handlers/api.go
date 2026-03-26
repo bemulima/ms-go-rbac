@@ -29,7 +29,7 @@ type PrincipalRoleHandler struct {
 }
 
 func (h *PrincipalRoleHandler) Update(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
+	if r.Method != http.MethodPatch {
 		http.NotFound(w, r)
 		return
 	}

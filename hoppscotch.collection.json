@@ -6,8 +6,8 @@
     {
       "v": "1",
       "name": "Assign role",
-      "method": "POST",
-      "endpoint": "<<RBAC_BASE_URL>>/api/v1/assign_role",
+      "method": "PATCH",
+      "endpoint": "<<RBAC_BASE_URL>>/api/v1/principal-role/update",
       "params": [],
       "headers": [
         {
@@ -32,7 +32,7 @@
       "v": "1",
       "name": "Get role by user",
       "method": "GET",
-      "endpoint": "<<RBAC_BASE_URL>>/api/v1/get_role_by_user_id?user_id=:userId",
+      "endpoint": "<<RBAC_BASE_URL>>/api/v1/principal-role/get?user_id=:userId",
       "params": [],
       "headers": [],
       "auth": {
@@ -52,7 +52,7 @@
       "v": "1",
       "name": "Get permissions by user",
       "method": "GET",
-      "endpoint": "<<RBAC_BASE_URL>>/api/v1/get_permissions_by_user_id_for_role?user_id=:userId",
+      "endpoint": "<<RBAC_BASE_URL>>/api/v1/principal-permission/list?user_id=:userId",
       "params": [],
       "headers": [],
       "auth": {
@@ -72,7 +72,7 @@
       "v": "1",
       "name": "Check role by user",
       "method": "GET",
-      "endpoint": "<<RBAC_BASE_URL>>/api/v1/check_role_by_user_id?user_id=:userId&role=:role",
+      "endpoint": "<<RBAC_BASE_URL>>/api/v1/principal-role/get-by-role?user_id=:userId&role=:role",
       "params": [],
       "headers": [],
       "auth": {
@@ -92,7 +92,7 @@
       "v": "1",
       "name": "Check permission by user",
       "method": "GET",
-      "endpoint": "<<RBAC_BASE_URL>>/api/v1/check_permission_by_user_id?user_id=:userId&permission=:permission",
+      "endpoint": "<<RBAC_BASE_URL>>/api/v1/principal-permission/get-by-permission?user_id=:userId&permission=:permission",
       "params": [],
       "headers": [],
       "auth": {
