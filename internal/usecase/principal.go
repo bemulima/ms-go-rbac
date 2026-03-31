@@ -20,6 +20,13 @@ func NewPrincipalRoleUsecase(r *repo.PrincipalRoleRepository) *PrincipalRoleUsec
 // Update updates the principal's role assignment.
 func (uc *PrincipalRoleUsecase) Update(ctx context.Context, principalID string, input repo.PrincipalRoleUpdate) error {
 	input.RoleKey = strings.TrimSpace(input.RoleKey)
+	current, err := uc.repo.Get(ctx, principalID)
+	if err != nil {
+		return err
+	}
+	if current == input.RoleKey && current != "" {
+		return nil
+	}
 	return uc.repo.Update(ctx, principalID, input)
 }
 

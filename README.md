@@ -10,6 +10,11 @@ This repository provides a lightweight RBAC microservice implemented in Go. The 
 - `internal/adapters/http` — net/http handlers and routing.
 - `internal/adapters/postgres` — Postgres repository layer.
 
+## Messaging Boundary
+- Retained broker scope for this service is limited to Core NATS RPC: `rbac.assign-role` and `rbac.checkRole`.
+- Both subjects are request/reply only and queue-group-safe by design.
+- `rbac.assign-role` is a mutating RPC and must remain idempotent for duplicate retries.
+
 ## Running locally
 
 ```
