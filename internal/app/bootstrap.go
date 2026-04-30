@@ -29,14 +29,9 @@ func Bootstrap() (*http.Server, error) {
 	if cfg.DBDSN == "" {
 		return nil, fmt.Errorf("DB_DSN is required")
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	pool, err := pgxpool.New(ctx, cfg.DBDSN)
+
+	pool, err := connectPostgresWithRetry(cfg.DBDSN)
 	if err != nil {
-		return nil, err
-	}
-	if err := pool.Ping(ctx); err != nil {
-		pool.Close()
 		return nil, err
 	}
 	dbPool = pool
@@ -110,6 +105,39 @@ func Shutdown(ctx context.Context, srv *http.Server) error {
 		dbPool.Close()
 	}
 	return nil
+}
+
+func connectPostgresWithRetry(dsn string) (*pgxpool.Pool, error) {
+	const (
+		maxAttempts = 30
+		retryDelay  = 2 * time.Second
+	)
+
+	var lastErr error
+	for attempt := 1; attempt <= maxAttempts; attempt++ {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		pool, err := pgxpool.New(ctx, dsn)
+		if err == nil {
+			err = pool.Ping(ctx)
+		}
+		cancel()
+
+		if err == nil {
+			return pool, nil
+		}
+		if pool != nil {
+			pool.Close()
+		}
+
+		lastErr = err
+		log.Printf("postgres connect attempt %d/%d failed: %v", attempt, maxAttempts, err)
+
+		if attempt < maxAttempts {
+			time.Sleep(retryDelay)
+		}
+	}
+
+	return nil, fmt.Errorf("postgres connect failed after retries: %w", lastErr)
 }
 
 func connectNATSWithRetry(url string) (*natsgo.Conn, error) {
