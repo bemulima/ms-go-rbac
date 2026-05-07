@@ -34,7 +34,7 @@ suggest_fixes() {
   local observed="$1"
   if [[ "${observed}" == *"admin gateway"* ]]; then
     cat <<'EOF'
-  - В `ms-getway/templates/admin-getway.conf.template` для RBAC переписать rewrite на `/admin/v1` (сейчас `/api/admin/v1`), либо добавить в `ms-go-rbac` алиас `/api/admin/v1`.
+  - В `ms-gateway/templates/admin-gateway.conf.template` для RBAC переписать rewrite на `/admin/v1` (сейчас `/api/admin/v1`), либо добавить в `ms-go-rbac` алиас `/api/admin/v1`.
 EOF
     return 0
   fi
