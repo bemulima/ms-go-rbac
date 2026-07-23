@@ -1,0 +1,152 @@
+schema_version: 1
+contracts:
+    - name: http_route
+      value: ANY /permission-list
+      confidence: 0.72
+      source_path: internal/adapters/http/admin/v1/router.go
+      explanation: A net/http HandleFunc registration exposes this route without a single-method guard.
+    - name: http_route
+      value: ANY /permission/
+      confidence: 0.72
+      source_path: internal/adapters/http/admin/v1/router.go
+      explanation: A net/http HandleFunc registration exposes this route without a single-method guard.
+    - name: http_route
+      value: ANY /permission
+      confidence: 0.72
+      source_path: internal/adapters/http/admin/v1/router.go
+      explanation: A net/http HandleFunc registration exposes this route without a single-method guard.
+    - name: http_route
+      value: ANY /principal-permission/get-by-permission
+      confidence: 0.72
+      source_path: internal/adapters/http/api/v1/router.go
+      explanation: A net/http HandleFunc registration exposes this route without a single-method guard.
+    - name: http_route
+      value: ANY /principal-permission/list
+      confidence: 0.72
+      source_path: internal/adapters/http/api/v1/router.go
+      explanation: A net/http HandleFunc registration exposes this route without a single-method guard.
+    - name: http_route
+      value: ANY /principal-role/get-by-role
+      confidence: 0.72
+      source_path: internal/adapters/http/api/v1/router.go
+      explanation: A net/http HandleFunc registration exposes this route without a single-method guard.
+    - name: http_route
+      value: ANY /principal-role/get
+      confidence: 0.72
+      source_path: internal/adapters/http/api/v1/router.go
+      explanation: A net/http HandleFunc registration exposes this route without a single-method guard.
+    - name: http_route
+      value: ANY /principal-role/update
+      confidence: 0.72
+      source_path: internal/adapters/http/api/v1/router.go
+      explanation: A net/http HandleFunc registration exposes this route without a single-method guard.
+    - name: http_route
+      value: ANY /role-list
+      confidence: 0.72
+      source_path: internal/adapters/http/admin/v1/router.go
+      explanation: A net/http HandleFunc registration exposes this route without a single-method guard.
+    - name: http_route
+      value: ANY /role-permission
+      confidence: 0.72
+      source_path: internal/adapters/http/admin/v1/router.go
+      explanation: A net/http HandleFunc registration exposes this route without a single-method guard.
+    - name: http_route
+      value: ANY /role/
+      confidence: 0.72
+      source_path: internal/adapters/http/admin/v1/router.go
+      explanation: A net/http HandleFunc registration exposes this route without a single-method guard.
+    - name: http_route
+      value: ANY /role
+      confidence: 0.72
+      source_path: internal/adapters/http/admin/v1/router.go
+      explanation: A net/http HandleFunc registration exposes this route without a single-method guard.
+    - name: http_route
+      value: ANY /service-list
+      confidence: 0.72
+      source_path: internal/adapters/http/admin/v1/router.go
+      explanation: A net/http HandleFunc registration exposes this route without a single-method guard.
+    - name: http_route
+      value: ANY /service/
+      confidence: 0.72
+      source_path: internal/adapters/http/admin/v1/router.go
+      explanation: A net/http HandleFunc registration exposes this route without a single-method guard.
+    - name: http_route
+      value: ANY /service
+      confidence: 0.72
+      source_path: internal/adapters/http/admin/v1/router.go
+      explanation: A net/http HandleFunc registration exposes this route without a single-method guard.
+    - name: http_route
+      value: GET /admin/v1/permission-list
+      confidence: 0.95
+      source_path: internal/adapters/http/handlers/admin.go
+      explanation: Semantic proposal with a verified repository quote. The production permission-list handler only accepts GET.
+    - name: http_route
+      value: GET /admin/v1/role-list
+      confidence: 0.95
+      source_path: internal/adapters/http/handlers/admin.go
+      explanation: Semantic proposal with a verified repository quote. The production role-list handler only accepts GET.
+    - name: http_route
+      value: GET /admin/v1/service-list
+      confidence: 0.95
+      source_path: internal/adapters/http/handlers/admin.go
+      explanation: Semantic proposal with a verified repository quote. The production list handler only accepts GET.
+    - name: http_route
+      value: GET /api/v1/principal-permission/get-by-permission
+      confidence: 0.95
+      source_path: internal/adapters/http/handlers/api.go
+      explanation: Semantic proposal with a verified repository quote. The production permission-check handler only accepts GET.
+    - name: http_route
+      value: GET /api/v1/principal-permission/list
+      confidence: 0.95
+      source_path: internal/adapters/http/handlers/api.go
+      explanation: Semantic proposal with a verified repository quote. The production principal-permission list handler only accepts GET.
+    - name: http_route
+      value: GET /api/v1/principal-role/get-by-role
+      confidence: 0.95
+      source_path: internal/adapters/http/handlers/api.go
+      explanation: Semantic proposal with a verified repository quote. The production role-check handler only accepts GET.
+    - name: http_route
+      value: GET /api/v1/principal-role/get
+      confidence: 0.95
+      source_path: internal/adapters/http/handlers/api.go
+      explanation: Semantic proposal with a verified repository quote. The production principal-role lookup handler only accepts GET.
+    - name: http_route
+      value: GET|PUT /admin/v1/permission/{id}
+      confidence: 0.95
+      source_path: internal/adapters/http/admin/v1/router.go
+      explanation: Semantic proposal with a verified repository quote. The admin router registers GET and PUT permission handlers on the identifier path.
+    - name: http_route
+      value: GET|PUT /admin/v1/role/{id}
+      confidence: 0.95
+      source_path: internal/adapters/http/admin/v1/router.go
+      explanation: Semantic proposal with a verified repository quote. The admin router registers GET and PUT role handlers on the identifier path.
+    - name: http_route
+      value: GET|PUT /admin/v1/service/{id}
+      confidence: 0.95
+      source_path: internal/adapters/http/admin/v1/router.go
+      explanation: Semantic proposal with a verified repository quote. The admin router registers GET and PUT service handlers on the identifier path.
+    - name: http_route
+      value: PATCH /api/v1/principal-role/update
+      confidence: 0.95
+      source_path: internal/adapters/http/handlers/api.go
+      explanation: Semantic proposal with a verified repository quote. The production principal-role update handler only accepts PATCH.
+    - name: http_route
+      value: POST /admin/v1/role-permission
+      confidence: 0.95
+      source_path: internal/adapters/http/handlers/admin.go
+      explanation: Semantic proposal with a verified repository quote. The production role-permission assignment handler only accepts POST.
+    - name: http_route
+      value: SET /admin/v1/permission
+      confidence: 0.95
+      source_path: internal/adapters/http/handlers/admin.go
+      explanation: Semantic proposal with a verified repository quote. The production handler accepts the nonstandard SET method for permission creation.
+    - name: http_route
+      value: SET /admin/v1/role
+      confidence: 0.95
+      source_path: internal/adapters/http/handlers/admin.go
+      explanation: Semantic proposal with a verified repository quote. The production handler accepts the nonstandard SET method for role creation.
+    - name: http_route
+      value: SET /admin/v1/service
+      confidence: 0.95
+      source_path: internal/adapters/http/handlers/admin.go
+      explanation: Semantic proposal with a verified repository quote. The production handler accepts the nonstandard SET method for service creation.

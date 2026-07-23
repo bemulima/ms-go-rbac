@@ -1,0 +1,135 @@
+schema_version: 1
+stack:
+    - name: container
+      value: docker
+      confidence: 0.95
+      source_path: docker/Dockerfile
+      explanation: A Dockerfile defines a container build.
+    - name: framework
+      value: nats
+      confidence: 0.98
+      source_path: go.mod
+      explanation: go.mod declares dependency github.com/nats-io/nats.go.
+    - name: framework
+      value: pgx
+      confidence: 0.98
+      source_path: go.mod
+      explanation: go.mod declares dependency github.com/jackc/pgx.
+    - name: language
+      value: go
+      confidence: 1
+      source_path: go.mod
+      explanation: go.mod is the canonical Go module manifest.
+    - name: orchestration
+      value: docker_compose
+      confidence: 0.98
+      source_path: docker-compose.yml
+      explanation: A Docker Compose manifest defines local infrastructure or runtime services.
+ownership:
+    - name: database_table
+      value: permission
+      confidence: 0.96
+      source_path: migrations/001_init.sql
+      explanation: A checked-in SQL schema file creates this table, indicating schema ownership.
+    - name: database_table
+      value: principal_override
+      confidence: 0.96
+      source_path: migrations/001_init.sql
+      explanation: A checked-in SQL schema file creates this table, indicating schema ownership.
+    - name: database_table
+      value: principal_role
+      confidence: 0.96
+      source_path: migrations/001_init.sql
+      explanation: A checked-in SQL schema file creates this table, indicating schema ownership.
+    - name: database_table
+      value: role_hierarchy
+      confidence: 0.96
+      source_path: migrations/001_init.sql
+      explanation: A checked-in SQL schema file creates this table, indicating schema ownership.
+    - name: database_table
+      value: role_permission
+      confidence: 0.96
+      source_path: migrations/001_init.sql
+      explanation: A checked-in SQL schema file creates this table, indicating schema ownership.
+    - name: database_table
+      value: role
+      confidence: 0.96
+      source_path: migrations/001_init.sql
+      explanation: A checked-in SQL schema file creates this table, indicating schema ownership.
+    - name: database_table
+      value: service_permission
+      confidence: 0.96
+      source_path: migrations/001_init.sql
+      explanation: A checked-in SQL schema file creates this table, indicating schema ownership.
+    - name: database_table
+      value: service_role
+      confidence: 0.96
+      source_path: migrations/001_init.sql
+      explanation: A checked-in SQL schema file creates this table, indicating schema ownership.
+    - name: database_table
+      value: service
+      confidence: 0.96
+      source_path: migrations/001_init.sql
+      explanation: A checked-in SQL schema file creates this table, indicating schema ownership.
+    - name: database_table
+      value: superadmin_principal
+      confidence: 0.96
+      source_path: migrations/001_init.sql
+      explanation: A checked-in SQL schema file creates this table, indicating schema ownership.
+relations:
+    - name: depends_on
+      value: postgres
+      confidence: 0.9
+      source_path: docker-compose.yml
+      explanation: Docker Compose declares this service dependency.
+infrastructure:
+    - name: CACHE_TTL_SECONDS
+      value: 60 seconds default
+      confidence: 0.94
+      source_path: internal/config/config.go
+      explanation: Semantic proposal with a verified repository quote. Production configuration parses the cache TTL as seconds and defaults it to 60.
+    - name: NATS
+      value: Configured Core NATS request/reply broker
+      confidence: 0.94
+      source_path: internal/app/bootstrap.go
+      explanation: Semantic proposal with a verified repository quote. Production bootstrap connects to NATS when NATS_URL is nonempty and fails bootstrap if the connection cannot be established.
+    - name: PostgreSQL
+      value: Required runtime database
+      confidence: 0.95
+      source_path: internal/app/bootstrap.go
+      explanation: Semantic proposal with a verified repository quote. Production bootstrap code requires a working PostgreSQL pool before constructing repositories.
+    - name: compose_dependency
+      value: postgres service_healthy
+      confidence: 0.95
+      source_path: docker-compose.yml
+      explanation: Semantic proposal with a verified repository quote. The application Compose service waits for the PostgreSQL health condition.
+    - name: compose_service
+      value: msgo-rbac
+      confidence: 0.96
+      source_path: docker-compose.yml
+      explanation: Docker Compose declares this service.
+    - name: compose_service
+      value: postgres=postgres:16-alpine
+      confidence: 0.96
+      source_path: docker-compose.yml
+      explanation: Docker Compose declares this service.
+    - name: container_runtime
+      value: gcr.io/distroless/base-debian12; port 8080
+      confidence: 0.95
+      source_path: docker/Dockerfile
+      explanation: Semantic proposal with a verified repository quote. The runtime container uses a distroless Debian 12 base and exposes port 8080.
+    - name: network
+      value: ms-net
+      confidence: 0.95
+      source_path: docker-compose.yml
+      explanation: Semantic proposal with a verified repository quote. The Compose manifest declares an externally managed network.
+    - name: postgres
+      value: postgres:16-alpine
+      confidence: 0.95
+      source_path: docker-compose.yml
+      explanation: Semantic proposal with a verified repository quote. The Compose manifest declares a PostgreSQL service and image.
+    - name: runtime_configuration
+      value: HTTP_ADDR, DB_DSN, NATS_URL
+      confidence: 0.94
+      source_path: internal/config/config.go
+      explanation: Semantic proposal with a verified repository quote. Production configuration code identifies the HTTP, database, and NATS settings and their applicable defaults.

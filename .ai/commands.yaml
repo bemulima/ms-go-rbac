@@ -1,0 +1,38 @@
+schema_version: 1
+commands:
+    - name: migrate_up
+      run: task migrate-up
+      source_path: README.md
+      confidence: 0.938
+      requires_approval: true
+      risk: state_change
+    - name: run_linter
+      run: golangci-lint run ./...
+      source_path: Taskfile.yml
+      confidence: 0.95
+      requires_approval: false
+      risk: verification
+    - name: run_service
+      run: go run ./cmd/ms-rbac-service
+      source_path: Taskfile.yml
+      confidence: 0.95
+      requires_approval: true
+      risk: lifecycle
+    - name: run_tests
+      run: go test ./...
+      source_path: Taskfile.yml
+      confidence: 0.95
+      requires_approval: false
+      risk: verification
+    - name: start_containers
+      run: docker compose up -d
+      source_path: Taskfile.yml
+      confidence: 0.95
+      requires_approval: true
+      risk: external_runtime
+    - name: stop_containers
+      run: docker compose down
+      source_path: Taskfile.yml
+      confidence: 0.95
+      requires_approval: true
+      risk: state_change
