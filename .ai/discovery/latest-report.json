@@ -1,0 +1,832 @@
+{
+  "schema_version": 9,
+  "project_id": "0286f605-06f9-4500-8530-56a7eed20763",
+  "project_name": "ms-go-rbac",
+  "repository_role": "service",
+  "repository_path": ".",
+  "commit_sha": "ca10bb399b11ab2a7c19a83b960d90165b7dcd6c",
+  "branch": "main",
+  "is_dirty": false,
+  "content_checksum": "cdca68d85e39f86cf6d4d30df59c70fb8d86e63cf652ec9aa9f7a14b39d998a0",
+  "started_at": "2026-07-22T19:14:32.17193521Z",
+  "completed_at": "2026-07-22T19:14:32.178806585Z",
+  "inventory": {
+    "files_visited": 48,
+    "files_analyzed": 45,
+    "bytes_analyzed": 118586,
+    "content_checksum": "cdca68d85e39f86cf6d4d30df59c70fb8d86e63cf652ec9aa9f7a14b39d998a0",
+    "truncated": false,
+    "excluded_paths": 1,
+    "skipped_large_files": 0
+  },
+  "facts": [
+    {
+      "category": "business_process",
+      "name": "resolve_principal_permissions",
+      "value": "Resolve current role, then list and deduplicate its permissions",
+      "confidence": 0.904,
+      "source_path": "internal/usecase/principal.go",
+      "explanation": "Semantic proposal with a verified repository quote. Permission resolution first obtains the principal role and then lists permissions assigned to that role."
+    },
+    {
+      "category": "business_rule",
+      "name": "permission_identifier_format",
+      "value": "action:resource_kind",
+      "confidence": 0.904,
+      "source_path": "internal/usecase/principal.go",
+      "explanation": "Semantic proposal with a verified repository quote. Permission identifiers combine action and resource kind with a colon when both exist."
+    },
+    {
+      "category": "business_rule",
+      "name": "principal_role_match",
+      "value": "A role check passes only for an exact, non-empty current role",
+      "confidence": 0.904,
+      "source_path": "internal/usecase/principal.go",
+      "explanation": "Semantic proposal with a verified repository quote. Role checks require an exact match with a non-empty current role."
+    },
+    {
+      "category": "business_rule",
+      "name": "role_assignment_idempotency",
+      "value": "Reassigning the current role is a no-op",
+      "confidence": 0.904,
+      "source_path": "internal/usecase/principal.go",
+      "explanation": "Semantic proposal with a verified repository quote. Duplicate assignment of a principal's current non-empty role succeeds without rewriting persistence."
+    },
+    {
+      "category": "capability",
+      "name": "business capability",
+      "value": "Manage RBAC services, roles, permissions, and principal assignments",
+      "confidence": 0.95,
+      "source_path": "README.md",
+      "explanation": "Semantic proposal with a verified repository quote. The README directly describes the main business capability."
+    },
+    {
+      "category": "capability",
+      "name": "event_subject",
+      "value": "rbac.assign-role",
+      "confidence": 0.72,
+      "source_path": "README.md",
+      "explanation": "A NATS/event-related source line references this subject."
+    },
+    {
+      "category": "capability",
+      "name": "event_subject",
+      "value": "rbac.assign-role",
+      "confidence": 0.72,
+      "source_path": "internal/app/bootstrap.go",
+      "explanation": "A NATS/event-related source line references this subject."
+    },
+    {
+      "category": "capability",
+      "name": "event_subject",
+      "value": "rbac.checkRole",
+      "confidence": 0.72,
+      "source_path": "README.md",
+      "explanation": "A NATS/event-related source line references this subject."
+    },
+    {
+      "category": "capability",
+      "name": "event_subject",
+      "value": "rbac.checkRole",
+      "confidence": 0.72,
+      "source_path": "internal/app/bootstrap.go",
+      "explanation": "A NATS/event-related source line references this subject."
+    },
+    {
+      "category": "capability",
+      "name": "http_route",
+      "value": "ANY /permission-list",
+      "confidence": 0.72,
+      "source_path": "internal/adapters/http/admin/v1/router.go",
+      "explanation": "A net/http HandleFunc registration exposes this route without a single-method guard."
+    },
+    {
+      "category": "capability",
+      "name": "http_route",
+      "value": "ANY /permission/",
+      "confidence": 0.72,
+      "source_path": "internal/adapters/http/admin/v1/router.go",
+      "explanation": "A net/http HandleFunc registration exposes this route without a single-method guard."
+    },
+    {
+      "category": "capability",
+      "name": "http_route",
+      "value": "ANY /permission",
+      "confidence": 0.72,
+      "source_path": "internal/adapters/http/admin/v1/router.go",
+      "explanation": "A net/http HandleFunc registration exposes this route without a single-method guard."
+    },
+    {
+      "category": "capability",
+      "name": "http_route",
+      "value": "ANY /principal-permission/get-by-permission",
+      "confidence": 0.72,
+      "source_path": "internal/adapters/http/api/v1/router.go",
+      "explanation": "A net/http HandleFunc registration exposes this route without a single-method guard."
+    },
+    {
+      "category": "capability",
+      "name": "http_route",
+      "value": "ANY /principal-permission/list",
+      "confidence": 0.72,
+      "source_path": "internal/adapters/http/api/v1/router.go",
+      "explanation": "A net/http HandleFunc registration exposes this route without a single-method guard."
+    },
+    {
+      "category": "capability",
+      "name": "http_route",
+      "value": "ANY /principal-role/get-by-role",
+      "confidence": 0.72,
+      "source_path": "internal/adapters/http/api/v1/router.go",
+      "explanation": "A net/http HandleFunc registration exposes this route without a single-method guard."
+    },
+    {
+      "category": "capability",
+      "name": "http_route",
+      "value": "ANY /principal-role/get",
+      "confidence": 0.72,
+      "source_path": "internal/adapters/http/api/v1/router.go",
+      "explanation": "A net/http HandleFunc registration exposes this route without a single-method guard."
+    },
+    {
+      "category": "capability",
+      "name": "http_route",
+      "value": "ANY /principal-role/update",
+      "confidence": 0.72,
+      "source_path": "internal/adapters/http/api/v1/router.go",
+      "explanation": "A net/http HandleFunc registration exposes this route without a single-method guard."
+    },
+    {
+      "category": "capability",
+      "name": "http_route",
+      "value": "ANY /role-list",
+      "confidence": 0.72,
+      "source_path": "internal/adapters/http/admin/v1/router.go",
+      "explanation": "A net/http HandleFunc registration exposes this route without a single-method guard."
+    },
+    {
+      "category": "capability",
+      "name": "http_route",
+      "value": "ANY /role-permission",
+      "confidence": 0.72,
+      "source_path": "internal/adapters/http/admin/v1/router.go",
+      "explanation": "A net/http HandleFunc registration exposes this route without a single-method guard."
+    },
+    {
+      "category": "capability",
+      "name": "http_route",
+      "value": "ANY /role/",
+      "confidence": 0.72,
+      "source_path": "internal/adapters/http/admin/v1/router.go",
+      "explanation": "A net/http HandleFunc registration exposes this route without a single-method guard."
+    },
+    {
+      "category": "capability",
+      "name": "http_route",
+      "value": "ANY /role",
+      "confidence": 0.72,
+      "source_path": "internal/adapters/http/admin/v1/router.go",
+      "explanation": "A net/http HandleFunc registration exposes this route without a single-method guard."
+    },
+    {
+      "category": "capability",
+      "name": "http_route",
+      "value": "ANY /service-list",
+      "confidence": 0.72,
+      "source_path": "internal/adapters/http/admin/v1/router.go",
+      "explanation": "A net/http HandleFunc registration exposes this route without a single-method guard."
+    },
+    {
+      "category": "capability",
+      "name": "http_route",
+      "value": "ANY /service/",
+      "confidence": 0.72,
+      "source_path": "internal/adapters/http/admin/v1/router.go",
+      "explanation": "A net/http HandleFunc registration exposes this route without a single-method guard."
+    },
+    {
+      "category": "capability",
+      "name": "http_route",
+      "value": "ANY /service",
+      "confidence": 0.72,
+      "source_path": "internal/adapters/http/admin/v1/router.go",
+      "explanation": "A net/http HandleFunc registration exposes this route without a single-method guard."
+    },
+    {
+      "category": "capability",
+      "name": "http_route",
+      "value": "SET /admin/v1/service",
+      "confidence": 0.95,
+      "source_path": "internal/adapters/http/handlers/admin.go",
+      "explanation": "Semantic proposal with a verified repository quote. The production handler restricts service creation to the custom SET method; the router mounts it under /admin/v1."
+    },
+    {
+      "category": "classification",
+      "name": "service_kind",
+      "value": "backend_service",
+      "confidence": 0.8,
+      "source_path": ".",
+      "explanation": "Detected runtime source or manifests identify a backend service, with no stronger specialized kind signal."
+    },
+    {
+      "category": "command",
+      "name": "containers_down",
+      "value": "docker compose down",
+      "confidence": 0.95,
+      "source_path": "Taskfile.yml",
+      "explanation": "Semantic proposal with a verified repository quote. Taskfile documents the exact container shutdown command."
+    },
+    {
+      "category": "command",
+      "name": "containers_up",
+      "value": "docker compose up -d",
+      "confidence": 0.95,
+      "source_path": "Taskfile.yml",
+      "explanation": "Semantic proposal with a verified repository quote. Taskfile documents the exact container startup command."
+    },
+    {
+      "category": "command",
+      "name": "lint",
+      "value": "golangci-lint run ./...",
+      "confidence": 0.95,
+      "source_path": "Taskfile.yml",
+      "explanation": "Semantic proposal with a verified repository quote. Taskfile documents the exact lint command."
+    },
+    {
+      "category": "command",
+      "name": "migrate_down",
+      "value": "task migrate-down",
+      "confidence": 0.95,
+      "source_path": "Taskfile.yml",
+      "explanation": "Semantic proposal with a verified repository quote. Taskfile defines migrate-down as the developer task for rolling back migrations."
+    },
+    {
+      "category": "command",
+      "name": "migrate_status",
+      "value": "task migrate-status",
+      "confidence": 0.95,
+      "source_path": "Taskfile.yml",
+      "explanation": "Semantic proposal with a verified repository quote. Taskfile defines migrate-status as the developer task for listing public tables."
+    },
+    {
+      "category": "command",
+      "name": "migrate_up",
+      "value": "task migrate-up",
+      "confidence": 0.95,
+      "source_path": "Taskfile.yml",
+      "explanation": "Semantic proposal with a verified repository quote. Taskfile defines migrate-up as the developer task for applying all migrations."
+    },
+    {
+      "category": "command",
+      "name": "run_locally",
+      "value": "docker compose up -d\ntask migrate-up\ngo run ./cmd/ms-rbac-service",
+      "confidence": 0.95,
+      "source_path": "README.md",
+      "explanation": "Semantic proposal with a verified repository quote. The README documents this exact local startup sequence."
+    },
+    {
+      "category": "command",
+      "name": "run_service",
+      "value": "go run ./cmd/ms-rbac-service",
+      "confidence": 0.95,
+      "source_path": "Taskfile.yml",
+      "explanation": "Semantic proposal with a verified repository quote. Taskfile documents the exact direct service command."
+    },
+    {
+      "category": "command",
+      "name": "test",
+      "value": "go test ./...",
+      "confidence": 0.95,
+      "source_path": "Taskfile.yml",
+      "explanation": "Semantic proposal with a verified repository quote. Taskfile documents the exact test command."
+    },
+    {
+      "category": "contract",
+      "name": "database_schema",
+      "value": "migrations/001_init.sql",
+      "confidence": 0.96,
+      "source_path": "migrations/001_init.sql",
+      "explanation": "The SQL file creates database resources owned by the project."
+    },
+    {
+      "category": "contract",
+      "name": "database_schema",
+      "value": "override_effect = allow | deny",
+      "confidence": 0.95,
+      "source_path": "migrations/001_init.sql",
+      "explanation": "Semantic proposal with a verified repository quote. The migration defines the permitted database values for override effects."
+    },
+    {
+      "category": "contract",
+      "name": "database_schema",
+      "value": "principal_kind = user | service_account | group",
+      "confidence": 0.95,
+      "source_path": "migrations/001_init.sql",
+      "explanation": "Semantic proposal with a verified repository quote. The migration defines the permitted database values for principal kinds."
+    },
+    {
+      "category": "contract",
+      "name": "event_subscribe",
+      "value": "rbac.assign-role request {user_id, role}; reply {ok, error?}",
+      "confidence": 0.95,
+      "source_path": "internal/adapters/nats/role_assigner.go",
+      "explanation": "Semantic proposal with a verified repository quote. Production code defines the request and reply payload fields for role assignment."
+    },
+    {
+      "category": "contract",
+      "name": "event_subscribe",
+      "value": "rbac.assign-role",
+      "confidence": 0.95,
+      "source_path": "internal/app/bootstrap.go",
+      "explanation": "Semantic proposal with a verified repository quote. Production bootstrap configures a queue subscriber for role-assignment requests."
+    },
+    {
+      "category": "contract",
+      "name": "event_subscribe",
+      "value": "rbac.checkRole request {user_id, role}; reply {ok, error?}",
+      "confidence": 0.95,
+      "source_path": "internal/adapters/nats/role_checker.go",
+      "explanation": "Semantic proposal with a verified repository quote. Production code defines the request and reply payload fields for role checking."
+    },
+    {
+      "category": "contract",
+      "name": "event_subscribe",
+      "value": "rbac.checkRole",
+      "confidence": 0.95,
+      "source_path": "internal/app/bootstrap.go",
+      "explanation": "Semantic proposal with a verified repository quote. Production bootstrap configures a queue subscriber for role-check requests."
+    },
+    {
+      "category": "contract",
+      "name": "http_produce",
+      "value": "ANY /permission-list",
+      "confidence": 0.72,
+      "source_path": "internal/adapters/http/admin/v1/router.go",
+      "explanation": "The service implementation provides this HTTP contract."
+    },
+    {
+      "category": "contract",
+      "name": "http_produce",
+      "value": "ANY /permission/",
+      "confidence": 0.72,
+      "source_path": "internal/adapters/http/admin/v1/router.go",
+      "explanation": "The service implementation provides this HTTP contract."
+    },
+    {
+      "category": "contract",
+      "name": "http_produce",
+      "value": "ANY /permission",
+      "confidence": 0.72,
+      "source_path": "internal/adapters/http/admin/v1/router.go",
+      "explanation": "The service implementation provides this HTTP contract."
+    },
+    {
+      "category": "contract",
+      "name": "http_produce",
+      "value": "ANY /principal-permission/get-by-permission",
+      "confidence": 0.72,
+      "source_path": "internal/adapters/http/api/v1/router.go",
+      "explanation": "The service implementation provides this HTTP contract."
+    },
+    {
+      "category": "contract",
+      "name": "http_produce",
+      "value": "ANY /principal-permission/list",
+      "confidence": 0.72,
+      "source_path": "internal/adapters/http/api/v1/router.go",
+      "explanation": "The service implementation provides this HTTP contract."
+    },
+    {
+      "category": "contract",
+      "name": "http_produce",
+      "value": "ANY /principal-role/get-by-role",
+      "confidence": 0.72,
+      "source_path": "internal/adapters/http/api/v1/router.go",
+      "explanation": "The service implementation provides this HTTP contract."
+    },
+    {
+      "category": "contract",
+      "name": "http_produce",
+      "value": "ANY /principal-role/get",
+      "confidence": 0.72,
+      "source_path": "internal/adapters/http/api/v1/router.go",
+      "explanation": "The service implementation provides this HTTP contract."
+    },
+    {
+      "category": "contract",
+      "name": "http_produce",
+      "value": "ANY /principal-role/update",
+      "confidence": 0.72,
+      "source_path": "internal/adapters/http/api/v1/router.go",
+      "explanation": "The service implementation provides this HTTP contract."
+    },
+    {
+      "category": "contract",
+      "name": "http_produce",
+      "value": "ANY /role-list",
+      "confidence": 0.72,
+      "source_path": "internal/adapters/http/admin/v1/router.go",
+      "explanation": "The service implementation provides this HTTP contract."
+    },
+    {
+      "category": "contract",
+      "name": "http_produce",
+      "value": "ANY /role-permission",
+      "confidence": 0.72,
+      "source_path": "internal/adapters/http/admin/v1/router.go",
+      "explanation": "The service implementation provides this HTTP contract."
+    },
+    {
+      "category": "contract",
+      "name": "http_produce",
+      "value": "ANY /role/",
+      "confidence": 0.72,
+      "source_path": "internal/adapters/http/admin/v1/router.go",
+      "explanation": "The service implementation provides this HTTP contract."
+    },
+    {
+      "category": "contract",
+      "name": "http_produce",
+      "value": "ANY /role",
+      "confidence": 0.72,
+      "source_path": "internal/adapters/http/admin/v1/router.go",
+      "explanation": "The service implementation provides this HTTP contract."
+    },
+    {
+      "category": "contract",
+      "name": "http_produce",
+      "value": "ANY /service-list",
+      "confidence": 0.72,
+      "source_path": "internal/adapters/http/admin/v1/router.go",
+      "explanation": "The service implementation provides this HTTP contract."
+    },
+    {
+      "category": "contract",
+      "name": "http_produce",
+      "value": "ANY /service/",
+      "confidence": 0.72,
+      "source_path": "internal/adapters/http/admin/v1/router.go",
+      "explanation": "The service implementation provides this HTTP contract."
+    },
+    {
+      "category": "contract",
+      "name": "http_produce",
+      "value": "ANY /service",
+      "confidence": 0.72,
+      "source_path": "internal/adapters/http/admin/v1/router.go",
+      "explanation": "The service implementation provides this HTTP contract."
+    },
+    {
+      "category": "contract",
+      "name": "http_produce",
+      "value": "GET /admin/v1/permission-list",
+      "confidence": 0.95,
+      "source_path": "internal/adapters/http/admin/v1/router.go",
+      "explanation": "Semantic proposal with a verified repository quote. The production router exposes the permission-list handler beneath /admin/v1."
+    },
+    {
+      "category": "contract",
+      "name": "http_produce",
+      "value": "GET /admin/v1/role-list",
+      "confidence": 0.95,
+      "source_path": "internal/adapters/http/admin/v1/router.go",
+      "explanation": "Semantic proposal with a verified repository quote. The production router exposes the role-list handler beneath /admin/v1."
+    },
+    {
+      "category": "contract",
+      "name": "http_produce",
+      "value": "GET /admin/v1/service-list",
+      "confidence": 0.95,
+      "source_path": "internal/adapters/http/admin/v1/router.go",
+      "explanation": "Semantic proposal with a verified repository quote. The production router exposes the service-list handler beneath /admin/v1."
+    },
+    {
+      "category": "contract",
+      "name": "http_produce",
+      "value": "GET /api/v1/principal-permission/list; GET /api/v1/principal-role/get-by-role; GET /api/v1/principal-permission/get-by-permission",
+      "confidence": 0.95,
+      "source_path": "internal/adapters/http/api/v1/router.go",
+      "explanation": "Semantic proposal with a verified repository quote. The API router mounts these read operations beneath /api/v1; their handlers require GET."
+    },
+    {
+      "category": "contract",
+      "name": "http_produce",
+      "value": "PATCH /api/v1/principal-role/update; GET /api/v1/principal-role/get",
+      "confidence": 0.95,
+      "source_path": "internal/adapters/http/api/v1/router.go",
+      "explanation": "Semantic proposal with a verified repository quote. The API router mounts principal-role operations beneath /api/v1; handlers require PATCH and GET respectively."
+    },
+    {
+      "category": "contract",
+      "name": "http_produce",
+      "value": "POST /admin/v1/role-permission",
+      "confidence": 0.95,
+      "source_path": "internal/adapters/http/admin/v1/router.go",
+      "explanation": "Semantic proposal with a verified repository quote. The handler requires POST and the router mounts it beneath /admin/v1."
+    },
+    {
+      "category": "contract",
+      "name": "http_produce",
+      "value": "SET /admin/v1/permission; GET|PUT /admin/v1/permission/{id}",
+      "confidence": 0.95,
+      "source_path": "internal/adapters/http/admin/v1/router.go",
+      "explanation": "Semantic proposal with a verified repository quote. The admin router produces permission create, get, and update endpoints beneath the /admin/v1 prefix."
+    },
+    {
+      "category": "contract",
+      "name": "http_produce",
+      "value": "SET /admin/v1/role; GET|PUT /admin/v1/role/{id}",
+      "confidence": 0.95,
+      "source_path": "internal/adapters/http/admin/v1/router.go",
+      "explanation": "Semantic proposal with a verified repository quote. The admin router produces role create, get, and update endpoints beneath the /admin/v1 prefix."
+    },
+    {
+      "category": "contract",
+      "name": "http_produce",
+      "value": "SET /admin/v1/service; GET|PUT /admin/v1/service/{id}",
+      "confidence": 0.95,
+      "source_path": "internal/adapters/http/admin/v1/router.go",
+      "explanation": "Semantic proposal with a verified repository quote. The admin router produces service create, get, and update endpoints beneath the /admin/v1 prefix."
+    },
+    {
+      "category": "entity",
+      "name": "permission",
+      "value": "Permission",
+      "confidence": 0.95,
+      "source_path": "internal/domain/model/models.go",
+      "explanation": "Semantic proposal with a verified repository quote. Production domain code defines the Permission entity."
+    },
+    {
+      "category": "entity",
+      "name": "principal_role",
+      "value": "PrincipalRole",
+      "confidence": 0.95,
+      "source_path": "internal/domain/model/models.go",
+      "explanation": "Semantic proposal with a verified repository quote. Production domain code defines scoped principal-role assignments."
+    },
+    {
+      "category": "entity",
+      "name": "role",
+      "value": "Role",
+      "confidence": 0.95,
+      "source_path": "internal/domain/model/models.go",
+      "explanation": "Semantic proposal with a verified repository quote. Production domain code defines the Role entity."
+    },
+    {
+      "category": "entity",
+      "name": "service",
+      "value": "Service",
+      "confidence": 0.95,
+      "source_path": "internal/domain/model/models.go",
+      "explanation": "Semantic proposal with a verified repository quote. Production domain code defines the Service entity."
+    },
+    {
+      "category": "infrastructure",
+      "name": "NATS optionality",
+      "value": "Disabled when NATS_URL is empty",
+      "confidence": 0.95,
+      "source_path": "internal/app/bootstrap.go",
+      "explanation": "Semantic proposal with a verified repository quote. Production bootstrap enables NATS only when NATS_URL is non-empty."
+    },
+    {
+      "category": "infrastructure",
+      "name": "NATS",
+      "value": "Optional request/reply broker configured by NATS_URL",
+      "confidence": 0.95,
+      "source_path": "internal/config/config.go",
+      "explanation": "Semantic proposal with a verified repository quote. Production configuration defines a default Core NATS connection endpoint."
+    },
+    {
+      "category": "infrastructure",
+      "name": "PostgreSQL",
+      "value": "Required database persistence",
+      "confidence": 0.95,
+      "source_path": "internal/app/bootstrap.go",
+      "explanation": "Semantic proposal with a verified repository quote. Production bootstrap requires and connects to PostgreSQL persistence."
+    },
+    {
+      "category": "infrastructure",
+      "name": "compose_service",
+      "value": "msgo-rbac",
+      "confidence": 0.96,
+      "source_path": "docker-compose.yml",
+      "explanation": "Docker Compose declares this service."
+    },
+    {
+      "category": "infrastructure",
+      "name": "compose_service",
+      "value": "postgres=postgres:16-alpine",
+      "confidence": 0.96,
+      "source_path": "docker-compose.yml",
+      "explanation": "Docker Compose declares this service."
+    },
+    {
+      "category": "infrastructure",
+      "name": "container runtime",
+      "value": "gcr.io/distroless/base-debian12 on port 8080",
+      "confidence": 0.95,
+      "source_path": "docker/Dockerfile",
+      "explanation": "Semantic proposal with a verified repository quote. The production image uses a distroless Debian 12 runtime and exposes port 8080."
+    },
+    {
+      "category": "infrastructure",
+      "name": "ms-net",
+      "value": "External Docker network",
+      "confidence": 0.95,
+      "source_path": "docker-compose.yml",
+      "explanation": "Semantic proposal with a verified repository quote. Docker Compose attaches the application to an externally managed network."
+    },
+    {
+      "category": "infrastructure",
+      "name": "msgo-rbac",
+      "value": "Application compose service",
+      "confidence": 0.95,
+      "source_path": "docker-compose.yml",
+      "explanation": "Semantic proposal with a verified repository quote. Docker Compose defines the RBAC service container build."
+    },
+    {
+      "category": "infrastructure",
+      "name": "postgres:16-alpine",
+      "value": "Local database container",
+      "confidence": 0.95,
+      "source_path": "docker-compose.yml",
+      "explanation": "Semantic proposal with a verified repository quote. Docker Compose defines a local PostgreSQL 16 service."
+    },
+    {
+      "category": "infrastructure",
+      "name": "runtime configuration",
+      "value": "HTTP_ADDR defaults to :8080; DB_DSN has no default",
+      "confidence": 0.95,
+      "source_path": "internal/config/config.go",
+      "explanation": "Semantic proposal with a verified repository quote. Production configuration reads the HTTP listener and database DSN from environment variables."
+    },
+    {
+      "category": "instruction",
+      "name": "instruction_file",
+      "value": "185314f18937de6dd189e3b1242c85d2c7dd6b0c6ac233652d421f5fbc715bca",
+      "confidence": 0.98,
+      "source_path": "AGENTS.md",
+      "explanation": "The file contains repository or agent instructions; only its checksum is collected."
+    },
+    {
+      "category": "instruction",
+      "name": "instruction_file",
+      "value": "ad38d49dc0d8ea99da6d71951b8b449c776c59ba642db1cfa5c310d5f4fc39c5",
+      "confidence": 0.98,
+      "source_path": "prompts/git-workflow.md",
+      "explanation": "The file contains repository or agent instructions; only its checksum is collected."
+    },
+    {
+      "category": "ownership",
+      "name": "database_table",
+      "value": "permission",
+      "confidence": 0.96,
+      "source_path": "migrations/001_init.sql",
+      "explanation": "A checked-in SQL schema file creates this table, indicating schema ownership."
+    },
+    {
+      "category": "ownership",
+      "name": "database_table",
+      "value": "principal_override",
+      "confidence": 0.96,
+      "source_path": "migrations/001_init.sql",
+      "explanation": "A checked-in SQL schema file creates this table, indicating schema ownership."
+    },
+    {
+      "category": "ownership",
+      "name": "database_table",
+      "value": "principal_role",
+      "confidence": 0.96,
+      "source_path": "migrations/001_init.sql",
+      "explanation": "A checked-in SQL schema file creates this table, indicating schema ownership."
+    },
+    {
+      "category": "ownership",
+      "name": "database_table",
+      "value": "role_hierarchy",
+      "confidence": 0.96,
+      "source_path": "migrations/001_init.sql",
+      "explanation": "A checked-in SQL schema file creates this table, indicating schema ownership."
+    },
+    {
+      "category": "ownership",
+      "name": "database_table",
+      "value": "role_permission",
+      "confidence": 0.96,
+      "source_path": "migrations/001_init.sql",
+      "explanation": "A checked-in SQL schema file creates this table, indicating schema ownership."
+    },
+    {
+      "category": "ownership",
+      "name": "database_table",
+      "value": "role",
+      "confidence": 0.96,
+      "source_path": "migrations/001_init.sql",
+      "explanation": "A checked-in SQL schema file creates this table, indicating schema ownership."
+    },
+    {
+      "category": "ownership",
+      "name": "database_table",
+      "value": "service_permission",
+      "confidence": 0.96,
+      "source_path": "migrations/001_init.sql",
+      "explanation": "A checked-in SQL schema file creates this table, indicating schema ownership."
+    },
+    {
+      "category": "ownership",
+      "name": "database_table",
+      "value": "service_role",
+      "confidence": 0.96,
+      "source_path": "migrations/001_init.sql",
+      "explanation": "A checked-in SQL schema file creates this table, indicating schema ownership."
+    },
+    {
+      "category": "ownership",
+      "name": "database_table",
+      "value": "service",
+      "confidence": 0.96,
+      "source_path": "migrations/001_init.sql",
+      "explanation": "A checked-in SQL schema file creates this table, indicating schema ownership."
+    },
+    {
+      "category": "ownership",
+      "name": "database_table",
+      "value": "superadmin_principal",
+      "confidence": 0.96,
+      "source_path": "migrations/001_init.sql",
+      "explanation": "A checked-in SQL schema file creates this table, indicating schema ownership."
+    },
+    {
+      "category": "purpose",
+      "name": "summary",
+      "value": "Go RBAC microservice for services, roles, permissions, and principal assignments",
+      "confidence": 0.95,
+      "source_path": "README.md",
+      "explanation": "Semantic proposal with a verified repository quote. The README directly states the service purpose and managed RBAC concepts."
+    },
+    {
+      "category": "purpose",
+      "name": "summary",
+      "value": "This repository provides a lightweight RBAC microservice implemented in Go. The service exposes administrative HTTP endpoints for managing services, roles, permissions, and principal assignments. Data is stored in Postgres via the migrations in `migrations/`, which keeps role assignments persistent across restarts.",
+      "confidence": 0.85,
+      "source_path": "README.md",
+      "explanation": "The first prose paragraph in the root README describes the repository purpose."
+    },
+    {
+      "category": "relation",
+      "name": "depends_on",
+      "value": "ms-go-user",
+      "confidence": 0.904,
+      "source_path": "migrations/002_seed_default_roles_and_principals.up.sql",
+      "explanation": "Semantic proposal with a verified repository quote. An authoritative migration explicitly identifies ms-go-user as the source of seeded default principals."
+    },
+    {
+      "category": "relation",
+      "name": "depends_on",
+      "value": "postgres",
+      "confidence": 0.9,
+      "source_path": "docker-compose.yml",
+      "explanation": "Docker Compose declares this service dependency."
+    },
+    {
+      "category": "stack",
+      "name": "container",
+      "value": "docker",
+      "confidence": 0.95,
+      "source_path": "docker/Dockerfile",
+      "explanation": "A Dockerfile defines a container build."
+    },
+    {
+      "category": "stack",
+      "name": "framework",
+      "value": "nats",
+      "confidence": 0.98,
+      "source_path": "go.mod",
+      "explanation": "go.mod declares dependency github.com/nats-io/nats.go."
+    },
+    {
+      "category": "stack",
+      "name": "framework",
+      "value": "pgx",
+      "confidence": 0.98,
+      "source_path": "go.mod",
+      "explanation": "go.mod declares dependency github.com/jackc/pgx."
+    },
+    {
+      "category": "stack",
+      "name": "language",
+      "value": "go",
+      "confidence": 1,
+      "source_path": "go.mod",
+      "explanation": "go.mod is the canonical Go module manifest."
+    },
+    {
+      "category": "stack",
+      "name": "orchestration",
+      "value": "docker_compose",
+      "confidence": 0.98,
+      "source_path": "docker-compose.yml",
+      "explanation": "A Docker Compose manifest defines local infrastructure or runtime services."
+    }
+  ]
+}

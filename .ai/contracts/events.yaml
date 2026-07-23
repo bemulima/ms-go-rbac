@@ -1,0 +1,22 @@
+schema_version: 1
+contracts:
+    - name: event_subject
+      value: rbac.assign-role
+      confidence: 0.72
+      source_path: README.md
+      explanation: A NATS/event-related source line references this subject.
+    - name: event_subject
+      value: rbac.assign-role
+      confidence: 0.72
+      source_path: internal/app/bootstrap.go
+      explanation: A NATS/event-related source line references this subject.
+    - name: event_subject
+      value: rbac.checkRole
+      confidence: 0.72
+      source_path: README.md
+      explanation: A NATS/event-related source line references this subject.
+    - name: event_subject
+      value: rbac.checkRole
+      confidence: 0.72
+      source_path: internal/app/bootstrap.go
+      explanation: A NATS/event-related source line references this subject.

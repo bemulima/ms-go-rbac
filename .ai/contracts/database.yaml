@@ -1,0 +1,67 @@
+schema_version: 1
+contracts:
+    - name: database_schema
+      value: migrations/001_init.sql
+      confidence: 0.96
+      source_path: migrations/001_init.sql
+      explanation: The SQL file creates database resources owned by the project.
+    - name: database_schema
+      value: override_effect = allow | deny
+      confidence: 0.95
+      source_path: migrations/001_init.sql
+      explanation: Semantic proposal with a verified repository quote. The migration defines the permitted database values for override effects.
+    - name: database_schema
+      value: principal_kind = user | service_account | group
+      confidence: 0.95
+      source_path: migrations/001_init.sql
+      explanation: Semantic proposal with a verified repository quote. The migration defines the permitted database values for principal kinds.
+    - name: database_table
+      value: permission
+      confidence: 0.96
+      source_path: migrations/001_init.sql
+      explanation: A checked-in SQL schema file creates this table, indicating schema ownership.
+    - name: database_table
+      value: principal_override
+      confidence: 0.96
+      source_path: migrations/001_init.sql
+      explanation: A checked-in SQL schema file creates this table, indicating schema ownership.
+    - name: database_table
+      value: principal_role
+      confidence: 0.96
+      source_path: migrations/001_init.sql
+      explanation: A checked-in SQL schema file creates this table, indicating schema ownership.
+    - name: database_table
+      value: role_hierarchy
+      confidence: 0.96
+      source_path: migrations/001_init.sql
+      explanation: A checked-in SQL schema file creates this table, indicating schema ownership.
+    - name: database_table
+      value: role_permission
+      confidence: 0.96
+      source_path: migrations/001_init.sql
+      explanation: A checked-in SQL schema file creates this table, indicating schema ownership.
+    - name: database_table
+      value: role
+      confidence: 0.96
+      source_path: migrations/001_init.sql
+      explanation: A checked-in SQL schema file creates this table, indicating schema ownership.
+    - name: database_table
+      value: service_permission
+      confidence: 0.96
+      source_path: migrations/001_init.sql
+      explanation: A checked-in SQL schema file creates this table, indicating schema ownership.
+    - name: database_table
+      value: service_role
+      confidence: 0.96
+      source_path: migrations/001_init.sql
+      explanation: A checked-in SQL schema file creates this table, indicating schema ownership.
+    - name: database_table
+      value: service
+      confidence: 0.96
+      source_path: migrations/001_init.sql
+      explanation: A checked-in SQL schema file creates this table, indicating schema ownership.
+    - name: database_table
+      value: superadmin_principal
+      confidence: 0.96
+      source_path: migrations/001_init.sql
+      explanation: A checked-in SQL schema file creates this table, indicating schema ownership.

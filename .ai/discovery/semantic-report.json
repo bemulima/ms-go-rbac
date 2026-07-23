@@ -1,0 +1,550 @@
+{
+  "schema_version": 1,
+  "project_id": "0286f605-06f9-4500-8530-56a7eed20763",
+  "project_name": "ms-go-rbac",
+  "base_commit": "ca10bb399b11ab2a7c19a83b960d90165b7dcd6c",
+  "summary": "The repository is a Go RBAC backend that persists services, roles, permissions, scoped principal-role assignments, overrides, and related mappings in PostgreSQL. It exposes versioned admin and client HTTP APIs and subscribes to two Core NATS request/reply subjects for assigning and checking roles. Local operation is Taskfile- and Docker Compose-based. Key onboarding ambiguities are the intentional use of the custom SET HTTP method, absent visible route authentication, external NATS provisioning, missing visible CI configuration, and differing Go versions between go.mod and the Docker builder.",
+  "facts": [
+    {
+      "category": "business_process",
+      "name": "resolve_principal_permissions",
+      "value": "Resolve current role, then list and deduplicate its permissions",
+      "confidence": 0.904,
+      "source_path": "internal/usecase/principal.go",
+      "evidence_quote": "role, err := uc.roleRepo.Get(ctx, principalID)\n\tif err != nil {\n\t\treturn nil, err\n\t}\n\trole = strings.TrimSpace(role)\n\tif role == \"\" {\n\t\treturn []string{}, nil\n\t}\n\tperms, err := uc.permissionRepo.ListByRoleKey(ctx, role)",
+      "explanation": "Permission resolution first obtains the principal role and then lists permissions assigned to that role."
+    },
+    {
+      "category": "business_rule",
+      "name": "permission_identifier_format",
+      "value": "action:resource_kind",
+      "confidence": 0.904,
+      "source_path": "internal/usecase/principal.go",
+      "evidence_quote": "case perm.Action != \"\" \u0026\u0026 perm.ResourceKind != \"\":\n\t\treturn perm.Action + \":\" + perm.ResourceKind",
+      "explanation": "Permission identifiers combine action and resource kind with a colon when both exist."
+    },
+    {
+      "category": "business_rule",
+      "name": "principal_role_match",
+      "value": "A role check passes only for an exact, non-empty current role",
+      "confidence": 0.904,
+      "source_path": "internal/usecase/principal.go",
+      "evidence_quote": "role = strings.TrimSpace(role)\n\treturn current == role \u0026\u0026 current != \"\", nil",
+      "explanation": "Role checks require an exact match with a non-empty current role."
+    },
+    {
+      "category": "business_rule",
+      "name": "role_assignment_idempotency",
+      "value": "Reassigning the current role is a no-op",
+      "confidence": 0.904,
+      "source_path": "internal/usecase/principal.go",
+      "evidence_quote": "current, err := uc.repo.Get(ctx, principalID)\n\tif err != nil {\n\t\treturn err\n\t}\n\tif current == input.RoleKey \u0026\u0026 current != \"\" {\n\t\treturn nil\n\t}",
+      "explanation": "Duplicate assignment of a principal's current non-empty role succeeds without rewriting persistence."
+    },
+    {
+      "category": "capability",
+      "name": "business capability",
+      "value": "Manage RBAC services, roles, permissions, and principal assignments",
+      "confidence": 0.95,
+      "source_path": "README.md",
+      "evidence_quote": "The service exposes administrative HTTP endpoints for managing services, roles, permissions, and principal assignments.",
+      "explanation": "The README directly describes the main business capability."
+    },
+    {
+      "category": "capability",
+      "name": "http_route",
+      "value": "SET /admin/v1/service",
+      "confidence": 0.95,
+      "source_path": "internal/adapters/http/handlers/admin.go",
+      "evidence_quote": "if r.Method != \"SET\" {\n\t\thttp.NotFound(w, r)\n\t\treturn\n\t}",
+      "explanation": "The production handler restricts service creation to the custom SET method; the router mounts it under /admin/v1."
+    },
+    {
+      "category": "command",
+      "name": "containers_down",
+      "value": "docker compose down",
+      "confidence": 0.95,
+      "source_path": "Taskfile.yml",
+      "evidence_quote": "down:\n    desc: Stop containers\n    cmds:\n      - docker compose down",
+      "explanation": "Taskfile documents the exact container shutdown command."
+    },
+    {
+      "category": "command",
+      "name": "containers_up",
+      "value": "docker compose up -d",
+      "confidence": 0.95,
+      "source_path": "Taskfile.yml",
+      "evidence_quote": "up:\n    desc: Start containers\n    cmds:\n      - docker compose up -d",
+      "explanation": "Taskfile documents the exact container startup command."
+    },
+    {
+      "category": "command",
+      "name": "lint",
+      "value": "golangci-lint run ./...",
+      "confidence": 0.95,
+      "source_path": "Taskfile.yml",
+      "evidence_quote": "lint:\n    desc: Run linter\n    cmds:\n      - golangci-lint run ./...",
+      "explanation": "Taskfile documents the exact lint command."
+    },
+    {
+      "category": "command",
+      "name": "migrate_down",
+      "value": "task migrate-down",
+      "confidence": 0.95,
+      "source_path": "Taskfile.yml",
+      "evidence_quote": "migrate-down:\n    desc: Rollback all migrations in reverse order",
+      "explanation": "Taskfile defines migrate-down as the developer task for rolling back migrations."
+    },
+    {
+      "category": "command",
+      "name": "migrate_status",
+      "value": "task migrate-status",
+      "confidence": 0.95,
+      "source_path": "Taskfile.yml",
+      "evidence_quote": "migrate-status:\n    desc: Show migration status (list tables)",
+      "explanation": "Taskfile defines migrate-status as the developer task for listing public tables."
+    },
+    {
+      "category": "command",
+      "name": "migrate_up",
+      "value": "task migrate-up",
+      "confidence": 0.95,
+      "source_path": "Taskfile.yml",
+      "evidence_quote": "migrate-up:\n    desc: Apply all migrations",
+      "explanation": "Taskfile defines migrate-up as the developer task for applying all migrations."
+    },
+    {
+      "category": "command",
+      "name": "run_locally",
+      "value": "docker compose up -d\ntask migrate-up\ngo run ./cmd/ms-rbac-service",
+      "confidence": 0.95,
+      "source_path": "README.md",
+      "evidence_quote": "docker compose up -d\ntask migrate-up\ngo run ./cmd/ms-rbac-service",
+      "explanation": "The README documents this exact local startup sequence."
+    },
+    {
+      "category": "command",
+      "name": "run_service",
+      "value": "go run ./cmd/ms-rbac-service",
+      "confidence": 0.95,
+      "source_path": "Taskfile.yml",
+      "evidence_quote": "run:\n    desc: Run service locally\n    cmds:\n      - go run ./cmd/ms-rbac-service",
+      "explanation": "Taskfile documents the exact direct service command."
+    },
+    {
+      "category": "command",
+      "name": "test",
+      "value": "go test ./...",
+      "confidence": 0.95,
+      "source_path": "Taskfile.yml",
+      "evidence_quote": "test:\n    desc: Run tests\n    cmds:\n      - go test ./...",
+      "explanation": "Taskfile documents the exact test command."
+    },
+    {
+      "category": "contract",
+      "name": "database_schema",
+      "value": "override_effect = allow | deny",
+      "confidence": 0.95,
+      "source_path": "migrations/001_init.sql",
+      "evidence_quote": "create type override_effect as enum ('allow','deny');",
+      "explanation": "The migration defines the permitted database values for override effects."
+    },
+    {
+      "category": "contract",
+      "name": "database_schema",
+      "value": "principal_kind = user | service_account | group",
+      "confidence": 0.95,
+      "source_path": "migrations/001_init.sql",
+      "evidence_quote": "create type principal_kind as enum ('user','service_account','group');",
+      "explanation": "The migration defines the permitted database values for principal kinds."
+    },
+    {
+      "category": "contract",
+      "name": "event_subscribe",
+      "value": "rbac.assign-role request {user_id, role}; reply {ok, error?}",
+      "confidence": 0.95,
+      "source_path": "internal/adapters/nats/role_assigner.go",
+      "evidence_quote": "type assignRoleRequest struct {\n\tUserID string `json:\"user_id\"`\n\tRole   string `json:\"role\"`\n}\n\ntype assignRoleResponse struct {\n\tOK    bool   `json:\"ok\"`\n\tError string `json:\"error,omitempty\"`\n}",
+      "explanation": "Production code defines the request and reply payload fields for role assignment."
+    },
+    {
+      "category": "contract",
+      "name": "event_subscribe",
+      "value": "rbac.assign-role",
+      "confidence": 0.95,
+      "source_path": "internal/app/bootstrap.go",
+      "evidence_quote": "assigner := natsadapter.RoleAssigner{\n\t\t\tConn:        conn,\n\t\t\tSubject:     \"rbac.assign-role\",\n\t\t\tQueue:       \"ms-go-rbac\",",
+      "explanation": "Production bootstrap configures a queue subscriber for role-assignment requests."
+    },
+    {
+      "category": "contract",
+      "name": "event_subscribe",
+      "value": "rbac.checkRole request {user_id, role}; reply {ok, error?}",
+      "confidence": 0.95,
+      "source_path": "internal/adapters/nats/role_checker.go",
+      "evidence_quote": "type roleCheckRequest struct {\n\tUserID string `json:\"user_id\"`\n\tRole   string `json:\"role\"`\n}\n\ntype roleCheckResponse struct {\n\tOK    bool   `json:\"ok\"`\n\tError string `json:\"error,omitempty\"`\n}",
+      "explanation": "Production code defines the request and reply payload fields for role checking."
+    },
+    {
+      "category": "contract",
+      "name": "event_subscribe",
+      "value": "rbac.checkRole",
+      "confidence": 0.95,
+      "source_path": "internal/app/bootstrap.go",
+      "evidence_quote": "checker := natsadapter.RoleChecker{\n\t\t\tConn:        conn,\n\t\t\tSubject:     \"rbac.checkRole\",\n\t\t\tQueue:       \"ms-go-rbac\",",
+      "explanation": "Production bootstrap configures a queue subscriber for role-check requests."
+    },
+    {
+      "category": "contract",
+      "name": "http_produce",
+      "value": "GET /admin/v1/permission-list",
+      "confidence": 0.95,
+      "source_path": "internal/adapters/http/admin/v1/router.go",
+      "evidence_quote": "mux.HandleFunc(\"/permission-list\", h.Permission.List)",
+      "explanation": "The production router exposes the permission-list handler beneath /admin/v1."
+    },
+    {
+      "category": "contract",
+      "name": "http_produce",
+      "value": "GET /admin/v1/role-list",
+      "confidence": 0.95,
+      "source_path": "internal/adapters/http/admin/v1/router.go",
+      "evidence_quote": "mux.HandleFunc(\"/role-list\", h.Role.List)",
+      "explanation": "The production router exposes the role-list handler beneath /admin/v1."
+    },
+    {
+      "category": "contract",
+      "name": "http_produce",
+      "value": "GET /admin/v1/service-list",
+      "confidence": 0.95,
+      "source_path": "internal/adapters/http/admin/v1/router.go",
+      "evidence_quote": "mux.HandleFunc(\"/service-list\", h.Service.List)",
+      "explanation": "The production router exposes the service-list handler beneath /admin/v1."
+    },
+    {
+      "category": "contract",
+      "name": "http_produce",
+      "value": "GET /api/v1/principal-permission/list; GET /api/v1/principal-role/get-by-role; GET /api/v1/principal-permission/get-by-permission",
+      "confidence": 0.95,
+      "source_path": "internal/adapters/http/api/v1/router.go",
+      "evidence_quote": "mux.HandleFunc(\"/principal-permission/list\", h.PrincipalPermission.List)\nmux.HandleFunc(\"/principal-role/get-by-role\", h.PrincipalRole.GetByRole)\nmux.HandleFunc(\"/principal-permission/get-by-permission\", h.PrincipalPermission.GetByPermission)",
+      "explanation": "The API router mounts these read operations beneath /api/v1; their handlers require GET."
+    },
+    {
+      "category": "contract",
+      "name": "http_produce",
+      "value": "PATCH /api/v1/principal-role/update; GET /api/v1/principal-role/get",
+      "confidence": 0.95,
+      "source_path": "internal/adapters/http/api/v1/router.go",
+      "evidence_quote": "mux.HandleFunc(\"/principal-role/update\", h.PrincipalRole.Update)\nmux.HandleFunc(\"/principal-role/get\", h.PrincipalRole.Get)",
+      "explanation": "The API router mounts principal-role operations beneath /api/v1; handlers require PATCH and GET respectively."
+    },
+    {
+      "category": "contract",
+      "name": "http_produce",
+      "value": "POST /admin/v1/role-permission",
+      "confidence": 0.95,
+      "source_path": "internal/adapters/http/admin/v1/router.go",
+      "evidence_quote": "mux.HandleFunc(\"/role-permission\", h.RolePermission.Create)",
+      "explanation": "The handler requires POST and the router mounts it beneath /admin/v1."
+    },
+    {
+      "category": "contract",
+      "name": "http_produce",
+      "value": "SET /admin/v1/permission; GET|PUT /admin/v1/permission/{id}",
+      "confidence": 0.95,
+      "source_path": "internal/adapters/http/admin/v1/router.go",
+      "evidence_quote": "mux.HandleFunc(\"/permission\", h.Permission.Create)\nmux.HandleFunc(\"/permission/\", methodMux(map[string]http.HandlerFunc{\n\t\thttp.MethodGet: h.Permission.Get,\n\t\thttp.MethodPut: h.Permission.Update,\n\t}))",
+      "explanation": "The admin router produces permission create, get, and update endpoints beneath the /admin/v1 prefix."
+    },
+    {
+      "category": "contract",
+      "name": "http_produce",
+      "value": "SET /admin/v1/role; GET|PUT /admin/v1/role/{id}",
+      "confidence": 0.95,
+      "source_path": "internal/adapters/http/admin/v1/router.go",
+      "evidence_quote": "mux.HandleFunc(\"/role\", h.Role.Create)\nmux.HandleFunc(\"/role/\", methodMux(map[string]http.HandlerFunc{\n\t\thttp.MethodGet: h.Role.Get,\n\t\thttp.MethodPut: h.Role.Update,\n\t}))",
+      "explanation": "The admin router produces role create, get, and update endpoints beneath the /admin/v1 prefix."
+    },
+    {
+      "category": "contract",
+      "name": "http_produce",
+      "value": "SET /admin/v1/service; GET|PUT /admin/v1/service/{id}",
+      "confidence": 0.95,
+      "source_path": "internal/adapters/http/admin/v1/router.go",
+      "evidence_quote": "mux.HandleFunc(\"/service\", h.Service.Create)\nmux.HandleFunc(\"/service/\", methodMux(map[string]http.HandlerFunc{\n\t\thttp.MethodGet: h.Service.Get,\n\t\thttp.MethodPut: h.Service.Update,\n\t}))",
+      "explanation": "The admin router produces service create, get, and update endpoints beneath the /admin/v1 prefix."
+    },
+    {
+      "category": "entity",
+      "name": "permission",
+      "value": "Permission",
+      "confidence": 0.95,
+      "source_path": "internal/domain/model/models.go",
+      "evidence_quote": "// Permission represents an action that can be applied to a resource kind.\ntype Permission struct {\n\tID           string\n\tAction       string\n\tResourceKind string\n}",
+      "explanation": "Production domain code defines the Permission entity."
+    },
+    {
+      "category": "entity",
+      "name": "principal_role",
+      "value": "PrincipalRole",
+      "confidence": 0.95,
+      "source_path": "internal/domain/model/models.go",
+      "evidence_quote": "type PrincipalRole struct {\n\tPrincipalID   string\n\tPrincipalKind PrincipalKind\n\tRoleID        string\n\tTenantID      *string\n\tServiceID     *string\n\tResourceKind  *string\n\tResourceID    *string\n}",
+      "explanation": "Production domain code defines scoped principal-role assignments."
+    },
+    {
+      "category": "entity",
+      "name": "role",
+      "value": "Role",
+      "confidence": 0.95,
+      "source_path": "internal/domain/model/models.go",
+      "evidence_quote": "// Role represents a named role with a key.\ntype Role struct {\n\tID    string\n\tKey   string\n\tTitle string\n}",
+      "explanation": "Production domain code defines the Role entity."
+    },
+    {
+      "category": "entity",
+      "name": "service",
+      "value": "Service",
+      "confidence": 0.95,
+      "source_path": "internal/domain/model/models.go",
+      "evidence_quote": "// Service represents an external system registered within RBAC.\ntype Service struct {\n\tID    string\n\tKey   string\n\tTitle string\n}",
+      "explanation": "Production domain code defines the Service entity."
+    },
+    {
+      "category": "infrastructure",
+      "name": "NATS optionality",
+      "value": "Disabled when NATS_URL is empty",
+      "confidence": 0.95,
+      "source_path": "internal/app/bootstrap.go",
+      "evidence_quote": "if cfg.NATSURL != \"\" {\n\t\tconn, err := connectNATSWithRetry(cfg.NATSURL)",
+      "explanation": "Production bootstrap enables NATS only when NATS_URL is non-empty."
+    },
+    {
+      "category": "infrastructure",
+      "name": "NATS",
+      "value": "Optional request/reply broker configured by NATS_URL",
+      "confidence": 0.95,
+      "source_path": "internal/config/config.go",
+      "evidence_quote": "NATSURL:          getEnv(\"NATS_URL\", \"nats://nats:4222\"),",
+      "explanation": "Production configuration defines a default Core NATS connection endpoint."
+    },
+    {
+      "category": "infrastructure",
+      "name": "PostgreSQL",
+      "value": "Required database persistence",
+      "confidence": 0.95,
+      "source_path": "internal/app/bootstrap.go",
+      "evidence_quote": "pool, err := connectPostgresWithRetry(cfg.DBDSN)\n\tif err != nil {\n\t\treturn nil, err\n\t}\n\tdbPool = pool",
+      "explanation": "Production bootstrap requires and connects to PostgreSQL persistence."
+    },
+    {
+      "category": "infrastructure",
+      "name": "container runtime",
+      "value": "gcr.io/distroless/base-debian12 on port 8080",
+      "confidence": 0.95,
+      "source_path": "docker/Dockerfile",
+      "evidence_quote": "FROM gcr.io/distroless/base-debian12\nWORKDIR /app\nCOPY --from=builder /app/ms-rbac-service /app/ms-rbac-service\nEXPOSE 8080",
+      "explanation": "The production image uses a distroless Debian 12 runtime and exposes port 8080."
+    },
+    {
+      "category": "infrastructure",
+      "name": "ms-net",
+      "value": "External Docker network",
+      "confidence": 0.95,
+      "source_path": "docker-compose.yml",
+      "evidence_quote": "networks:\n  ms-net:\n    external: true",
+      "explanation": "Docker Compose attaches the application to an externally managed network."
+    },
+    {
+      "category": "infrastructure",
+      "name": "msgo-rbac",
+      "value": "Application compose service",
+      "confidence": 0.95,
+      "source_path": "docker-compose.yml",
+      "evidence_quote": "msgo-rbac:\n    container_name: ms-rbac-service\n    build:\n      context: .\n      dockerfile: docker/Dockerfile",
+      "explanation": "Docker Compose defines the RBAC service container build."
+    },
+    {
+      "category": "infrastructure",
+      "name": "postgres:16-alpine",
+      "value": "Local database container",
+      "confidence": 0.95,
+      "source_path": "docker-compose.yml",
+      "evidence_quote": "services:\n  postgres:\n    container_name: ms-rbac-postgres\n    image: postgres:16-alpine",
+      "explanation": "Docker Compose defines a local PostgreSQL 16 service."
+    },
+    {
+      "category": "infrastructure",
+      "name": "runtime configuration",
+      "value": "HTTP_ADDR defaults to :8080; DB_DSN has no default",
+      "confidence": 0.95,
+      "source_path": "internal/config/config.go",
+      "evidence_quote": "HTTPAddr:         getEnv(\"HTTP_ADDR\", \":8080\"),\n\t\tDBDSN:            os.Getenv(\"DB_DSN\"),",
+      "explanation": "Production configuration reads the HTTP listener and database DSN from environment variables."
+    },
+    {
+      "category": "ownership",
+      "name": "database_table",
+      "value": "permission",
+      "confidence": 0.95,
+      "source_path": "migrations/001_init.sql",
+      "evidence_quote": "create table permission (\n  id uuid primary key default gen_random_uuid(),\n  action text not null,\n  resource_kind text not null,",
+      "explanation": "The authoritative migration creates the permission table."
+    },
+    {
+      "category": "ownership",
+      "name": "database_table",
+      "value": "principal_override",
+      "confidence": 0.95,
+      "source_path": "migrations/001_init.sql",
+      "evidence_quote": "create table principal_override (\n  principal_id uuid not null,\n  principal_kind principal_kind not null,\n  permission_id uuid not null references permission(id) on delete cascade,",
+      "explanation": "The authoritative migration creates the principal override table."
+    },
+    {
+      "category": "ownership",
+      "name": "database_table",
+      "value": "principal_role",
+      "confidence": 0.95,
+      "source_path": "migrations/001_init.sql",
+      "evidence_quote": "create table principal_role (\n  principal_id uuid not null,\n  principal_kind principal_kind not null,\n  role_id uuid not null references role(id) on delete cascade,",
+      "explanation": "The authoritative migration creates the principal-role table."
+    },
+    {
+      "category": "ownership",
+      "name": "database_table",
+      "value": "role_hierarchy",
+      "confidence": 0.95,
+      "source_path": "migrations/001_init.sql",
+      "evidence_quote": "create table role_hierarchy (\n  role_id uuid not null references role(id) on delete cascade,\n  parent_role_id uuid not null references role(id) on delete cascade,",
+      "explanation": "The authoritative migration creates the role hierarchy table."
+    },
+    {
+      "category": "ownership",
+      "name": "database_table",
+      "value": "role_permission",
+      "confidence": 0.95,
+      "source_path": "migrations/001_init.sql",
+      "evidence_quote": "create table role_permission (\n  role_id uuid not null references role(id) on delete cascade,\n  permission_id uuid not null references permission(id) on delete cascade,",
+      "explanation": "The authoritative migration creates the role-permission table."
+    },
+    {
+      "category": "ownership",
+      "name": "database_table",
+      "value": "role",
+      "confidence": 0.95,
+      "source_path": "migrations/001_init.sql",
+      "evidence_quote": "create table role (\n  id uuid primary key default gen_random_uuid(),\n  key text not null,\n  title text not null,\n  unique (key)\n);",
+      "explanation": "The authoritative migration creates the role table."
+    },
+    {
+      "category": "ownership",
+      "name": "database_table",
+      "value": "service_permission",
+      "confidence": 0.95,
+      "source_path": "migrations/001_init.sql",
+      "evidence_quote": "create table service_permission (\n  permission_id uuid not null references permission(id) on delete cascade,\n  service_id uuid not null references service(id) on delete cascade,",
+      "explanation": "The authoritative migration creates the service-permission table."
+    },
+    {
+      "category": "ownership",
+      "name": "database_table",
+      "value": "service_role",
+      "confidence": 0.95,
+      "source_path": "migrations/001_init.sql",
+      "evidence_quote": "create table service_role (\n  role_id uuid not null references role(id) on delete cascade,\n  service_id uuid not null references service(id) on delete cascade,",
+      "explanation": "The authoritative migration creates the service-role table."
+    },
+    {
+      "category": "ownership",
+      "name": "database_table",
+      "value": "service",
+      "confidence": 0.95,
+      "source_path": "migrations/001_init.sql",
+      "evidence_quote": "create table service (\n  id uuid primary key default gen_random_uuid(),\n  key text unique not null,\n  title text not null\n);",
+      "explanation": "The authoritative migration creates the service table."
+    },
+    {
+      "category": "ownership",
+      "name": "database_table",
+      "value": "superadmin_principal",
+      "confidence": 0.95,
+      "source_path": "migrations/001_init.sql",
+      "evidence_quote": "create table superadmin_principal (\n  principal_id uuid primary key,\n  principal_kind principal_kind not null\n);",
+      "explanation": "The authoritative migration creates the superadmin-principal table."
+    },
+    {
+      "category": "purpose",
+      "name": "summary",
+      "value": "Go RBAC microservice for services, roles, permissions, and principal assignments",
+      "confidence": 0.95,
+      "source_path": "README.md",
+      "evidence_quote": "This repository provides a lightweight RBAC microservice implemented in Go. The service exposes administrative HTTP endpoints for managing services, roles, permissions, and principal assignments.",
+      "explanation": "The README directly states the service purpose and managed RBAC concepts."
+    },
+    {
+      "category": "relation",
+      "name": "depends_on",
+      "value": "ms-go-user",
+      "confidence": 0.904,
+      "source_path": "migrations/002_seed_default_roles_and_principals.up.sql",
+      "evidence_quote": "-- Seed default roles and assign them to default principals from ms-go-user.",
+      "explanation": "An authoritative migration explicitly identifies ms-go-user as the source of seeded default principals."
+    }
+  ],
+  "open_questions": [
+    {
+      "question": "Are the custom SET methods on the service, role, and permission creation endpoints intentional, or should these endpoints use POST?",
+      "reason": "Production handlers explicitly require SET, and the README example also uses SET, but this is a non-standard HTTP method whose compatibility requirements are not documented.",
+      "source_paths": [
+        "README.md",
+        "internal/adapters/http/handlers/admin.go"
+      ]
+    },
+    {
+      "question": "How are the admin and public API routes authenticated and authorized?",
+      "reason": "The inspected production router mounts handlers directly, while configuration declares AUTH_MODERATOR_JWT_ISS and AUTH_MODERATOR_JWT_AUD without showing runtime use in the inspected bootstrap or router.",
+      "source_paths": [
+        "internal/adapters/http/router.go",
+        "internal/app/bootstrap.go",
+        "internal/config/config.go"
+      ]
+    },
+    {
+      "question": "Where is the NATS service expected to be provisioned for local development?",
+      "reason": "The application defaults to nats://nats:4222 and joins the external ms-net network, but docker-compose.yml declares no NATS service.",
+      "source_paths": [
+        "docker-compose.yml",
+        "internal/config/config.go"
+      ]
+    },
+    {
+      "question": "Which CI system and checks are authoritative for contributions?",
+      "reason": "No visible CI workflow or pipeline manifest was present in the repository file listing.",
+      "source_paths": []
+    },
+    {
+      "question": "Is Go 1.22 or Go 1.25.1 the intended development toolchain?",
+      "reason": "go.mod declares Go 1.22, while the container builder uses golang:1.25.1-alpine.",
+      "source_paths": [
+        "docker/Dockerfile",
+        "go.mod"
+      ]
+    },
+    {
+      "question": "Are role hierarchy, principal overrides, service-role links, service-permission links, and superadmin principals implemented runtime capabilities or schema reserved for future use?",
+      "reason": "The initial migration creates these structures, but the inspected bootstrap wires repositories only for services, roles, permissions, principal roles, and role permissions.",
+      "source_paths": [
+        "internal/app/bootstrap.go",
+        "migrations/001_init.sql"
+      ]
+    },
+    {
+      "question": "Should seeded principal identifiers remain coupled to ms-go-user fixtures, or is there a runtime synchronization mechanism?",
+      "reason": "The migration says the fixed default principals come from ms-go-user, but no synchronization contract is documented in the inspected production files.",
+      "source_paths": [
+        "migrations/002_seed_default_roles_and_principals.up.sql"
+      ]
+    }
+  ]
+}

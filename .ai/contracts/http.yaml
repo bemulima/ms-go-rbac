@@ -1,0 +1,82 @@
+schema_version: 1
+contracts:
+    - name: http_route
+      value: ANY /permission-list
+      confidence: 0.72
+      source_path: internal/adapters/http/admin/v1/router.go
+      explanation: A net/http HandleFunc registration exposes this route without a single-method guard.
+    - name: http_route
+      value: ANY /permission/
+      confidence: 0.72
+      source_path: internal/adapters/http/admin/v1/router.go
+      explanation: A net/http HandleFunc registration exposes this route without a single-method guard.
+    - name: http_route
+      value: ANY /permission
+      confidence: 0.72
+      source_path: internal/adapters/http/admin/v1/router.go
+      explanation: A net/http HandleFunc registration exposes this route without a single-method guard.
+    - name: http_route
+      value: ANY /principal-permission/get-by-permission
+      confidence: 0.72
+      source_path: internal/adapters/http/api/v1/router.go
+      explanation: A net/http HandleFunc registration exposes this route without a single-method guard.
+    - name: http_route
+      value: ANY /principal-permission/list
+      confidence: 0.72
+      source_path: internal/adapters/http/api/v1/router.go
+      explanation: A net/http HandleFunc registration exposes this route without a single-method guard.
+    - name: http_route
+      value: ANY /principal-role/get-by-role
+      confidence: 0.72
+      source_path: internal/adapters/http/api/v1/router.go
+      explanation: A net/http HandleFunc registration exposes this route without a single-method guard.
+    - name: http_route
+      value: ANY /principal-role/get
+      confidence: 0.72
+      source_path: internal/adapters/http/api/v1/router.go
+      explanation: A net/http HandleFunc registration exposes this route without a single-method guard.
+    - name: http_route
+      value: ANY /principal-role/update
+      confidence: 0.72
+      source_path: internal/adapters/http/api/v1/router.go
+      explanation: A net/http HandleFunc registration exposes this route without a single-method guard.
+    - name: http_route
+      value: ANY /role-list
+      confidence: 0.72
+      source_path: internal/adapters/http/admin/v1/router.go
+      explanation: A net/http HandleFunc registration exposes this route without a single-method guard.
+    - name: http_route
+      value: ANY /role-permission
+      confidence: 0.72
+      source_path: internal/adapters/http/admin/v1/router.go
+      explanation: A net/http HandleFunc registration exposes this route without a single-method guard.
+    - name: http_route
+      value: ANY /role/
+      confidence: 0.72
+      source_path: internal/adapters/http/admin/v1/router.go
+      explanation: A net/http HandleFunc registration exposes this route without a single-method guard.
+    - name: http_route
+      value: ANY /role
+      confidence: 0.72
+      source_path: internal/adapters/http/admin/v1/router.go
+      explanation: A net/http HandleFunc registration exposes this route without a single-method guard.
+    - name: http_route
+      value: ANY /service-list
+      confidence: 0.72
+      source_path: internal/adapters/http/admin/v1/router.go
+      explanation: A net/http HandleFunc registration exposes this route without a single-method guard.
+    - name: http_route
+      value: ANY /service/
+      confidence: 0.72
+      source_path: internal/adapters/http/admin/v1/router.go
+      explanation: A net/http HandleFunc registration exposes this route without a single-method guard.
+    - name: http_route
+      value: ANY /service
+      confidence: 0.72
+      source_path: internal/adapters/http/admin/v1/router.go
+      explanation: A net/http HandleFunc registration exposes this route without a single-method guard.
+    - name: http_route
+      value: SET /admin/v1/service
+      confidence: 0.95
+      source_path: internal/adapters/http/handlers/admin.go
+      explanation: Semantic proposal with a verified repository quote. The production handler restricts service creation to the custom SET method; the router mounts it under /admin/v1.

@@ -1,0 +1,140 @@
+schema_version: 1
+stack:
+    - name: container
+      value: docker
+      confidence: 0.95
+      source_path: docker/Dockerfile
+      explanation: A Dockerfile defines a container build.
+    - name: framework
+      value: nats
+      confidence: 0.98
+      source_path: go.mod
+      explanation: go.mod declares dependency github.com/nats-io/nats.go.
+    - name: framework
+      value: pgx
+      confidence: 0.98
+      source_path: go.mod
+      explanation: go.mod declares dependency github.com/jackc/pgx.
+    - name: language
+      value: go
+      confidence: 1
+      source_path: go.mod
+      explanation: go.mod is the canonical Go module manifest.
+    - name: orchestration
+      value: docker_compose
+      confidence: 0.98
+      source_path: docker-compose.yml
+      explanation: A Docker Compose manifest defines local infrastructure or runtime services.
+ownership:
+    - name: database_table
+      value: permission
+      confidence: 0.96
+      source_path: migrations/001_init.sql
+      explanation: A checked-in SQL schema file creates this table, indicating schema ownership.
+    - name: database_table
+      value: principal_override
+      confidence: 0.96
+      source_path: migrations/001_init.sql
+      explanation: A checked-in SQL schema file creates this table, indicating schema ownership.
+    - name: database_table
+      value: principal_role
+      confidence: 0.96
+      source_path: migrations/001_init.sql
+      explanation: A checked-in SQL schema file creates this table, indicating schema ownership.
+    - name: database_table
+      value: role_hierarchy
+      confidence: 0.96
+      source_path: migrations/001_init.sql
+      explanation: A checked-in SQL schema file creates this table, indicating schema ownership.
+    - name: database_table
+      value: role_permission
+      confidence: 0.96
+      source_path: migrations/001_init.sql
+      explanation: A checked-in SQL schema file creates this table, indicating schema ownership.
+    - name: database_table
+      value: role
+      confidence: 0.96
+      source_path: migrations/001_init.sql
+      explanation: A checked-in SQL schema file creates this table, indicating schema ownership.
+    - name: database_table
+      value: service_permission
+      confidence: 0.96
+      source_path: migrations/001_init.sql
+      explanation: A checked-in SQL schema file creates this table, indicating schema ownership.
+    - name: database_table
+      value: service_role
+      confidence: 0.96
+      source_path: migrations/001_init.sql
+      explanation: A checked-in SQL schema file creates this table, indicating schema ownership.
+    - name: database_table
+      value: service
+      confidence: 0.96
+      source_path: migrations/001_init.sql
+      explanation: A checked-in SQL schema file creates this table, indicating schema ownership.
+    - name: database_table
+      value: superadmin_principal
+      confidence: 0.96
+      source_path: migrations/001_init.sql
+      explanation: A checked-in SQL schema file creates this table, indicating schema ownership.
+relations:
+    - name: depends_on
+      value: ms-go-user
+      confidence: 0.904
+      source_path: migrations/002_seed_default_roles_and_principals.up.sql
+      explanation: Semantic proposal with a verified repository quote. An authoritative migration explicitly identifies ms-go-user as the source of seeded default principals.
+    - name: depends_on
+      value: postgres
+      confidence: 0.9
+      source_path: docker-compose.yml
+      explanation: Docker Compose declares this service dependency.
+infrastructure:
+    - name: NATS optionality
+      value: Disabled when NATS_URL is empty
+      confidence: 0.95
+      source_path: internal/app/bootstrap.go
+      explanation: Semantic proposal with a verified repository quote. Production bootstrap enables NATS only when NATS_URL is non-empty.
+    - name: NATS
+      value: Optional request/reply broker configured by NATS_URL
+      confidence: 0.95
+      source_path: internal/config/config.go
+      explanation: Semantic proposal with a verified repository quote. Production configuration defines a default Core NATS connection endpoint.
+    - name: PostgreSQL
+      value: Required database persistence
+      confidence: 0.95
+      source_path: internal/app/bootstrap.go
+      explanation: Semantic proposal with a verified repository quote. Production bootstrap requires and connects to PostgreSQL persistence.
+    - name: compose_service
+      value: msgo-rbac
+      confidence: 0.96
+      source_path: docker-compose.yml
+      explanation: Docker Compose declares this service.
+    - name: compose_service
+      value: postgres=postgres:16-alpine
+      confidence: 0.96
+      source_path: docker-compose.yml
+      explanation: Docker Compose declares this service.
+    - name: container runtime
+      value: gcr.io/distroless/base-debian12 on port 8080
+      confidence: 0.95
+      source_path: docker/Dockerfile
+      explanation: Semantic proposal with a verified repository quote. The production image uses a distroless Debian 12 runtime and exposes port 8080.
+    - name: ms-net
+      value: External Docker network
+      confidence: 0.95
+      source_path: docker-compose.yml
+      explanation: Semantic proposal with a verified repository quote. Docker Compose attaches the application to an externally managed network.
+    - name: msgo-rbac
+      value: Application compose service
+      confidence: 0.95
+      source_path: docker-compose.yml
+      explanation: Semantic proposal with a verified repository quote. Docker Compose defines the RBAC service container build.
+    - name: postgres:16-alpine
+      value: Local database container
+      confidence: 0.95
+      source_path: docker-compose.yml
+      explanation: Semantic proposal with a verified repository quote. Docker Compose defines a local PostgreSQL 16 service.
+    - name: runtime configuration
+      value: HTTP_ADDR defaults to :8080; DB_DSN has no default
+      confidence: 0.95
+      source_path: internal/config/config.go
+      explanation: Semantic proposal with a verified repository quote. Production configuration reads the HTTP listener and database DSN from environment variables.
