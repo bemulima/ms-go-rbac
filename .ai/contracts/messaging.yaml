@@ -1,0 +1,6 @@
+schema_version: 1
+documentation: docs/messaging-contract.md
+core_nats_rpc:
+  consumes:
+    - {subject: rbac.assign-role, queue: ms-go-rbac, request: [user_id, role], response: [ok, error]}
+    - {subject: rbac.checkRole, queue: ms-go-rbac, request: [user_id, role], response: [ok, error]}

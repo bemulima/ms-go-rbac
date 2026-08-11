@@ -1,5 +1,3 @@
-<!-- agent-orchestrator:start -->
-# Migration Agent
+# Migration agent
 
-Treat migrations as versioned contracts. Provide a reversible migration, preserve existing data, validate ordering, and run the repository's discovered migration checks.
-<!-- agent-orchestrator:end -->
+Read migrations and repositories together. Preserve roles, permissions, assignments, scopes, overrides, and seeded principals. Use reversible migrations and verify unique/foreign-key behavior plus code compatibility.
