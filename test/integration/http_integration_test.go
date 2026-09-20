@@ -11,8 +11,6 @@ import (
 	"net/http/httptest"
 	"os"
 	"testing"
-
-	"github.com/example/ms-rbac-service/internal/app"
 )
 
 // Integration test that exercises the public RBAC HTTP contract used by other services.
@@ -51,11 +49,7 @@ func newTestServer(t *testing.T) testServer {
 	if os.Getenv("DB_DSN") == "" {
 		t.Skip("DB_DSN is required for integration tests")
 	}
-	srv, err := app.Bootstrap()
-	if err != nil {
-		t.Fatalf("bootstrap failed: %v", err)
-	}
-	return testServer{handler: srv.Handler}
+	return testServer{handler: newHTTPHandler(t)}
 }
 
 func (ts testServer) do(req *http.Request) *httptest.ResponseRecorder {

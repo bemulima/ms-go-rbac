@@ -7,12 +7,10 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-
-	"github.com/example/ms-rbac-service/internal/app"
 )
 
 func main() {
-	srv, err := app.Bootstrap()
+	srv, err := bootstrap()
 	if err != nil {
 		log.Fatalf("bootstrap failed: %v", err)
 	}
@@ -27,7 +25,7 @@ func main() {
 	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
 	<-sigCh
 
-	if err := app.Shutdown(context.Background(), srv); err != nil {
+	if err := shutdown(context.Background(), srv); err != nil {
 		log.Printf("shutdown error: %v", err)
 	}
 }

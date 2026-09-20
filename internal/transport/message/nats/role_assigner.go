@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"strings"
 
-	repo "github.com/example/ms-rbac-service/internal/adapters/postgres"
+	"github.com/example/ms-rbac-service/internal/domain/repository"
 	natsgo "github.com/nats-io/nats.go"
 
 	"github.com/example/ms-rbac-service/internal/usecase"
@@ -46,7 +46,7 @@ func (c RoleAssigner) Listen() error {
 			_ = msg.Respond(marshal(assignRoleResponse{OK: false, Error: "user_id and role are required"}))
 			return
 		}
-		if err := c.PrincipalUC.Update(context.Background(), req.UserID, repo.PrincipalRoleUpdate{RoleKey: req.Role}); err != nil {
+		if err := c.PrincipalUC.Update(context.Background(), req.UserID, repository.PrincipalRoleUpdate{RoleKey: req.Role}); err != nil {
 			_ = msg.Respond(marshal(assignRoleResponse{OK: false, Error: err.Error()}))
 			return
 		}

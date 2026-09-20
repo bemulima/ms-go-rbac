@@ -3,14 +3,12 @@ package repo
 import (
 	"context"
 
+	"github.com/example/ms-rbac-service/internal/domain/repository"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 // RolePermissionCreate describes a role-permission assignment request.
-type RolePermissionCreate struct {
-	RoleKey      string
-	PermissionID string
-}
+type RolePermissionCreate = repository.RolePermissionCreate
 
 // RolePermissionRepository manages role-permission assignments.
 type RolePermissionRepository struct {

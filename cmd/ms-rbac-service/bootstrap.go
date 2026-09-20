@@ -1,4 +1,4 @@
-package app
+package main
 
 import (
 	"context"
@@ -7,11 +7,13 @@ import (
 	"net/http"
 	"time"
 
-	httpadapter "github.com/example/ms-rbac-service/internal/adapters/http"
-	"github.com/example/ms-rbac-service/internal/adapters/http/handlers"
-	natsadapter "github.com/example/ms-rbac-service/internal/adapters/nats"
-	"github.com/example/ms-rbac-service/internal/adapters/postgres"
 	"github.com/example/ms-rbac-service/internal/config"
+	natsclient "github.com/example/ms-rbac-service/internal/infrastructure/messaging/nats"
+	repo "github.com/example/ms-rbac-service/internal/infrastructure/persistence/postgres"
+	httptransport "github.com/example/ms-rbac-service/internal/transport/http"
+	adminhandlers "github.com/example/ms-rbac-service/internal/transport/http/admin/v1/handlers"
+	apihandlers "github.com/example/ms-rbac-service/internal/transport/http/api/v1/handlers"
+	natstransport "github.com/example/ms-rbac-service/internal/transport/message/nats"
 	"github.com/example/ms-rbac-service/internal/usecase"
 	"github.com/jackc/pgx/v5/pgxpool"
 	natsgo "github.com/nats-io/nats.go"
@@ -19,8 +21,8 @@ import (
 
 var dbPool *pgxpool.Pool
 
-// Bootstrap wires dependencies and returns an HTTP server instance.
-func Bootstrap() (*http.Server, error) {
+// bootstrap is the service composition root.
+func bootstrap() (*http.Server, error) {
 	cfg, err := config.Load()
 	if err != nil {
 		return nil, err
@@ -48,17 +50,17 @@ func Bootstrap() (*http.Server, error) {
 	principalRoleUC := usecase.NewPrincipalRoleUsecase(principalRoleRepo)
 	principalPermissionUC := usecase.NewPrincipalPermissionUsecase(principalRoleRepo, rolePermissionRepo)
 
-	adminHandlers := &handlers.AdminHandlers{
-		Service:        &handlers.ServiceHandler{Usecase: serviceUC},
-		Role:           &handlers.RoleHandler{Usecase: roleUC},
-		Permission:     &handlers.PermissionHandler{Usecase: permissionUC},
-		RolePermission: &handlers.RolePermissionHandler{Usecase: rolePermissionUC},
+	adminHandlers := &adminhandlers.AdminHandlers{
+		Service:        &adminhandlers.ServiceHandler{Usecase: serviceUC},
+		Role:           &adminhandlers.RoleHandler{Usecase: roleUC},
+		Permission:     &adminhandlers.PermissionHandler{Usecase: permissionUC},
+		RolePermission: &adminhandlers.RolePermissionHandler{Usecase: rolePermissionUC},
 	}
-	apiHandlers := &handlers.APIHandlers{
-		PrincipalRole:       &handlers.PrincipalRoleHandler{Usecase: principalRoleUC},
-		PrincipalPermission: &handlers.PrincipalPermissionHandler{Usecase: principalPermissionUC},
+	apiHandlers := &apihandlers.APIHandlers{
+		PrincipalRole:       &apihandlers.PrincipalRoleHandler{Usecase: principalRoleUC},
+		PrincipalPermission: &apihandlers.PrincipalPermissionHandler{Usecase: principalPermissionUC},
 	}
-	router := httpadapter.NewRouter(adminHandlers, apiHandlers)
+	router := httptransport.NewRouter(adminHandlers, apiHandlers)
 
 	if cfg.NATSURL != "" {
 		conn, err := connectNATSWithRetry(cfg.NATSURL)
@@ -67,7 +69,7 @@ func Bootstrap() (*http.Server, error) {
 			return nil, err
 		}
 
-		assigner := natsadapter.RoleAssigner{
+		assigner := natstransport.RoleAssigner{
 			Conn:        conn,
 			Subject:     "rbac.assign-role",
 			Queue:       "ms-go-rbac",
@@ -77,7 +79,7 @@ func Bootstrap() (*http.Server, error) {
 			log.Printf("nats subscribe failed (rbac.assign-role): %v", err)
 		}
 
-		checker := natsadapter.RoleChecker{
+		checker := natstransport.RoleChecker{
 			Conn:        conn,
 			Subject:     "rbac.checkRole",
 			Queue:       "ms-go-rbac",
@@ -94,8 +96,8 @@ func Bootstrap() (*http.Server, error) {
 	return httpServer, nil
 }
 
-// Shutdown gracefully terminates the HTTP server.
-func Shutdown(ctx context.Context, srv *http.Server) error {
+// shutdown gracefully terminates the HTTP server.
+func shutdown(ctx context.Context, srv *http.Server) error {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 	if err := srv.Shutdown(ctx); err != nil {
@@ -148,7 +150,7 @@ func connectNATSWithRetry(url string) (*natsgo.Conn, error) {
 
 	var lastErr error
 	for attempt := 1; attempt <= maxAttempts; attempt++ {
-		conn, err := natsadapter.Connect(url)
+		conn, err := natsclient.Connect(url)
 		if err == nil {
 			return conn, nil
 		}

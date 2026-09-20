@@ -4,21 +4,22 @@ import (
 	"context"
 	"strings"
 
-	"github.com/example/ms-rbac-service/internal/adapters/postgres"
+	"github.com/example/ms-rbac-service/internal/domain/model"
+	"github.com/example/ms-rbac-service/internal/domain/repository"
 )
 
 // PrincipalRoleUsecase handles principal role assignments.
 type PrincipalRoleUsecase struct {
-	repo *repo.PrincipalRoleRepository
+	repo repository.PrincipalRoleRepository
 }
 
 // NewPrincipalRoleUsecase constructs a new PrincipalRoleUsecase instance.
-func NewPrincipalRoleUsecase(r *repo.PrincipalRoleRepository) *PrincipalRoleUsecase {
+func NewPrincipalRoleUsecase(r repository.PrincipalRoleRepository) *PrincipalRoleUsecase {
 	return &PrincipalRoleUsecase{repo: r}
 }
 
 // Update updates the principal's role assignment.
-func (uc *PrincipalRoleUsecase) Update(ctx context.Context, principalID string, input repo.PrincipalRoleUpdate) error {
+func (uc *PrincipalRoleUsecase) Update(ctx context.Context, principalID string, input repository.PrincipalRoleUpdate) error {
 	input.RoleKey = strings.TrimSpace(input.RoleKey)
 	current, err := uc.repo.Get(ctx, principalID)
 	if err != nil {
@@ -47,12 +48,12 @@ func (uc *PrincipalRoleUsecase) GetByRole(ctx context.Context, principalID, role
 
 // PrincipalPermissionUsecase resolves permissions for principals.
 type PrincipalPermissionUsecase struct {
-	roleRepo       *repo.PrincipalRoleRepository
-	permissionRepo *repo.RolePermissionRepository
+	roleRepo       repository.PrincipalRoleRepository
+	permissionRepo repository.RolePermissionRepository
 }
 
 // NewPrincipalPermissionUsecase constructs a new PrincipalPermissionUsecase instance.
-func NewPrincipalPermissionUsecase(roleRepo *repo.PrincipalRoleRepository, permissionRepo *repo.RolePermissionRepository) *PrincipalPermissionUsecase {
+func NewPrincipalPermissionUsecase(roleRepo repository.PrincipalRoleRepository, permissionRepo repository.RolePermissionRepository) *PrincipalPermissionUsecase {
 	return &PrincipalPermissionUsecase{roleRepo: roleRepo, permissionRepo: permissionRepo}
 }
 
@@ -98,7 +99,7 @@ func (uc *PrincipalPermissionUsecase) GetByPermission(ctx context.Context, princ
 	return false, nil
 }
 
-func permissionIdentifier(perm repo.Permission) string {
+func permissionIdentifier(perm model.Permission) string {
 	switch {
 	case perm.Action == "" && perm.ResourceKind == "":
 		return ""

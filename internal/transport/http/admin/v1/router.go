@@ -3,7 +3,7 @@ package v1
 import (
 	"net/http"
 
-	"github.com/example/ms-rbac-service/internal/adapters/http/handlers"
+	"github.com/example/ms-rbac-service/internal/transport/http/admin/v1/handlers"
 )
 
 // RegisterRoutes wires admin endpoints onto a mux.

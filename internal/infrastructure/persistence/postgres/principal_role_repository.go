@@ -4,14 +4,13 @@ import (
 	"context"
 	"errors"
 
+	"github.com/example/ms-rbac-service/internal/domain/repository"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 // PrincipalRoleUpdate contains fields for updating a principal role.
-type PrincipalRoleUpdate struct {
-	RoleKey string
-}
+type PrincipalRoleUpdate = repository.PrincipalRoleUpdate
 
 // PrincipalRoleRepository manages role assignments for principals.
 type PrincipalRoleRepository struct {

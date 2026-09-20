@@ -1,10 +1,18 @@
 package model
 
+import "time"
+
+type BaseModel struct {
+	CreatedAt time.Time
+	UpdatedAt time.Time
+}
+
 // Service represents an external system registered within RBAC.
 type Service struct {
 	ID    string
 	Key   string
 	Title string
+	BaseModel
 }
 
 // Role represents a named role with a key.
@@ -12,6 +20,7 @@ type Role struct {
 	ID    string
 	Key   string
 	Title string
+	BaseModel
 }
 
 // Permission represents an action that can be applied to a resource kind.
@@ -19,6 +28,7 @@ type Permission struct {
 	ID           string
 	Action       string
 	ResourceKind string
+	BaseModel
 }
 
 type RoleHierarchy struct {

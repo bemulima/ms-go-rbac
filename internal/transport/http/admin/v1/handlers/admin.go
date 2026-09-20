@@ -6,10 +6,45 @@ import (
 	"net/http"
 	"strings"
 
-	repo "github.com/example/ms-rbac-service/internal/adapters/postgres"
+	"github.com/example/ms-rbac-service/internal/domain"
+	"github.com/example/ms-rbac-service/internal/domain/repository"
+	"github.com/example/ms-rbac-service/internal/transport/http/common"
 	"github.com/example/ms-rbac-service/internal/usecase"
 	"github.com/example/ms-rbac-service/pkg/pagination"
 )
+
+type createServiceRequest struct {
+	Key   string `json:"key"`
+	Title string `json:"title"`
+}
+
+type updateServiceRequest struct {
+	Title string `json:"title"`
+}
+
+type createRoleRequest struct {
+	Key   string `json:"key"`
+	Title string `json:"title"`
+}
+
+type updateRoleRequest struct {
+	Title string `json:"title"`
+}
+
+type createPermissionRequest struct {
+	Action       string `json:"action"`
+	ResourceKind string `json:"resource_kind"`
+}
+
+type updatePermissionRequest struct {
+	Action       *string `json:"action"`
+	ResourceKind *string `json:"resource_kind"`
+}
+
+type createRolePermissionRequest struct {
+	RoleKey      string `json:"role_key"`
+	PermissionID string `json:"permission_id"`
+}
 
 // AdminHandlers groups admin handler dependencies.
 type AdminHandlers struct {
@@ -30,20 +65,20 @@ func (h *ServiceHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if h.Usecase == nil {
-		writeError(w, http.StatusInternalServerError, "service use case is unavailable")
+		common.WriteError(w, http.StatusInternalServerError, "service use case is unavailable")
 		return
 	}
 	var payload createServiceRequest
 	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid payload")
+		common.WriteError(w, http.StatusBadRequest, "invalid payload")
 		return
 	}
 	item, err := h.Usecase.Create(r.Context(), payload.Key, payload.Title)
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		common.WriteError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
-	writeJSON(w, http.StatusCreated, item)
+	common.WriteJSON(w, http.StatusCreated, item)
 }
 
 func (h *ServiceHandler) Update(w http.ResponseWriter, r *http.Request) {
@@ -52,7 +87,7 @@ func (h *ServiceHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if h.Usecase == nil {
-		writeError(w, http.StatusInternalServerError, "service use case is unavailable")
+		common.WriteError(w, http.StatusInternalServerError, "service use case is unavailable")
 		return
 	}
 	id := trimPathID(r.URL.Path, "/service/")
@@ -62,11 +97,11 @@ func (h *ServiceHandler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 	var payload updateServiceRequest
 	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid payload")
+		common.WriteError(w, http.StatusBadRequest, "invalid payload")
 		return
 	}
 	if err := h.Usecase.Update(r.Context(), id, payload.Title); err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		common.WriteError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
@@ -78,7 +113,7 @@ func (h *ServiceHandler) Get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if h.Usecase == nil {
-		writeError(w, http.StatusInternalServerError, "service use case is unavailable")
+		common.WriteError(w, http.StatusInternalServerError, "service use case is unavailable")
 		return
 	}
 	id := trimPathID(r.URL.Path, "/service/")
@@ -88,10 +123,10 @@ func (h *ServiceHandler) Get(w http.ResponseWriter, r *http.Request) {
 	}
 	item, err := h.Usecase.Get(r.Context(), id)
 	if err != nil {
-		writeError(w, http.StatusNotFound, err.Error())
+		common.WriteError(w, http.StatusNotFound, err.Error())
 		return
 	}
-	writeJSON(w, http.StatusOK, item)
+	common.WriteJSON(w, http.StatusOK, item)
 }
 
 func (h *ServiceHandler) List(w http.ResponseWriter, r *http.Request) {
@@ -100,16 +135,16 @@ func (h *ServiceHandler) List(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if h.Usecase == nil {
-		writeError(w, http.StatusInternalServerError, "service use case is unavailable")
+		common.WriteError(w, http.StatusInternalServerError, "service use case is unavailable")
 		return
 	}
-	params := parsePagination(r)
+	params := common.ParsePagination(r)
 	items, total, err := h.Usecase.List(r.Context(), params)
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		common.WriteError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
-	writeJSON(w, http.StatusOK, pagination.Result{Items: items, Page: params.Page, PageSize: params.PageSize, Total: total})
+	common.WriteJSON(w, http.StatusOK, pagination.Result{Items: items, Page: params.Page, PageSize: params.PageSize, Total: total})
 }
 
 // RoleHandler manages role CRUD endpoints.
@@ -123,20 +158,20 @@ func (h *RoleHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if h.Usecase == nil {
-		writeError(w, http.StatusInternalServerError, "role use case is unavailable")
+		common.WriteError(w, http.StatusInternalServerError, "role use case is unavailable")
 		return
 	}
 	var payload createRoleRequest
 	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid payload")
+		common.WriteError(w, http.StatusBadRequest, "invalid payload")
 		return
 	}
 	item, err := h.Usecase.Create(r.Context(), payload.Key, payload.Title)
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		common.WriteError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
-	writeJSON(w, http.StatusCreated, item)
+	common.WriteJSON(w, http.StatusCreated, item)
 }
 
 func (h *RoleHandler) Update(w http.ResponseWriter, r *http.Request) {
@@ -145,7 +180,7 @@ func (h *RoleHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if h.Usecase == nil {
-		writeError(w, http.StatusInternalServerError, "role use case is unavailable")
+		common.WriteError(w, http.StatusInternalServerError, "role use case is unavailable")
 		return
 	}
 	id := trimPathID(r.URL.Path, "/role/")
@@ -155,11 +190,11 @@ func (h *RoleHandler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 	var payload updateRoleRequest
 	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid payload")
+		common.WriteError(w, http.StatusBadRequest, "invalid payload")
 		return
 	}
 	if err := h.Usecase.Update(r.Context(), id, payload.Title); err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		common.WriteError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
@@ -171,7 +206,7 @@ func (h *RoleHandler) Get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if h.Usecase == nil {
-		writeError(w, http.StatusInternalServerError, "role use case is unavailable")
+		common.WriteError(w, http.StatusInternalServerError, "role use case is unavailable")
 		return
 	}
 	id := trimPathID(r.URL.Path, "/role/")
@@ -181,10 +216,10 @@ func (h *RoleHandler) Get(w http.ResponseWriter, r *http.Request) {
 	}
 	item, err := h.Usecase.Get(r.Context(), id)
 	if err != nil {
-		writeError(w, http.StatusNotFound, err.Error())
+		common.WriteError(w, http.StatusNotFound, err.Error())
 		return
 	}
-	writeJSON(w, http.StatusOK, item)
+	common.WriteJSON(w, http.StatusOK, item)
 }
 
 func (h *RoleHandler) List(w http.ResponseWriter, r *http.Request) {
@@ -193,16 +228,16 @@ func (h *RoleHandler) List(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if h.Usecase == nil {
-		writeError(w, http.StatusInternalServerError, "role use case is unavailable")
+		common.WriteError(w, http.StatusInternalServerError, "role use case is unavailable")
 		return
 	}
-	params := parsePagination(r)
+	params := common.ParsePagination(r)
 	items, total, err := h.Usecase.List(r.Context(), params)
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		common.WriteError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
-	writeJSON(w, http.StatusOK, pagination.Result{Items: items, Page: params.Page, PageSize: params.PageSize, Total: total})
+	common.WriteJSON(w, http.StatusOK, pagination.Result{Items: items, Page: params.Page, PageSize: params.PageSize, Total: total})
 }
 
 // PermissionHandler manages permission CRUD endpoints.
@@ -216,20 +251,20 @@ func (h *PermissionHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if h.Usecase == nil {
-		writeError(w, http.StatusInternalServerError, "permission use case is unavailable")
+		common.WriteError(w, http.StatusInternalServerError, "permission use case is unavailable")
 		return
 	}
 	var payload createPermissionRequest
 	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid payload")
+		common.WriteError(w, http.StatusBadRequest, "invalid payload")
 		return
 	}
 	item, err := h.Usecase.Create(r.Context(), payload.Action, payload.ResourceKind)
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		common.WriteError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
-	writeJSON(w, http.StatusCreated, item)
+	common.WriteJSON(w, http.StatusCreated, item)
 }
 
 func (h *PermissionHandler) Update(w http.ResponseWriter, r *http.Request) {
@@ -238,7 +273,7 @@ func (h *PermissionHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if h.Usecase == nil {
-		writeError(w, http.StatusInternalServerError, "permission use case is unavailable")
+		common.WriteError(w, http.StatusInternalServerError, "permission use case is unavailable")
 		return
 	}
 	id := trimPathID(r.URL.Path, "/permission/")
@@ -248,7 +283,7 @@ func (h *PermissionHandler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 	var payload updatePermissionRequest
 	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid payload")
+		common.WriteError(w, http.StatusBadRequest, "invalid payload")
 		return
 	}
 	attrs := map[string]interface{}{}
@@ -259,11 +294,11 @@ func (h *PermissionHandler) Update(w http.ResponseWriter, r *http.Request) {
 		attrs["resource_kind"] = *payload.ResourceKind
 	}
 	if len(attrs) == 0 {
-		writeError(w, http.StatusBadRequest, "no updates supplied")
+		common.WriteError(w, http.StatusBadRequest, "no updates supplied")
 		return
 	}
 	if err := h.Usecase.Update(r.Context(), id, attrs); err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		common.WriteError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
@@ -275,7 +310,7 @@ func (h *PermissionHandler) Get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if h.Usecase == nil {
-		writeError(w, http.StatusInternalServerError, "permission use case is unavailable")
+		common.WriteError(w, http.StatusInternalServerError, "permission use case is unavailable")
 		return
 	}
 	id := trimPathID(r.URL.Path, "/permission/")
@@ -285,10 +320,10 @@ func (h *PermissionHandler) Get(w http.ResponseWriter, r *http.Request) {
 	}
 	item, err := h.Usecase.Get(r.Context(), id)
 	if err != nil {
-		writeError(w, http.StatusNotFound, err.Error())
+		common.WriteError(w, http.StatusNotFound, err.Error())
 		return
 	}
-	writeJSON(w, http.StatusOK, item)
+	common.WriteJSON(w, http.StatusOK, item)
 }
 
 func (h *PermissionHandler) List(w http.ResponseWriter, r *http.Request) {
@@ -297,16 +332,16 @@ func (h *PermissionHandler) List(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if h.Usecase == nil {
-		writeError(w, http.StatusInternalServerError, "permission use case is unavailable")
+		common.WriteError(w, http.StatusInternalServerError, "permission use case is unavailable")
 		return
 	}
-	params := parsePagination(r)
+	params := common.ParsePagination(r)
 	items, total, err := h.Usecase.List(r.Context(), params)
 	if err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
+		common.WriteError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
-	writeJSON(w, http.StatusOK, pagination.Result{Items: items, Page: params.Page, PageSize: params.PageSize, Total: total})
+	common.WriteJSON(w, http.StatusOK, pagination.Result{Items: items, Page: params.Page, PageSize: params.PageSize, Total: total})
 }
 
 // RolePermissionHandler manages role-permission assignments.
@@ -320,29 +355,29 @@ func (h *RolePermissionHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if h.Usecase == nil {
-		writeError(w, http.StatusInternalServerError, "role permission use case is unavailable")
+		common.WriteError(w, http.StatusInternalServerError, "role permission use case is unavailable")
 		return
 	}
 	var payload createRolePermissionRequest
 	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
-		writeError(w, http.StatusBadRequest, "invalid payload")
+		common.WriteError(w, http.StatusBadRequest, "invalid payload")
 		return
 	}
 	roleKey := strings.TrimSpace(payload.RoleKey)
 	permissionID := strings.TrimSpace(payload.PermissionID)
 	if roleKey == "" || permissionID == "" {
-		writeError(w, http.StatusBadRequest, "role_key and permission_id are required")
+		common.WriteError(w, http.StatusBadRequest, "role_key and permission_id are required")
 		return
 	}
-	if err := h.Usecase.Create(r.Context(), repo.RolePermissionCreate{RoleKey: roleKey, PermissionID: permissionID}); err != nil {
-		if errors.Is(err, repo.ErrNotFound) {
-			writeError(w, http.StatusNotFound, "role or permission not found")
+	if err := h.Usecase.Create(r.Context(), repository.RolePermissionCreate{RoleKey: roleKey, PermissionID: permissionID}); err != nil {
+		if errors.Is(err, domain.ErrNotFound) {
+			common.WriteError(w, http.StatusNotFound, "role or permission not found")
 			return
 		}
-		writeError(w, http.StatusInternalServerError, err.Error())
+		common.WriteError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
-	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
+	common.WriteJSON(w, http.StatusOK, map[string]string{"status": "ok"})
 }
 
 func trimPathID(path, prefix string) string {

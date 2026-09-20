@@ -3,12 +3,12 @@
 This repository provides a lightweight RBAC microservice implemented in Go. The service exposes administrative HTTP endpoints for managing services, roles, permissions, and principal assignments. Data is stored in Postgres via the migrations in `migrations/`, which keeps role assignments persistent across restarts.
 
 ## Architecture
-- `cmd/ms-rbac-service` — entrypoint that boots the HTTP server.
-- `internal/app` — wiring: config load, use case creation, HTTP server setup.
+- `cmd/ms-rbac-service` — composition root: config load, dependency wiring, and HTTP server lifecycle.
 - `internal/domain` — entities and domain errors.
 - `internal/usecase` — business logic for services, roles, permissions, principals.
-- `internal/adapters/http` — net/http handlers and routing.
-- `internal/adapters/postgres` — Postgres repository layer.
+- `internal/transport/http` — API, admin, and private HTTP contours.
+- `internal/transport/message` — inbound Core NATS RPC handlers.
+- `internal/infrastructure/persistence/postgres` — Postgres repository implementations.
 
 ## Messaging Boundary
 - Retained broker scope for this service is limited to Core NATS RPC: `rbac.assign-role` and `rbac.checkRole`.
