@@ -1,0 +1,35 @@
+schema: architecture/v1
+kind: operation
+id: nats-rbac-check-role
+manifest_revision: 1
+service_id: ms-go-rbac
+type: nats_request_reply
+identity:
+  transport: nats
+  nats: {subject: "rbac.checkRole", role: request_handler, queue: "ms-go-rbac", mode: request_reply}
+access:
+  audience: {value: "NATS request/reply clients", confidence: 1, evidence: [{source_path: cmd/ms-rbac-service/bootstrap.go, symbol: bootstrap}]}
+  authentication: {value: "NATS connection; no message-level credential is parsed by the handler", confidence: 1, evidence: [{source_path: internal/transport/message/nats/role_checker.go, symbol: RoleChecker.Listen}]}
+  authorization: {value: "handler-specific input validation only", confidence: 0.9, evidence: [{source_path: internal/transport/message/nats/role_checker.go, symbol: RoleChecker.Listen}]}
+  idempotency: {value: "request/reply behavior is defined by the handler", confidence: 0.9, evidence: [{source_path: internal/transport/message/nats/role_checker.go, symbol: RoleChecker.Listen}]}
+trigger:
+  description: {value: "NATS request on rbac.checkRole", confidence: 1, evidence: [{source_path: cmd/ms-rbac-service/bootstrap.go, symbol: bootstrap}]}
+input: {path_params: [], query: [], headers: [], body: {name: JSON request}}
+business_task: {value: "check a principal role through NATS request/reply", confidence: 1, evidence: [{source_path: internal/transport/message/nats/role_checker.go, symbol: RoleChecker.Listen}]}
+business_process:
+  - id: handle-request
+    description: {value: "RoleChecker.Listen decodes the NATS payload and responds to the requester", confidence: 1, evidence: [{source_path: internal/transport/message/nats/role_checker.go, symbol: RoleChecker.Listen}]}
+implementation:
+  router: []
+  handler: [{source_path: internal/transport/message/nats/role_checker.go, symbol: RoleChecker.Listen}]
+  use_cases: []
+  domain_services: []
+  repositories: []
+data_access: []
+external_interactions: []
+side_effects: []
+output: {responses: [], result: {name: JSON reply}, emitted_events: []}
+errors: []
+evidence: [{source_path: internal/transport/message/nats/role_checker.go, symbol: RoleChecker.Listen}]
+confidence: 0.95
+ 

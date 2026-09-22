@@ -1,0 +1,35 @@
+schema: architecture/v1
+kind: operation
+id: post-admin-role-permission
+manifest_revision: 1
+service_id: ms-go-rbac
+type: http
+identity:
+  transport: http
+  http: {method: POST, path: "/admin/v1/role-permission"}
+access:
+  audience: {value: "unauthenticated caller", confidence: 1, evidence: [{source_path: internal/transport/http/admin/v1/router.go, symbol: RegisterRoutes}]}
+  authentication: {value: "none; documented known security defect", confidence: 1, evidence: [{source_path: internal/transport/http/admin/v1/router.go, symbol: RegisterRoutes}]}
+  authorization: {value: "none; documented known security defect", confidence: 1, evidence: [{source_path: internal/transport/http/admin/v1/router.go, symbol: RegisterRoutes}]}
+  idempotency: {value: "no explicit caller idempotency mechanism is registered by this handler", confidence: 0.8, evidence: [{source_path: internal/transport/http/admin/v1/handlers/admin.go, symbol: RolePermissionHandler.Create}]}
+trigger:
+  description: {value: "POST /admin/v1/role-permission invokes RolePermissionHandler.Create", confidence: 1, evidence: [{source_path: internal/transport/http/admin/v1/router.go, symbol: RegisterRoutes}]}
+input: {path_params: [], query: [], headers: [], body: null}
+business_task: {value: "role-permission assignment", confidence: 1, evidence: [{source_path: internal/transport/http/admin/v1/handlers/admin.go, symbol: RolePermissionHandler.Create}]}
+business_process:
+  - id: handler
+    description: {value: "RolePermissionHandler.Create validates the request and delegates application behavior", confidence: 0.9, evidence: [{source_path: internal/transport/http/admin/v1/handlers/admin.go, symbol: RolePermissionHandler.Create}]}
+implementation:
+  router: [{source_path: internal/transport/http/admin/v1/router.go, symbol: RegisterRoutes}]
+  handler: [{source_path: internal/transport/http/admin/v1/handlers/admin.go, symbol: RolePermissionHandler.Create}]
+  use_cases: []
+  domain_services: []
+  repositories: []
+data_access: []
+external_interactions: []
+side_effects: []
+output: {responses: [], result: null, emitted_events: []}
+errors: []
+evidence: [{source_path: internal/transport/http/admin/v1/handlers/admin.go, symbol: RolePermissionHandler.Create}]
+confidence: 0.9
+ 

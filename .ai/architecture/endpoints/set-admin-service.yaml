@@ -1,0 +1,35 @@
+schema: architecture/v1
+kind: operation
+id: set-admin-service
+manifest_revision: 1
+service_id: ms-go-rbac
+type: http
+identity:
+  transport: http
+  http: {method: SET, path: "/admin/v1/service"}
+access:
+  audience: {value: "unauthenticated caller", confidence: 1, evidence: [{source_path: internal/transport/http/admin/v1/router.go, symbol: RegisterRoutes}]}
+  authentication: {value: "none; documented known security defect", confidence: 1, evidence: [{source_path: internal/transport/http/admin/v1/router.go, symbol: RegisterRoutes}]}
+  authorization: {value: "none; documented known security defect", confidence: 1, evidence: [{source_path: internal/transport/http/admin/v1/router.go, symbol: RegisterRoutes}]}
+  idempotency: {value: "no explicit caller idempotency mechanism is registered by this handler", confidence: 0.8, evidence: [{source_path: internal/transport/http/admin/v1/handlers/admin.go, symbol: ServiceHandler.Create}]}
+trigger:
+  description: {value: "SET /admin/v1/service invokes ServiceHandler.Create", confidence: 1, evidence: [{source_path: internal/transport/http/admin/v1/router.go, symbol: RegisterRoutes}]}
+input: {path_params: [], query: [], headers: [], body: null}
+business_task: {value: "service creation; nonstandard SET method", confidence: 1, evidence: [{source_path: internal/transport/http/admin/v1/handlers/admin.go, symbol: ServiceHandler.Create}]}
+business_process:
+  - id: handler
+    description: {value: "ServiceHandler.Create validates the request and delegates application behavior", confidence: 0.9, evidence: [{source_path: internal/transport/http/admin/v1/handlers/admin.go, symbol: ServiceHandler.Create}]}
+implementation:
+  router: [{source_path: internal/transport/http/admin/v1/router.go, symbol: RegisterRoutes}]
+  handler: [{source_path: internal/transport/http/admin/v1/handlers/admin.go, symbol: ServiceHandler.Create}]
+  use_cases: []
+  domain_services: []
+  repositories: []
+data_access: []
+external_interactions: []
+side_effects: []
+output: {responses: [], result: null, emitted_events: []}
+errors: []
+evidence: [{source_path: internal/transport/http/admin/v1/handlers/admin.go, symbol: ServiceHandler.Create}]
+confidence: 0.9
+ 

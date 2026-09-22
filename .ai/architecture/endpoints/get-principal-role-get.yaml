@@ -1,0 +1,35 @@
+schema: architecture/v1
+kind: operation
+id: get-principal-role-get
+manifest_revision: 1
+service_id: ms-go-rbac
+type: http
+identity:
+  transport: http
+  http: {method: GET, path: "/api/v1/principal-role/get"}
+access:
+  audience: {value: "unauthenticated caller", confidence: 1, evidence: [{source_path: internal/transport/http/api/v1/router.go, symbol: RegisterRoutes}]}
+  authentication: {value: "none; documented known security defect", confidence: 1, evidence: [{source_path: internal/transport/http/api/v1/router.go, symbol: RegisterRoutes}]}
+  authorization: {value: "none; documented known security defect", confidence: 1, evidence: [{source_path: internal/transport/http/api/v1/router.go, symbol: RegisterRoutes}]}
+  idempotency: {value: "no explicit caller idempotency mechanism is registered by this handler", confidence: 0.8, evidence: [{source_path: internal/transport/http/api/v1/handlers/api.go, symbol: PrincipalRoleHandler.Get}]}
+trigger:
+  description: {value: "GET /api/v1/principal-role/get invokes PrincipalRoleHandler.Get", confidence: 1, evidence: [{source_path: internal/transport/http/api/v1/router.go, symbol: RegisterRoutes}]}
+input: {path_params: [], query: [], headers: [], body: null}
+business_task: {value: "principal role lookup", confidence: 1, evidence: [{source_path: internal/transport/http/api/v1/handlers/api.go, symbol: PrincipalRoleHandler.Get}]}
+business_process:
+  - id: handler
+    description: {value: "PrincipalRoleHandler.Get validates the request and delegates application behavior", confidence: 0.9, evidence: [{source_path: internal/transport/http/api/v1/handlers/api.go, symbol: PrincipalRoleHandler.Get}]}
+implementation:
+  router: [{source_path: internal/transport/http/api/v1/router.go, symbol: RegisterRoutes}]
+  handler: [{source_path: internal/transport/http/api/v1/handlers/api.go, symbol: PrincipalRoleHandler.Get}]
+  use_cases: []
+  domain_services: []
+  repositories: []
+data_access: []
+external_interactions: []
+side_effects: []
+output: {responses: [], result: null, emitted_events: []}
+errors: []
+evidence: [{source_path: internal/transport/http/api/v1/handlers/api.go, symbol: PrincipalRoleHandler.Get}]
+confidence: 0.9
+ 

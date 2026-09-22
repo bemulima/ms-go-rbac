@@ -1,0 +1,54 @@
+%% GENERATED — READ-ONLY PRESENTATION
+%% Do not edit; source of truth is the architecture manifest.
+flowchart LR
+  svc["ms-go-rbac / ms-go-rbac"]
+  svcInfo["purpose: Own roles, permissions, assignments, scopes, overrides, and authorization lookup RPC.<br/>confidence: 0.95"]
+  svc --> svcInfo
+  service_responsibilities["responsibilities: Own roles, permissions, assignments, scopes, overrides, and authorization lookup RPC."]
+  svc --> service_responsibilities
+  service_capabilities["capabilities: Serve the registered runtime operations listed below."]
+  svc --> service_capabilities
+  inbound_0["inbound http: /api/v1 and /admin/v1 — net/http public and administrative contours"]
+  inbound_0 -->|inbound| svc
+  inbound_1["inbound nats: rbac.assign-role and rbac.checkRole — Core NATS request/reply consumers"]
+  inbound_1 -->|inbound| svc
+  operation_0["operation: get-admin-permission-id (http)"]
+  svc --> operation_0
+  operation_1["operation: get-admin-permission-list (http)"]
+  svc --> operation_1
+  operation_2["operation: get-admin-role-id (http)"]
+  svc --> operation_2
+  operation_3["operation: get-admin-role-list (http)"]
+  svc --> operation_3
+  operation_4["operation: get-admin-service-id (http)"]
+  svc --> operation_4
+  operation_5["operation: get-admin-service-list (http)"]
+  svc --> operation_5
+  operation_6["operation: get-principal-permission-get-by-permission (http)"]
+  svc --> operation_6
+  operation_7["operation: get-principal-permission-list (http)"]
+  svc --> operation_7
+  operation_8["operation: get-principal-role-get-by-role (http)"]
+  svc --> operation_8
+  operation_9["operation: get-principal-role-get (http)"]
+  svc --> operation_9
+  operation_10["operation: patch-principal-role-update (http)"]
+  svc --> operation_10
+  operation_11["operation: post-admin-role-permission (http)"]
+  svc --> operation_11
+  operation_12["operation: put-admin-permission-id (http)"]
+  svc --> operation_12
+  operation_13["operation: put-admin-role-id (http)"]
+  svc --> operation_13
+  operation_14["operation: put-admin-service-id (http)"]
+  svc --> operation_14
+  operation_15["operation: set-admin-permission (http)"]
+  svc --> operation_15
+  operation_16["operation: set-admin-role (http)"]
+  svc --> operation_16
+  operation_17["operation: set-admin-service (http)"]
+  svc --> operation_17
+  operation_18["operation: nats-rbac-assign-role (nats_request_reply)"]
+  svc --> operation_18
+  operation_19["operation: nats-rbac-check-role (nats_request_reply)"]
+  svc --> operation_19

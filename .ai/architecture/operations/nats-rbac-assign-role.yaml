@@ -1,0 +1,35 @@
+schema: architecture/v1
+kind: operation
+id: nats-rbac-assign-role
+manifest_revision: 1
+service_id: ms-go-rbac
+type: nats_request_reply
+identity:
+  transport: nats
+  nats: {subject: "rbac.assign-role", role: request_handler, queue: "ms-go-rbac", mode: request_reply}
+access:
+  audience: {value: "NATS request/reply clients", confidence: 1, evidence: [{source_path: cmd/ms-rbac-service/bootstrap.go, symbol: bootstrap}]}
+  authentication: {value: "NATS connection; no message-level credential is parsed by the handler", confidence: 1, evidence: [{source_path: internal/transport/message/nats/role_assigner.go, symbol: RoleAssigner.Listen}]}
+  authorization: {value: "handler-specific input validation only", confidence: 0.9, evidence: [{source_path: internal/transport/message/nats/role_assigner.go, symbol: RoleAssigner.Listen}]}
+  idempotency: {value: "request/reply behavior is defined by the handler", confidence: 0.9, evidence: [{source_path: internal/transport/message/nats/role_assigner.go, symbol: RoleAssigner.Listen}]}
+trigger:
+  description: {value: "NATS request on rbac.assign-role", confidence: 1, evidence: [{source_path: cmd/ms-rbac-service/bootstrap.go, symbol: bootstrap}]}
+input: {path_params: [], query: [], headers: [], body: {name: JSON request}}
+business_task: {value: "assign a principal role through NATS request/reply", confidence: 1, evidence: [{source_path: internal/transport/message/nats/role_assigner.go, symbol: RoleAssigner.Listen}]}
+business_process:
+  - id: handle-request
+    description: {value: "RoleAssigner.Listen decodes the NATS payload and responds to the requester", confidence: 1, evidence: [{source_path: internal/transport/message/nats/role_assigner.go, symbol: RoleAssigner.Listen}]}
+implementation:
+  router: []
+  handler: [{source_path: internal/transport/message/nats/role_assigner.go, symbol: RoleAssigner.Listen}]
+  use_cases: []
+  domain_services: []
+  repositories: []
+data_access: []
+external_interactions: []
+side_effects: []
+output: {responses: [], result: {name: JSON reply}, emitted_events: []}
+errors: []
+evidence: [{source_path: internal/transport/message/nats/role_assigner.go, symbol: RoleAssigner.Listen}]
+confidence: 0.95
+ 

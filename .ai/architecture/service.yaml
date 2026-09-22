@@ -1,0 +1,62 @@
+schema: architecture/v1
+kind: service
+id: ms-go-rbac
+manifest_revision: 1
+identity:
+  name: ms-go-rbac
+  kind: go_backend_service
+purpose:
+  value: "Own roles, permissions, assignments, scopes, overrides, and authorization lookup RPC."
+  confidence: 1
+  evidence: [{source_path: .ai/service.yaml, symbol: purpose}]
+responsibilities:
+  - value: "Own roles, permissions, assignments, scopes, overrides, and authorization lookup RPC."
+    confidence: 1
+    evidence: [{source_path: .ai/service.yaml, symbol: purpose}]
+capabilities:
+  - value: "Serve the registered runtime operations listed below."
+    confidence: 1
+    evidence: [{source_path: internal/transport/http/router.go, symbol: Handler}]
+owned_resources: []
+inbound_interfaces:
+  - transport: http
+    name: "/api/v1 and /admin/v1"
+    description: {value: "net/http public and administrative contours", confidence: 1, evidence: [{source_path: internal/transport/http/router.go, symbol: Handler}]}
+  - transport: nats
+    name: "rbac.assign-role and rbac.checkRole"
+    description: {value: "Core NATS request/reply consumers", confidence: 1, evidence: [{source_path: internal/transport/http/router.go, symbol: Handler}]}
+outbound_dependencies: []
+endpoint_groups: []
+produced_contracts: []
+consumed_contracts: []
+published_events: []
+subscribed_events: []
+business_rules: []
+operation_manifests:
+  - endpoints/patch-principal-role-update.yaml
+  - endpoints/get-principal-role-get.yaml
+  - endpoints/get-principal-permission-list.yaml
+  - endpoints/get-principal-role-get-by-role.yaml
+  - endpoints/get-principal-permission-get-by-permission.yaml
+  - endpoints/set-admin-service.yaml
+  - endpoints/get-admin-service-id.yaml
+  - endpoints/put-admin-service-id.yaml
+  - endpoints/get-admin-service-list.yaml
+  - endpoints/set-admin-role.yaml
+  - endpoints/get-admin-role-id.yaml
+  - endpoints/put-admin-role-id.yaml
+  - endpoints/get-admin-role-list.yaml
+  - endpoints/set-admin-permission.yaml
+  - endpoints/get-admin-permission-id.yaml
+  - endpoints/put-admin-permission-id.yaml
+  - endpoints/get-admin-permission-list.yaml
+  - endpoints/post-admin-role-permission.yaml
+  - operations/nats-rbac-assign-role.yaml
+  - operations/nats-rbac-check-role.yaml
+evidence:
+  - source_path: internal/transport/http/router.go
+    symbol: Handler
+  - source_path: .ai/service.yaml
+    symbol: purpose
+confidence: 0.95
+ 
