@@ -6,4 +6,7 @@ commands:
   - {name: test, run: go test ./..., requires_approval: false, risk: verification}
   - {name: run, run: go run ./cmd/ms-rbac-service, requires_approval: true, risk: lifecycle}
   - {name: migrate-up, run: task migrate-up, requires_approval: true, risk: database-write}
+  - {name: migrate-up-with-legacy-fixtures, run: task migrate-up-with-legacy-fixtures, requires_approval: true, risk: database-write}
   - {name: migrate-down, run: task migrate-down, requires_approval: true, risk: destructive-database-write}
+  - {name: migrate-status, run: task migrate-status, requires_approval: true, risk: database-read}
+  - {name: migrate-status-legacy, run: task migrate-status-legacy, requires_approval: true, risk: database-read}

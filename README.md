@@ -48,7 +48,7 @@ curl http://localhost:8080/admin/v1/service-list
 
 ## Default roles
 
-Default roles are seeded via migrations:
+RBAC owns the canonical role definitions in `internal/domain/model/reference_data.go`:
 
 - `admin`
 - `moderator`
@@ -57,7 +57,17 @@ Default roles are seeded via migrations:
 - `user`
 - `guest`
 
-Only existing roles can be assigned via `PATCH /api/v1/principal-role/update`. Add new roles through the `/admin/role` endpoint if needed, then run migrations for seeds.
+`task migrate-up` applies the schema and ensures these roles plus the `core`
+service reference. It does not create principal-role assignments. Existing
+deployments that explicitly depend on the historical fixed principal grants
+can use `task migrate-up-with-legacy-fixtures`; it applies the current 002 seed
+only when the migration ledger says it was intentionally excluded. Adoption
+recognizes the known earlier manager-era footprint and refuses partial or
+ambiguous history instead of replaying the seed.
+
+Only existing roles can be assigned via `PATCH /api/v1/principal-role/update`.
+Add new canonical roles through the RBAC-owned reference model and its bootstrap
+tests; ordinary principal assignments remain environment data.
 
 ## Testing
 - Integration-style HTTP contract tests (requires `DB_DSN`): `GOCACHE=../.gocache go test ./...`

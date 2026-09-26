@@ -7,6 +7,22 @@ permissions: {contents: read}
 jobs:
   verify:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: rbac-ci-only
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      RBAC_MIGRATION_TEST_ADMIN_DSN: postgres://postgres:rbac-ci-only@127.0.0.1:5432/postgres?sslmode=disable
+      RBAC_MIGRATION_TEST_ALLOW_CREATE_DATABASE: YES
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-go@v6

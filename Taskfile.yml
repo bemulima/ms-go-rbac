@@ -20,33 +20,29 @@ tasks:
       - docker compose down
 
   migrate-up:
-    desc: Apply all migrations
+    desc: Apply schema and canonical reference data without legacy principal fixtures
     cmds:
-      - |
-        set -euo pipefail
-        for f in $(ls migrations/*.sql 2>/dev/null | grep -v '\.up\.sql$' | grep -v '\.down\.sql$' | sort); do
-          echo "==> applying $f"
-          cat "$f" | docker compose exec -T {{.DB_CONTAINER}} psql -U {{.DB_USER}} -d {{.DB_NAME}} -v ON_ERROR_STOP=1
-        done
-        for f in $(ls migrations/*.up.sql 2>/dev/null | sort); do
-          echo "==> applying $f"
-          cat "$f" | docker compose exec -T {{.DB_CONTAINER}} psql -U {{.DB_USER}} -d {{.DB_NAME}} -v ON_ERROR_STOP=1
-        done
+      - docker compose --profile migration run --rm migrate up
+
+  migrate-up-with-legacy-fixtures:
+    desc: Apply all migrations, including the historical fixed principal assignments
+    cmds:
+      - docker compose --profile migration run --rm migrate up-with-legacy-fixtures
 
   migrate-down:
     desc: Rollback all migrations in reverse order
     cmds:
-      - |
-        set -euo pipefail
-        for f in $(ls migrations/*.down.sql 2>/dev/null | sort -r); do
-          echo "==> rolling back $f"
-          cat "$f" | docker compose exec -T {{.DB_CONTAINER}} psql -U {{.DB_USER}} -d {{.DB_NAME}} -v ON_ERROR_STOP=1
-        done
+      - docker compose --profile migration run --rm migrate down
 
   migrate-status:
-    desc: Show migration status (list tables)
+    desc: Show schema-profile migration status
     cmds:
-      - docker compose exec -T {{.DB_CONTAINER}} psql -U {{.DB_USER}} -d {{.DB_NAME}} -c "SELECT tablename FROM pg_tables WHERE schemaname = 'public';"
+      - docker compose --profile migration run --rm migrate status
+
+  migrate-status-legacy:
+    desc: Show full legacy migration status
+    cmds:
+      - docker compose --profile migration run --rm migrate status-legacy
 
   run:
     desc: Run service locally

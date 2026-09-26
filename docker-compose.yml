@@ -15,6 +15,18 @@ services:
       retries: 10
       start_period: 5s
 
+  migrate:
+    profiles: ["migration"]
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    environment:
+      DB_DSN: "postgres://rbac:rbac_password@postgres:5432/rbacdb?sslmode=disable"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    entrypoint: ["/app/ms-rbac-migrate"]
+
   msgo-rbac:
     container_name: ms-rbac-service
     build:
