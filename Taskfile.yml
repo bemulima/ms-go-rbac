@@ -44,10 +44,25 @@ tasks:
     cmds:
       - docker compose --profile migration run --rm migrate status-legacy
 
+  migrate:native:
+    desc: Apply schema and canonical reference data to shared native PostgreSQL
+    cmds:
+      - python3 scripts/native_config.py -- go run ./cmd/ms-rbac-migrate up
+
+  migrate-native-legacy-fixtures:
+    desc: Apply the historical fixed-principal seed to shared native PostgreSQL
+    cmds:
+      - python3 scripts/native_config.py -- go run ./cmd/ms-rbac-migrate up-with-legacy-fixtures
+
   run:
     desc: Run service locally
     cmds:
       - go run ./cmd/ms-rbac-service
+
+  run:native:
+    desc: Run RBAC on macOS against shared PostgreSQL and NATS
+    cmds:
+      - python3 scripts/native_config.py -- go run ./cmd/ms-rbac-service
 
   test:
     desc: Run tests

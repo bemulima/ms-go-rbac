@@ -15,6 +15,10 @@ services:
       retries: 10
       start_period: 5s
 
+  nats:
+    image: nats:2.10-alpine
+    command: ["-js"]
+
   migrate:
     profiles: ["migration"]
     build:
@@ -40,6 +44,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      nats:
+        condition: service_started
     restart: unless-stopped
     networks:
       - default
@@ -50,4 +56,6 @@ volumes:
 
 networks:
   ms-net:
-    external: true
+    # A project-managed network keeps this standalone Docker path runnable on
+    # a fresh machine. Integrations that need another network can attach it
+    # through the ignored docker-compose.override.yml.

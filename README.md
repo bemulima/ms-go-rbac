@@ -70,5 +70,12 @@ Add new canonical roles through the RBAC-owned reference model and its bootstrap
 tests; ordinary principal assignments remain environment data.
 
 ## Testing
-- Integration-style HTTP contract tests (requires `DB_DSN`): `GOCACHE=../.gocache go test ./...`
+- Integration-style HTTP contract tests (requires `DB_DSN`): `GOCACHE=../.gocache go test -tags=integration ./test/integration`
 - Covers role/permission creation, assignment, permission lookup, and default `user` role assignment helper.
+
+## Native macOS development
+
+The application stays topology-neutral: Docker Compose uses `postgres` and
+`nats` DNS names, while the native task supplies loopback endpoints through
+environment variables. Follow [the native development guide](docs/native-development.md)
+for the supported PostgreSQL, NATS, migration, and process lifecycle.
