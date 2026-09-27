@@ -1,0 +1,463 @@
+schema_version: test-manifest.v1
+manifest_version: "1.0.0"
+policy_version: testing-policy.v1
+
+repository:
+  id: ms-go-rbac
+  profile: GO_SERVICE
+  stack:
+    language: Go
+    runtime:
+      name: go
+      version: "1.22"
+
+suites:
+  unit.domain:
+    applicability: APPLICABLE
+    implementation: PARTIAL
+    commands: [test:unit]
+    exception_id: MS_GO_RBAC_UNIT_DOMAIN
+  application.usecase:
+    applicability: APPLICABLE
+    implementation: PARTIAL
+    commands: [test:unit]
+    exception_id: MS_GO_RBAC_APPLICATION_USECASE
+  persistence.repository:
+    applicability: APPLICABLE
+    implementation: MISSING
+    commands: [test:persistence]
+    exception_id: MS_GO_RBAC_PERSISTENCE_REPOSITORY
+  transport.http:
+    applicability: APPLICABLE
+    implementation: PARTIAL
+    commands: [test:transport]
+    exception_id: MS_GO_RBAC_TRANSPORT_HTTP
+  authorization:
+    applicability: APPLICABLE
+    implementation: PARTIAL
+    commands: [test:unit]
+    exception_id: MS_GO_RBAC_AUTHORIZATION
+  integration.hermetic:
+    applicability: APPLICABLE
+    implementation: PARTIAL
+    commands: [test:unit]
+    exception_id: MS_GO_RBAC_INTEGRATION_HERMETIC
+  integration.dependency:
+    applicability: APPLICABLE
+    implementation: PARTIAL
+    commands: [test:integration:deps]
+    exception_id: MS_GO_RBAC_INTEGRATION_DEPENDENCY
+  migration.lifecycle:
+    applicability: APPLICABLE
+    implementation: PARTIAL
+    commands: [test:migration]
+    exception_id: MS_GO_RBAC_MIGRATION_LIFECYCLE
+  event.producer:
+    applicability: APPLICABLE
+    implementation: MISSING
+    commands: [test:events]
+    exception_id: MS_GO_RBAC_EVENT_PRODUCER
+  event.consumer:
+    applicability: APPLICABLE
+    implementation: MISSING
+    commands: [test:events]
+    exception_id: MS_GO_RBAC_EVENT_CONSUMER
+  contract.provider:
+    applicability: APPLICABLE
+    implementation: MISSING
+    commands: [test:contract]
+    exception_id: MS_GO_RBAC_CONTRACT_PROVIDER
+  contract.consumer:
+    applicability: APPLICABLE
+    implementation: MISSING
+    commands: [test:contract]
+    exception_id: MS_GO_RBAC_CONTRACT_CONSUMER
+  architecture.local:
+    applicability: APPLICABLE
+    implementation: PARTIAL
+    commands: [test:architecture]
+    exception_id: MS_GO_RBAC_ARCHITECTURE_LOCAL
+  quality.static:
+    applicability: APPLICABLE
+    implementation: PARTIAL
+    commands: [check:format, check:lint, check:types]
+    exception_id: MS_GO_RBAC_QUALITY_STATIC
+  coverage:
+    applicability: APPLICABLE
+    implementation: MISSING
+    commands: [coverage]
+    exception_id: MS_GO_RBAC_COVERAGE
+  mutation:
+    applicability: NOT_APPLICABLE
+    implementation: MISSING
+    commands: []
+    reason: "Mutation testing is outside the frozen GO_SERVICE profile and is reserved for later capability work."
+  frontend.hook:
+    applicability: NOT_APPLICABLE
+    implementation: MISSING
+    commands: []
+    reason: "A Go backend service does not own frontend hooks."
+  frontend.store:
+    applicability: NOT_APPLICABLE
+    implementation: MISSING
+    commands: []
+    reason: "A Go backend service does not own frontend state stores."
+  frontend.api_client:
+    applicability: NOT_APPLICABLE
+    implementation: MISSING
+    commands: []
+    reason: "Frontend API-client behavior belongs to the frontend profile."
+  frontend.component:
+    applicability: NOT_APPLICABLE
+    implementation: MISSING
+    commands: []
+    reason: "A Go backend service does not own rendered frontend components."
+  frontend.component_integration:
+    applicability: NOT_APPLICABLE
+    implementation: MISSING
+    commands: []
+    reason: "Frontend component composition belongs to the frontend profile."
+  frontend.accessibility:
+    applicability: NOT_APPLICABLE
+    implementation: MISSING
+    commands: []
+    reason: "Frontend accessibility behavior belongs to the frontend profile."
+  frontend.browser_e2e:
+    applicability: NOT_APPLICABLE
+    implementation: MISSING
+    commands: []
+    reason: "Browser UI acceptance belongs to the frontend profile."
+  platform.business_acceptance:
+    applicability: NOT_APPLICABLE
+    implementation: MISSING
+    commands: []
+    reason: "Cross-service business acceptance is owned by the Verification Platform."
+  platform.api_e2e:
+    applicability: NOT_APPLICABLE
+    implementation: MISSING
+    commands: []
+    reason: "Cross-service API end-to-end verification is owned by the Verification Platform."
+  platform.event_e2e:
+    applicability: NOT_APPLICABLE
+    implementation: MISSING
+    commands: []
+    reason: "Cross-service event end-to-end verification is owned by the Verification Platform."
+  platform.browser_e2e:
+    applicability: NOT_APPLICABLE
+    implementation: MISSING
+    commands: []
+    reason: "Cross-service browser acceptance is owned by the Verification Platform."
+  platform.contract_compatibility:
+    applicability: NOT_APPLICABLE
+    implementation: MISSING
+    commands: []
+    reason: "Cross-repository provider-consumer compatibility orchestration is owned by the Verification Platform."
+  platform.architecture:
+    applicability: NOT_APPLICABLE
+    implementation: MISSING
+    commands: []
+    reason: "Cross-repository topology enforcement is owned by the Architecture Orchestrator."
+  platform.reporting:
+    applicability: NOT_APPLICABLE
+    implementation: MISSING
+    commands: []
+    reason: "Cross-repository result normalization and aggregation are owned by the Verification Platform."
+
+commands:
+  "test:unit":
+    availability: AVAILABLE
+    invoke: ["task", "test"]
+    working_directory: .
+    timeout_seconds: 2400
+    env: ["RBAC_MIGRATION_TEST_ADMIN_DSN", "RBAC_MIGRATION_TEST_ALLOW_CREATE_DATABASE"]
+    requires:
+      - type: "database"
+        mode: "managed"
+        probe: "tcp"
+        endpoint_env: "RBAC_MIGRATION_TEST_ADMIN_DSN"
+  "test:transport":
+    availability: AVAILABLE
+    invoke: ["go", "test", "./test/integration", "-count=1"]
+    working_directory: .
+    timeout_seconds: 1800
+    env: ["RBAC_MIGRATION_TEST_ADMIN_DSN", "RBAC_MIGRATION_TEST_ALLOW_CREATE_DATABASE"]
+    requires:
+      - type: "database"
+        mode: "managed"
+        probe: "tcp"
+        endpoint_env: "RBAC_MIGRATION_TEST_ADMIN_DSN"
+  "test:integration:deps":
+    availability: AVAILABLE
+    invoke: ["go", "test", "./test/integration", "-count=1"]
+    working_directory: .
+    timeout_seconds: 1800
+    env: ["RBAC_MIGRATION_TEST_ADMIN_DSN", "RBAC_MIGRATION_TEST_ALLOW_CREATE_DATABASE"]
+    requires:
+      - type: "database"
+        mode: "managed"
+        probe: "tcp"
+        endpoint_env: "RBAC_MIGRATION_TEST_ADMIN_DSN"
+  "test:migration":
+    availability: AVAILABLE
+    invoke: ["go", "test", "./cmd/ms-rbac-migrate", "-count=1"]
+    working_directory: .
+    timeout_seconds: 1800
+    env: ["RBAC_MIGRATION_TEST_ADMIN_DSN", "RBAC_MIGRATION_TEST_ALLOW_CREATE_DATABASE"]
+    requires:
+      - type: "database"
+        mode: "managed"
+        probe: "tcp"
+        endpoint_env: "RBAC_MIGRATION_TEST_ADMIN_DSN"
+  "test:architecture":
+    availability: AVAILABLE
+    invoke: ["task", "test"]
+    working_directory: .
+    timeout_seconds: 2400
+    env: ["RBAC_MIGRATION_TEST_ADMIN_DSN", "RBAC_MIGRATION_TEST_ALLOW_CREATE_DATABASE"]
+    requires:
+      - type: "database"
+        mode: "managed"
+        probe: "tcp"
+        endpoint_env: "RBAC_MIGRATION_TEST_ADMIN_DSN"
+  "check:types":
+    availability: AVAILABLE
+    invoke: ["go", "vet", "./..."]
+    working_directory: .
+    timeout_seconds: 1200
+  "check:lint":
+    availability: AVAILABLE
+    invoke: ["golangci-lint", "run", "./..."]
+    working_directory: .
+    timeout_seconds: 1800
+  "check:format":
+    availability: UNAVAILABLE
+    reason: "The owner CI format check is expressed with shell command substitution; the frozen runner accepts argv only and no checked-in shell-free formatter adapter exists."
+  "coverage":
+    availability: UNAVAILABLE
+    reason: "No native coverage command, configured threshold, or coverage artifact is declared at the audited HEAD."
+  "test:persistence":
+    availability: UNAVAILABLE
+    reason: "No dedicated policy-runnable test:persistence command is registered at the audited committed HEAD."
+  "test:events":
+    availability: UNAVAILABLE
+    reason: "No dedicated policy-runnable test:events command is registered at the audited committed HEAD."
+  "test:contract":
+    availability: UNAVAILABLE
+    reason: "No dedicated policy-runnable test:contract command is registered at the audited committed HEAD."
+
+references:
+  contracts: []
+  architecture: [".ai/service.yaml", "AGENTS.md"]
+  business_features: []
+
+exceptions:
+  - id: MS_GO_RBAC_UNIT_DOMAIN
+    repository: ms-go-rbac
+    categories: [unit.domain]
+    scope:
+      description: "Only the unit.domain baseline gap for ms-go-rbac is in scope; it covers the mapped command(s) test:unit."
+      commands: [test:unit]
+    owner: "ms-go-rbac service owners"
+    reason: "Direct role and permission reference-data tests exist but do not establish all authorization invariants."
+    evidence: ["internal/domain/model/reference_data_test.go"]
+    created_at: 2026-09-27
+    expires_at: 2026-12-26
+    remediation_target: "Reassess this category with the service owner at the next testing baseline review; add focused verification only if the category remains owned."
+    tracking_reference: task:T3.2-BASELINE-ADOPTION-2026-09-27
+    approval_reference: task:T3.2-BASELINE-ADOPTION-2026-09-27
+  - id: MS_GO_RBAC_APPLICATION_USECASE
+    repository: ms-go-rbac
+    categories: [application.usecase]
+    scope:
+      description: "Only the application.usecase baseline gap for ms-go-rbac is in scope; it covers the mapped command(s) test:unit."
+      commands: [test:unit]
+    owner: "ms-go-rbac service owners"
+    reason: "The HTTP integration suite exercises selected service behavior, but direct use-case coverage is not comprehensive."
+    evidence: ["test/integration/http_integration_test.go"]
+    created_at: 2026-09-27
+    expires_at: 2026-12-26
+    remediation_target: "Reassess this category with the service owner at the next testing baseline review; add focused verification only if the category remains owned."
+    tracking_reference: task:T3.2-BASELINE-ADOPTION-2026-09-27
+    approval_reference: task:T3.2-BASELINE-ADOPTION-2026-09-27
+  - id: MS_GO_RBAC_PERSISTENCE_REPOSITORY
+    repository: ms-go-rbac
+    categories: [persistence.repository]
+    scope:
+      description: "Only the persistence.repository baseline gap for ms-go-rbac is in scope; it covers the mapped command(s) test:persistence."
+      commands: [test:persistence]
+    owner: "ms-go-rbac service owners"
+    reason: "PostgreSQL repositories exist, but no direct CRUD/transaction repository test suite is present."
+    evidence: [".ai/commands.yaml", "Taskfile.yml"]
+    created_at: 2026-09-27
+    expires_at: 2026-12-26
+    remediation_target: "Reassess this category with the service owner at the next testing baseline review; add focused verification only if the category remains owned."
+    tracking_reference: task:T3.2-BASELINE-ADOPTION-2026-09-27
+    approval_reference: task:T3.2-BASELINE-ADOPTION-2026-09-27
+  - id: MS_GO_RBAC_TRANSPORT_HTTP
+    repository: ms-go-rbac
+    categories: [transport.http]
+    scope:
+      description: "Only the transport.http baseline gap for ms-go-rbac is in scope; it covers the mapped command(s) test:transport."
+      commands: [test:transport]
+    owner: "ms-go-rbac service owners"
+    reason: "HTTP integration tests exist, but they rely on database-backed bootstrap and do not cover every route or failure path."
+    evidence: ["test/integration/http_integration_test.go", "test/integration/http_bootstrap_test.go"]
+    created_at: 2026-09-27
+    expires_at: 2026-12-26
+    remediation_target: "Reassess this category with the service owner at the next testing baseline review; add focused verification only if the category remains owned."
+    tracking_reference: task:T3.2-BASELINE-ADOPTION-2026-09-27
+    approval_reference: task:T3.2-BASELINE-ADOPTION-2026-09-27
+  - id: MS_GO_RBAC_AUTHORIZATION
+    repository: ms-go-rbac
+    categories: [authorization]
+    scope:
+      description: "Only the authorization baseline gap for ms-go-rbac is in scope; it covers the mapped command(s) test:unit."
+      commands: [test:unit]
+    owner: "ms-go-rbac service owners"
+    reason: "Role/reference-data tests provide limited coverage; AGENTS explicitly records missing admin-route authentication and unsupported SET methods."
+    evidence: ["internal/domain/model/reference_data_test.go", "AGENTS.md"]
+    created_at: 2026-09-27
+    expires_at: 2026-12-26
+    remediation_target: "Reassess this category with the service owner at the next testing baseline review; add focused verification only if the category remains owned."
+    tracking_reference: task:T3.2-BASELINE-ADOPTION-2026-09-27
+    approval_reference: task:T3.2-BASELINE-ADOPTION-2026-09-27
+  - id: MS_GO_RBAC_INTEGRATION_HERMETIC
+    repository: ms-go-rbac
+    categories: [integration.hermetic]
+    scope:
+      description: "Only the integration.hermetic baseline gap for ms-go-rbac is in scope; it covers the mapped command(s) test:unit."
+      commands: [test:unit]
+    owner: "ms-go-rbac service owners"
+    reason: "HTTP/bootstrap tests cover selected paths but require external database setup in CI and do not provide a standalone hermetic integration gate."
+    evidence: ["test/integration/http_bootstrap_test.go"]
+    created_at: 2026-09-27
+    expires_at: 2026-12-26
+    remediation_target: "Reassess this category with the service owner at the next testing baseline review; add focused verification only if the category remains owned."
+    tracking_reference: task:T3.2-BASELINE-ADOPTION-2026-09-27
+    approval_reference: task:T3.2-BASELINE-ADOPTION-2026-09-27
+  - id: MS_GO_RBAC_INTEGRATION_DEPENDENCY
+    repository: ms-go-rbac
+    categories: [integration.dependency]
+    scope:
+      description: "Only the integration.dependency baseline gap for ms-go-rbac is in scope; it covers the mapped command(s) test:integration:deps."
+      commands: [test:integration:deps]
+    owner: "ms-go-rbac service owners"
+    reason: "PostgreSQL-backed integration tests are present and CI provisions PostgreSQL; the local command depends on explicit DB environment and must not silently count skipped integration cases as passing."
+    evidence: ["test/integration/http_integration_test.go", ".github/workflows/ci.yml"]
+    created_at: 2026-09-27
+    expires_at: 2026-12-26
+    remediation_target: "Reassess this category with the service owner at the next testing baseline review; add focused verification only if the category remains owned."
+    tracking_reference: task:T3.2-BASELINE-ADOPTION-2026-09-27
+    approval_reference: task:T3.2-BASELINE-ADOPTION-2026-09-27
+  - id: MS_GO_RBAC_MIGRATION_LIFECYCLE
+    repository: ms-go-rbac
+    categories: [migration.lifecycle]
+    scope:
+      description: "Only the migration.lifecycle baseline gap for ms-go-rbac is in scope; it covers the mapped command(s) test:migration."
+      commands: [test:migration]
+    owner: "ms-go-rbac service owners"
+    reason: "A migration integration test and CI PostgreSQL service exist; the path is dependency-gated and requires an explicitly configured temporary database."
+    evidence: ["cmd/ms-rbac-migrate/migration_integration_test.go", ".github/workflows/ci.yml"]
+    created_at: 2026-09-27
+    expires_at: 2026-12-26
+    remediation_target: "Reassess this category with the service owner at the next testing baseline review; add focused verification only if the category remains owned."
+    tracking_reference: task:T3.2-BASELINE-ADOPTION-2026-09-27
+    approval_reference: task:T3.2-BASELINE-ADOPTION-2026-09-27
+  - id: MS_GO_RBAC_EVENT_PRODUCER
+    repository: ms-go-rbac
+    categories: [event.producer]
+    scope:
+      description: "Only the event.producer baseline gap for ms-go-rbac is in scope; it covers the mapped command(s) test:events."
+      commands: [test:events]
+    owner: "ms-go-rbac service owners"
+    reason: "No owner-native category-specific verification is present at the audited HEAD; this bounded exception records the baseline gap without adding runtime or product behavior."
+    evidence: [".ai/service.yaml"]
+    created_at: 2026-09-27
+    expires_at: 2026-12-26
+    remediation_target: "Reassess this category with the service owner at the next testing baseline review; add focused verification only if the category remains owned."
+    tracking_reference: task:T3.2-BASELINE-ADOPTION-2026-09-27
+    approval_reference: task:T3.2-BASELINE-ADOPTION-2026-09-27
+  - id: MS_GO_RBAC_EVENT_CONSUMER
+    repository: ms-go-rbac
+    categories: [event.consumer]
+    scope:
+      description: "Only the event.consumer baseline gap for ms-go-rbac is in scope; it covers the mapped command(s) test:events."
+      commands: [test:events]
+    owner: "ms-go-rbac service owners"
+    reason: "No owner-native category-specific verification is present at the audited HEAD; this bounded exception records the baseline gap without adding runtime or product behavior."
+    evidence: [".ai/service.yaml"]
+    created_at: 2026-09-27
+    expires_at: 2026-12-26
+    remediation_target: "Reassess this category with the service owner at the next testing baseline review; add focused verification only if the category remains owned."
+    tracking_reference: task:T3.2-BASELINE-ADOPTION-2026-09-27
+    approval_reference: task:T3.2-BASELINE-ADOPTION-2026-09-27
+  - id: MS_GO_RBAC_CONTRACT_PROVIDER
+    repository: ms-go-rbac
+    categories: [contract.provider]
+    scope:
+      description: "Only the contract.provider baseline gap for ms-go-rbac is in scope; it covers the mapped command(s) test:contract."
+      commands: [test:contract]
+    owner: "ms-go-rbac service owners"
+    reason: "No owner-native category-specific verification is present at the audited HEAD; this bounded exception records the baseline gap without adding runtime or product behavior."
+    evidence: [".ai/commands.yaml", "Taskfile.yml"]
+    created_at: 2026-09-27
+    expires_at: 2026-12-26
+    remediation_target: "Reassess this category with the service owner at the next testing baseline review; add focused verification only if the category remains owned."
+    tracking_reference: task:T3.2-BASELINE-ADOPTION-2026-09-27
+    approval_reference: task:T3.2-BASELINE-ADOPTION-2026-09-27
+  - id: MS_GO_RBAC_CONTRACT_CONSUMER
+    repository: ms-go-rbac
+    categories: [contract.consumer]
+    scope:
+      description: "Only the contract.consumer baseline gap for ms-go-rbac is in scope; it covers the mapped command(s) test:contract."
+      commands: [test:contract]
+    owner: "ms-go-rbac service owners"
+    reason: "No owner-native category-specific verification is present at the audited HEAD; this bounded exception records the baseline gap without adding runtime or product behavior."
+    evidence: [".ai/commands.yaml", "Taskfile.yml"]
+    created_at: 2026-09-27
+    expires_at: 2026-12-26
+    remediation_target: "Reassess this category with the service owner at the next testing baseline review; add focused verification only if the category remains owned."
+    tracking_reference: task:T3.2-BASELINE-ADOPTION-2026-09-27
+    approval_reference: task:T3.2-BASELINE-ADOPTION-2026-09-27
+  - id: MS_GO_RBAC_ARCHITECTURE_LOCAL
+    repository: ms-go-rbac
+    categories: [architecture.local]
+    scope:
+      description: "Only the architecture.local baseline gap for ms-go-rbac is in scope; it covers the mapped command(s) test:architecture."
+      commands: [test:architecture]
+    owner: "ms-go-rbac service owners"
+    reason: "An import-boundary test exists, but the baseline is limited to that structural rule."
+    evidence: ["internal/architecture/import_boundaries_test.go"]
+    created_at: 2026-09-27
+    expires_at: 2026-12-26
+    remediation_target: "Reassess this category with the service owner at the next testing baseline review; add focused verification only if the category remains owned."
+    tracking_reference: task:T3.2-BASELINE-ADOPTION-2026-09-27
+    approval_reference: task:T3.2-BASELINE-ADOPTION-2026-09-27
+  - id: MS_GO_RBAC_QUALITY_STATIC
+    repository: ms-go-rbac
+    categories: [quality.static]
+    scope:
+      description: "Only the quality.static baseline gap for ms-go-rbac is in scope; it covers the mapped command(s) check:format, check:lint, check:types."
+      commands: [check:format, check:lint, check:types]
+    owner: "ms-go-rbac service owners"
+    reason: "Go vet and golangci-lint are registered; the formatting gate requires shell substitution and no coverage command or threshold is configured."
+    evidence: [".ai/commands.yaml", ".github/workflows/ci.yml"]
+    created_at: 2026-09-27
+    expires_at: 2026-12-26
+    remediation_target: "Reassess this category with the service owner at the next testing baseline review; add focused verification only if the category remains owned."
+    tracking_reference: task:T3.2-BASELINE-ADOPTION-2026-09-27
+    approval_reference: task:T3.2-BASELINE-ADOPTION-2026-09-27
+  - id: MS_GO_RBAC_COVERAGE
+    repository: ms-go-rbac
+    categories: [coverage]
+    scope:
+      description: "Only the coverage baseline gap for ms-go-rbac is in scope; it covers the mapped command(s) coverage."
+      commands: [coverage]
+    owner: "ms-go-rbac service owners"
+    reason: "No owner-native category-specific verification is present at the audited HEAD; this bounded exception records the baseline gap without adding runtime or product behavior."
+    evidence: [".ai/commands.yaml", "Taskfile.yml"]
+    created_at: 2026-09-27
+    expires_at: 2026-12-26
+    remediation_target: "Reassess this category with the service owner at the next testing baseline review; add focused verification only if the category remains owned."
+    tracking_reference: task:T3.2-BASELINE-ADOPTION-2026-09-27
+    approval_reference: task:T3.2-BASELINE-ADOPTION-2026-09-27
