@@ -18,7 +18,7 @@ import (
 )
 
 // newHTTPHandler composes only the HTTP dependencies exercised by this contract suite.
-func newHTTPHandler(t *testing.T) http.Handler {
+func newHTTPHandler(t *testing.T) (http.Handler, *pgxpool.Pool) {
 	t.Helper()
 	pool, err := pgxpool.New(context.Background(), getenvRequired(t, "DB_DSN"))
 	if err != nil {
@@ -51,7 +51,7 @@ func newHTTPHandler(t *testing.T) http.Handler {
 			PrincipalPermission: &apihandlers.PrincipalPermissionHandler{Usecase: principalPermissionUC},
 		},
 	)
-	return router.Handler()
+	return router.Handler(), pool
 }
 
 func getenvRequired(t *testing.T, key string) string {

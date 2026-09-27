@@ -5,32 +5,41 @@ package integration
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"testing"
+
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 // Integration test that exercises the public RBAC HTTP contract used by other services.
 func TestRBACHTTPFlow(t *testing.T) {
 	ts := newTestServer(t)
+	const action = "d7-native-read"
+	const resource = "d7-native-course"
+	const userID = "d7000000-0000-0000-0000-000000000001"
+	ts.cleanupD7Data(t, action, resource, userID)
+	t.Cleanup(func() { ts.cleanupD7Data(t, action, resource, userID) })
 
-	permID := createPermission(t, ts, "read", "course")
+	permID := createPermission(t, ts, action, resource)
 	assignPermissionToRole(t, ts, "moderator", permID)
 
-	userID := "11111111-1111-1111-1111-111111111111"
 	assignRole(t, ts, userID, "moderator")
 
 	assertCheckRole(t, ts, userID, "moderator", true)
-	assertPermissionsList(t, ts, userID, []string{"read:course"})
-	assertCheckPermission(t, ts, userID, "read:course", true)
+	assertPermissionsList(t, ts, userID, []string{action + ":" + resource})
+	assertCheckPermission(t, ts, userID, action+":"+resource, true)
 }
 
 func TestAssignsUserRoleForNewPrincipal(t *testing.T) {
 	ts := newTestServer(t)
-	userID := "22222222-2222-2222-2222-222222222222"
+	const userID = "d7000000-0000-0000-0000-000000000002"
+	ts.cleanupD7Data(t, "d7-native-user", "d7-native-user", userID)
+	t.Cleanup(func() { ts.cleanupD7Data(t, "d7-native-user", "d7-native-user", userID) })
 
 	assignRole(t, ts, userID, "user")
 
@@ -42,6 +51,7 @@ func TestAssignsUserRoleForNewPrincipal(t *testing.T) {
 
 type testServer struct {
 	handler http.Handler
+	pool    *pgxpool.Pool
 }
 
 func newTestServer(t *testing.T) testServer {
@@ -49,13 +59,30 @@ func newTestServer(t *testing.T) testServer {
 	if os.Getenv("DB_DSN") == "" {
 		t.Skip("DB_DSN is required for integration tests")
 	}
-	return testServer{handler: newHTTPHandler(t)}
+	handler, pool := newHTTPHandler(t)
+	return testServer{handler: handler, pool: pool}
 }
 
 func (ts testServer) do(req *http.Request) *httptest.ResponseRecorder {
 	rr := httptest.NewRecorder()
 	ts.handler.ServeHTTP(rr, req)
 	return rr
+}
+
+func (ts testServer) cleanupD7Data(t *testing.T, action, resource string, userIDs ...string) {
+	t.Helper()
+	ctx := context.Background()
+	for _, userID := range userIDs {
+		if _, err := ts.pool.Exec(ctx, "DELETE FROM principal_role WHERE principal_id = $1", userID); err != nil {
+			t.Fatalf("cleanup D7 principal role: %v", err)
+		}
+	}
+	if _, err := ts.pool.Exec(ctx, "DELETE FROM role_permission WHERE permission_id IN (SELECT id FROM permission WHERE action = $1 AND resource_kind = $2)", action, resource); err != nil {
+		t.Fatalf("cleanup D7 role permission: %v", err)
+	}
+	if _, err := ts.pool.Exec(ctx, "DELETE FROM permission WHERE action = $1 AND resource_kind = $2", action, resource); err != nil {
+		t.Fatalf("cleanup D7 permission: %v", err)
+	}
 }
 
 func createPermission(t *testing.T, ts testServer, action, resource string) string {
