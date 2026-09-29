@@ -39,6 +39,37 @@ jobs:
           go-version-file: go.mod
           cache: true
 
+      - name: Install pinned golangci-lint
+        shell: bash
+        run: |
+          set -euo pipefail
+          export GOBIN="$GITHUB_WORKSPACE/.cache/bin"
+          mkdir -p "$GOBIN"
+          GOTOOLCHAIN=go1.24.4 go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.64.8
+          echo "$GOBIN" >> "$GITHUB_PATH"
+
+      - name: Verify pinned golangci-lint
+        shell: bash
+        run: |
+          set -euo pipefail
+          expected="$GITHUB_WORKSPACE/.cache/bin/golangci-lint"
+          resolved="$(command -v golangci-lint)"
+          if [[ "$resolved" != "$expected" ]]; then
+            echo "Expected golangci-lint at $expected; resolved $resolved" >&2
+            exit 1
+          fi
+          version="$("$resolved" version)"
+          if [[ "$version" != *"version v1.64.8 built with go1.24.4"* ]]; then
+            echo "Unexpected golangci-lint version/build toolchain: $version" >&2
+            exit 1
+          fi
+          go_version="$(go version "$resolved")"
+          if [[ "$go_version" != *": go1.24.4" ]]; then
+            echo "Unexpected golangci-lint binary toolchain: $go_version" >&2
+            exit 1
+          fi
+          printf 'Pinned linter preflight PASS: %s; %s\n' "$resolved" "$version"
+
       - name: Set up Node 20 for Testing Policy
         uses: actions/setup-node@v4
         with:
