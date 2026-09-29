@@ -268,7 +268,7 @@ func apply(ctx context.Context, pool *pgxpool.Pool, current state, migrations []
 				if err != nil {
 					return err
 				}
-				disposition, recorded = current.dispositions[item.version]
+				_, recorded = current.dispositions[item.version]
 			}
 			if !recorded {
 				if err := recordDisposition(ctx, lockConn, item.version, dispositionExcluded); err != nil {
@@ -455,15 +455,6 @@ func rollback(ctx context.Context, pool *pgxpool.Pool, current state, migrations
 		fmt.Printf("rolled back %s\n", item.version)
 	}
 	return nil
-}
-
-func executeFile(ctx context.Context, pool *pgxpool.Pool, sql, record string) error {
-	conn, err := pool.Acquire(ctx)
-	if err != nil {
-		return err
-	}
-	defer conn.Release()
-	return executeFileOn(ctx, conn.Conn(), sql, record)
 }
 
 func executeFileOn(ctx context.Context, conn *pgx.Conn, sql, record string) error {
