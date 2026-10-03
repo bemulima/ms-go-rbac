@@ -1,0 +1,96 @@
+{
+  "schema_version": "consumer-owner-audit.v1",
+  "consumer": {
+    "repository": "bemulima/ms-go-rbac",
+    "service": "ms-go-rbac",
+    "commit_sha": "f5654d61caab44418767bbf0ce011ae9e13ae398"
+  },
+  "classification": "CONSUMER_NOT_APPLICABLE",
+  "source_pins": [
+    {
+      "repository": "bemulima/ms-go-rbac",
+      "commit_sha": "f5654d61caab44418767bbf0ce011ae9e13ae398",
+      "path": "cmd/ms-rbac-migrate/adoption.go",
+      "blob_sha": "fe4f824cb6e941d260017bf56d5a6e5c34530df8",
+      "content_sha256": "57baadc7d0e2efac56de7629532b8e4b0c33ed790823bdf1dc135989969841f9"
+    },
+    {
+      "repository": "bemulima/ms-go-rbac",
+      "commit_sha": "f5654d61caab44418767bbf0ce011ae9e13ae398",
+      "path": "cmd/ms-rbac-migrate/history.go",
+      "blob_sha": "e3056141d5a89d649f5c660b830f83110745a730",
+      "content_sha256": "69cb66cbe03947b4b2d5821ebd06c8063c72c9e3939728727f822a3ad6fdf72f"
+    },
+    {
+      "repository": "bemulima/ms-go-rbac",
+      "commit_sha": "f5654d61caab44418767bbf0ce011ae9e13ae398",
+      "path": "cmd/ms-rbac-migrate/main.go",
+      "blob_sha": "3107e7c5079da2e066af024147adc164a94b33de",
+      "content_sha256": "63bc8c13ee9d345b0e67eef545ce2e7143b17041c9b2996980c03b3ea947085f"
+    },
+    {
+      "repository": "bemulima/ms-go-rbac",
+      "commit_sha": "f5654d61caab44418767bbf0ce011ae9e13ae398",
+      "path": "cmd/ms-rbac-service/bootstrap.go",
+      "blob_sha": "056fef39a74c5dd7be77e427f9ea8970a6726885",
+      "content_sha256": "8bf3b108ac8d92175e95d934d6544a1759cfc3c8cc4062d6cf647e143b20a6af"
+    },
+    {
+      "repository": "bemulima/ms-go-rbac",
+      "commit_sha": "f5654d61caab44418767bbf0ce011ae9e13ae398",
+      "path": "cmd/ms-rbac-service/main.go",
+      "blob_sha": "b037f5b3a51665bb4854dc5d23c0ef2b9511e58b",
+      "content_sha256": "809518078a9d32b4f6cdae96519a06de480076a11244df7895ced18951f225e4"
+    },
+    {
+      "repository": "bemulima/ms-go-rbac",
+      "commit_sha": "f5654d61caab44418767bbf0ce011ae9e13ae398",
+      "path": "internal/infrastructure/messaging/nats/conn.go",
+      "blob_sha": "e3d1da8c736ab63050c5ad683e5ec403a8576a29",
+      "content_sha256": "6b229d5e8c73b717d3ea1ce4d76eae968dc2c12fd7d668269315e04bd91d709e"
+    }
+  ],
+  "reason": "RBAC NATS subscriptions implement inbound assign/check RPC provider interfaces; owned PostgreSQL is infrastructure, with no implemented outbound pinned fleet service client.",
+  "inspected_paths": [
+    "cmd/ms-rbac-migrate/adoption.go",
+    "cmd/ms-rbac-migrate/history.go",
+    "cmd/ms-rbac-migrate/main.go",
+    "cmd/ms-rbac-service/bootstrap.go",
+    "cmd/ms-rbac-service/main.go",
+    "internal/config/config.go",
+    "internal/domain/errors.go",
+    "internal/domain/model/models.go",
+    "internal/domain/model/reference_data.go",
+    "internal/domain/pdp/decision.go",
+    "internal/domain/repository/repository.go",
+    "internal/infrastructure/messaging/nats/conn.go",
+    "internal/infrastructure/pdp/cache.go",
+    "internal/infrastructure/pdp/engine.go",
+    "internal/infrastructure/persistence/postgres/errors.go",
+    "internal/infrastructure/persistence/postgres/helpers.go",
+    "internal/infrastructure/persistence/postgres/models.go",
+    "internal/infrastructure/persistence/postgres/pdp_repository.go",
+    "internal/infrastructure/persistence/postgres/permission_repository.go",
+    "internal/infrastructure/persistence/postgres/principal_role_repository.go",
+    "internal/infrastructure/persistence/postgres/role_permission_repository.go",
+    "internal/infrastructure/persistence/postgres/role_repository.go",
+    "internal/infrastructure/persistence/postgres/service_repository.go",
+    "internal/transport/http/admin/v1/handlers/admin.go",
+    "internal/transport/http/admin/v1/router.go",
+    "internal/transport/http/api/v1/handlers/api.go",
+    "internal/transport/http/api/v1/router.go",
+    "internal/transport/http/common/common.go",
+    "internal/transport/http/private/router.go",
+    "internal/transport/http/router.go",
+    "internal/transport/message/nats/role_assigner.go",
+    "internal/transport/message/nats/role_checker.go",
+    "internal/usecase/errors.go",
+    "internal/usecase/permission.go",
+    "internal/usecase/principal.go",
+    "internal/usecase/role.go",
+    "internal/usecase/role_permission.go",
+    "internal/usecase/service.go",
+    "pkg/pagination/pagination.go"
+  ],
+  "expectation_paths": []
+}

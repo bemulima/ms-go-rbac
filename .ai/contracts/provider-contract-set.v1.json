@@ -1,0 +1,114 @@
+{
+  "schema_version": "provider-contract-set.v1",
+  "provider": {
+    "repository": "bemulima/ms-go-rbac",
+    "commit_sha": "f5654d61caab44418767bbf0ce011ae9e13ae398",
+    "service": "ms-go-rbac"
+  },
+  "contracts": [
+    {
+      "id": "ms-go-rbac.http",
+      "kind": "HTTP",
+      "path": "internal/transport/http/api/v1/router.go",
+      "version": "v1",
+      "version_semantics": "exact",
+      "blob_sha": "e34a93625b499609b85720033fe88a6918a4d91d",
+      "content_sha256": "676726196081c08c10e0f7086cd348c8dac16f19184ead7575ccbf5d279fe7b7",
+      "operations": [
+        "GET /admin/v1/permission-list",
+        "GET /admin/v1/permission/{id}",
+        "GET /admin/v1/role-list",
+        "GET /admin/v1/role/{id}",
+        "GET /admin/v1/service-list",
+        "GET /admin/v1/service/{id}",
+        "GET /api/v1/principal-permission/get-by-permission",
+        "GET /api/v1/principal-permission/list",
+        "GET /api/v1/principal-role/get",
+        "GET /api/v1/principal-role/get-by-role",
+        "PATCH /api/v1/principal-role/update",
+        "POST /admin/v1/role-permission",
+        "PUT /admin/v1/permission/{id}",
+        "PUT /admin/v1/role/{id}",
+        "PUT /admin/v1/service/{id}",
+        "SET /admin/v1/permission",
+        "SET /admin/v1/role",
+        "SET /admin/v1/service"
+      ],
+      "references": [],
+      "source_pins": [
+        {
+          "repository": "bemulima/ms-go-rbac",
+          "commit_sha": "f5654d61caab44418767bbf0ce011ae9e13ae398",
+          "path": "internal/transport/http/admin/v1/router.go",
+          "blob_sha": "e7c592f2319e7a782539402a607ec449d10e7ddc",
+          "content_sha256": "81204012b9fda69e6021fce1b95c8dcbdf89219849c02b5dffda3ee7687974ab"
+        },
+        {
+          "repository": "bemulima/ms-go-rbac",
+          "commit_sha": "f5654d61caab44418767bbf0ce011ae9e13ae398",
+          "path": "internal/transport/http/api/v1/handlers/api.go",
+          "blob_sha": "035c2cc2d627ce533e25dc7372627468f2c2785b",
+          "content_sha256": "a6755756936a3d8454061720ad8d6ce5b322aa242a7f73bd0366a13499b95156"
+        },
+        {
+          "repository": "bemulima/ms-go-rbac",
+          "commit_sha": "f5654d61caab44418767bbf0ce011ae9e13ae398",
+          "path": "internal/transport/http/api/v1/router.go",
+          "blob_sha": "e34a93625b499609b85720033fe88a6918a4d91d",
+          "content_sha256": "676726196081c08c10e0f7086cd348c8dac16f19184ead7575ccbf5d279fe7b7"
+        },
+        {
+          "repository": "bemulima/ms-go-rbac",
+          "commit_sha": "f5654d61caab44418767bbf0ce011ae9e13ae398",
+          "path": "internal/transport/http/router.go",
+          "blob_sha": "44f4be09b4766f1237124144b964ad8946e3e2d7",
+          "content_sha256": "025596f9b2a76db2e03afcaae74cff758fd6103ffaf0bbdd0ab625116aa17cb5"
+        },
+        {
+          "repository": "bemulima/ms-go-rbac",
+          "commit_sha": "f5654d61caab44418767bbf0ce011ae9e13ae398",
+          "path": "internal/transport/http/admin/v1/handlers/admin.go",
+          "blob_sha": "b0ee0587c2daaef4e4e00be913d0aef67b2cc42c",
+          "content_sha256": "eab1952395d74fe59ae1d1881b7e7ea3918cd886f14c687f1f573842f519cfc3"
+        }
+      ]
+    },
+    {
+      "id": "ms-go-rbac.event",
+      "kind": "EVENT",
+      "path": "cmd/ms-rbac-service/bootstrap.go",
+      "version": "unversioned",
+      "version_semantics": "unversioned",
+      "blob_sha": "056fef39a74c5dd7be77e427f9ea8970a6726885",
+      "content_sha256": "8bf3b108ac8d92175e95d934d6544a1759cfc3c8cc4062d6cf647e143b20a6af",
+      "operations": [
+        "rbac.assign-role",
+        "rbac.checkRole"
+      ],
+      "references": [],
+      "source_pins": [
+        {
+          "repository": "bemulima/ms-go-rbac",
+          "commit_sha": "f5654d61caab44418767bbf0ce011ae9e13ae398",
+          "path": "cmd/ms-rbac-service/bootstrap.go",
+          "blob_sha": "056fef39a74c5dd7be77e427f9ea8970a6726885",
+          "content_sha256": "8bf3b108ac8d92175e95d934d6544a1759cfc3c8cc4062d6cf647e143b20a6af"
+        },
+        {
+          "repository": "bemulima/ms-go-rbac",
+          "commit_sha": "f5654d61caab44418767bbf0ce011ae9e13ae398",
+          "path": "internal/transport/message/nats/role_assigner.go",
+          "blob_sha": "744ccb31b12f791bc3534d8f08f3ad5d6c35cbb3",
+          "content_sha256": "79c592ae0a7696ce2412898dc669c8ed478ba4481a8571f57bc5cfdd2e29e56a"
+        },
+        {
+          "repository": "bemulima/ms-go-rbac",
+          "commit_sha": "f5654d61caab44418767bbf0ce011ae9e13ae398",
+          "path": "internal/transport/message/nats/role_checker.go",
+          "blob_sha": "e09c383acb4e70eca3033ecbbd5da6538ebf910d",
+          "content_sha256": "6d271558b9efb54338b0105a7958ad17473788f00c3a336e80fdbe6663b1e3e0"
+        }
+      ]
+    }
+  ]
+}
