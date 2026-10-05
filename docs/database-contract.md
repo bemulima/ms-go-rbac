@@ -73,3 +73,31 @@ The migration integration suite is opt-in. It requires
 server's `postgres` database, plus
 `RBAC_MIGRATION_TEST_ALLOW_CREATE_DATABASE=YES`; each case creates and drops
 its own randomly named test database.
+
+## Disposable HTTP integration fixture
+
+`go run ./cmd/ms-rbac-http-integration` requires the same explicit disposable
+server opt-in: `RBAC_MIGRATION_TEST_ADMIN_DSN` and
+`RBAC_MIGRATION_TEST_ALLOW_CREATE_DATABASE=YES`. The admin input must be a
+PostgreSQL URL naming a loopback host, the `postgres` database, and an explicit
+user. Only the `sslmode` URL query parameter is accepted; alternate endpoint
+fallbacks must also be loopback. The adapter verifies the connected database
+and superuser identity before creating a uniquely named `rbac_http_test_`
+database. These inputs must identify an authorized disposable server.
+
+The adapter replaces `DB_DSN` for its children, runs
+`go run ./cmd/ms-rbac-migrate up` for the existing schema profile and canonical
+roles, then runs `go test -tags=integration ./test/integration -count=1`.
+It drops only the exact database whose creation it confirmed, including after
+migration/test failure or cancellation. Cleanup uses a separate bounded
+connection and a cleanup failure fails the command. An unconfirmed database
+creation fails closed without deleting a potentially unowned database.
+Missing configuration fails before testing; direct tagged HTTP tests also
+fail when `DB_DSN` is missing. Both Testing Policy HTTP logical commands and
+the native CI HTTP step invoke this adapter. No NATS or application service
+process is needed for these in-process HTTP tests.
+
+The adapter also detects when its original `go run` parent exits, because a
+policy timeout can signal that wrapper without forwarding the signal to its
+child. Cancellation stops the owned migration/test process group and triggers
+the same database cleanup path.

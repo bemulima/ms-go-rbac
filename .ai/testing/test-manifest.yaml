@@ -177,7 +177,7 @@ commands:
         endpoint_env: "RBAC_MIGRATION_TEST_ADMIN_DSN"
   "test:transport":
     availability: AVAILABLE
-    invoke: ["go", "test", "./test/integration", "-count=1"]
+    invoke: ["go", "run", "./cmd/ms-rbac-http-integration"]
     working_directory: .
     timeout_seconds: 1800
     env: ["RBAC_MIGRATION_TEST_ADMIN_DSN", "RBAC_MIGRATION_TEST_ALLOW_CREATE_DATABASE"]
@@ -188,7 +188,7 @@ commands:
         endpoint_env: "RBAC_MIGRATION_TEST_ADMIN_DSN"
   "test:integration:deps":
     availability: AVAILABLE
-    invoke: ["go", "test", "./test/integration", "-count=1"]
+    invoke: ["go", "run", "./cmd/ms-rbac-http-integration"]
     working_directory: .
     timeout_seconds: 1800
     env: ["RBAC_MIGRATION_TEST_ADMIN_DSN", "RBAC_MIGRATION_TEST_ALLOW_CREATE_DATABASE"]

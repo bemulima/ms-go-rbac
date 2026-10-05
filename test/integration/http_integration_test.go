@@ -57,7 +57,7 @@ type testServer struct {
 func newTestServer(t *testing.T) testServer {
 	t.Helper()
 	if os.Getenv("DB_DSN") == "" {
-		t.Skip("DB_DSN is required for integration tests")
+		t.Fatal("DB_DSN is required for integration tests")
 	}
 	handler, pool := newHTTPHandler(t)
 	return testServer{handler: handler, pool: pool}
