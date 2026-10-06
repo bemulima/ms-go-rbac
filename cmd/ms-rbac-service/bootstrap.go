@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/example/ms-rbac-service/internal/config"
+	"github.com/example/ms-rbac-service/internal/infrastructure/client"
 	natsclient "github.com/example/ms-rbac-service/internal/infrastructure/messaging/nats"
 	repo "github.com/example/ms-rbac-service/internal/infrastructure/persistence/postgres"
 	httptransport "github.com/example/ms-rbac-service/internal/transport/http"
@@ -24,6 +25,11 @@ var dbPool *pgxpool.Pool
 // bootstrap is the service composition root.
 func bootstrap() (*http.Server, error) {
 	cfg, err := config.Load()
+	if err != nil {
+		return nil, err
+	}
+
+	signupVerifier, err := client.NewSignupProofVerifier(cfg.AuthSignupPublicKey)
 	if err != nil {
 		return nil, err
 	}
@@ -48,6 +54,7 @@ func bootstrap() (*http.Server, error) {
 	permissionUC := usecase.NewPermissionUsecase(permissionRepo)
 	rolePermissionUC := usecase.NewRolePermissionUsecase(rolePermissionRepo)
 	principalRoleUC := usecase.NewPrincipalRoleUsecase(principalRoleRepo)
+	signupUC := usecase.NewSignupProvisioner(signupVerifier, repo.NewSignupProvisioningRepository(pool))
 	principalPermissionUC := usecase.NewPrincipalPermissionUsecase(principalRoleRepo, rolePermissionRepo)
 
 	adminHandlers := &adminhandlers.AdminHandlers{
@@ -70,10 +77,10 @@ func bootstrap() (*http.Server, error) {
 		}
 
 		assigner := natstransport.RoleAssigner{
-			Conn:        conn,
-			Subject:     "rbac.assign-role",
-			Queue:       "ms-go-rbac",
-			PrincipalUC: principalRoleUC,
+			Conn:     conn,
+			Subject:  "rbac.assign-role",
+			Queue:    "ms-go-rbac",
+			SignupUC: signupUC,
 		}
 		if err := assigner.Listen(); err != nil {
 			log.Printf("nats subscribe failed (rbac.assign-role): %v", err)

@@ -1,5 +1,5 @@
 schema_version: 1
 documentation: docs/database-contract.md
 owner: ms-go-rbac
-tables: [service, role, role_hierarchy, permission, role_permission, service_role, service_permission, principal_role, principal_override, superadmin_principal, rbac_schema_migrations]
-migrations: [001_init, 002_seed_default_roles_and_principals]
+tables: [service, role, role_hierarchy, permission, role_permission, service_role, service_permission, principal_role, principal_override, superadmin_principal, signup_provisioning_receipt, rbac_schema_migrations]
+migrations: [001_init, 002_seed_default_roles_and_principals, 003_signup_provisioning_receipts]

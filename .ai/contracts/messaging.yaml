@@ -2,5 +2,22 @@ schema_version: 1
 documentation: docs/messaging-contract.md
 core_nats_rpc:
   consumes:
-    - {subject: rbac.assign-role, queue: ms-go-rbac, request: [user_id, role], response: [ok, error]}
+    - {subject: rbac.assign-role, queue: ms-go-rbac, request: [key_id, payload, signature], response: [ok, error]}
     - {subject: rbac.checkRole, queue: ms-go-rbac, request: [user_id, role], response: [ok, error]}
+signup_assignment:
+  contract: AUTH_RBAC_STUDENT_PROVISIONING_V1
+  contract_documentation: .ai/contracts/auth-rbac-student-provisioning-v1.md
+  accepted_actor: dedicated ms-go-auth Ed25519 signer
+  key_id: auth-signup-v1
+  public_key_config: AUTH_SIGNUP_PUBLIC_KEY
+  purpose: signup-student-provisioning-v1
+  role: student
+  scope: canonical user/global/core default tuple
+  envelope: strict single JSON object; payload and signature standard base64
+  maximum_bytes: {envelope: 16384, payload: 8192}
+  lifetime_seconds: 60
+  issued_at_future_skew_seconds: 5
+  replay: verify fresh proof before immutable receipt lookup; no writes on exact replay
+  unsigned_or_caller_header_fallback: forbidden
+  conflict: no principal, operation, role or scope reparenting; no different default role replacement
+  incompatible_signed_role_or_scope: conflict before storage; includes non-student initial operation

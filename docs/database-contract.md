@@ -101,3 +101,31 @@ The adapter also detects when its original `go run` parent exits, because a
 policy timeout can signal that wrapper without forwarding the signal to its
 child. Cancellation stops the owned migration/test process group and triggers
 the same database cleanup path.
+
+## Signed signup receipts
+
+Forward migration 003 adds signup_provisioning_receipt. Its primary key is
+issuer plus persisted signup operation UUID; issuer plus canonical principal
+is also unique. Rows hold only immutable principal, student role, exact default
+user/global/core scope and creation time. No signed proof, signature or private
+key is persisted. Constraints limit the accepted issuer, role and scope; an
+UPDATE/DELETE trigger prevents changing receipt tombstones. Down migration
+locks the table and refuses any nonempty receipt set before dropping the empty
+table and trigger function. Historical 001/002 contents remain unchanged.
+
+The signup repository verifies the admission result before starting a transaction,
+then acquires a principal advisory transaction lock. It checks immutable receipt
+binding before the exact default-scope assignment. Same operation and binding
+returns stable success without assignment or receipt writes. A different target,
+operation, role or scope conflicts. No current-role fallback grants authority:
+an absent default assignment receives student, an existing student remains,
+and any different or ambiguous default assignment is refused. Assignment and
+receipt commit atomically, including rollback if a concurrent immutable key
+conflicts. Cryptographic admission runs before this repository and before every
+replay. Only accepted Auth signup provisioning uses this repository.
+
+The opt-in SQL regression uses RBAC_SIGNUP_TEST_DATABASE_URL naming one
+loopback owned database ending in _test, already migrated by the root. A Docker
+backend requires its exact root-attested IP in RBAC_SIGNUP_POSTGRES_EXPECTED_SERVER_IP
+(or the existing T16_POSTGRES_EXPECTED_SERVER_IP). Tests retain receipt/data;
+they do not migrate, reset or clean tables and do not claim full Auth issuance.

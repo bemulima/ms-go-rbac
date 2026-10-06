@@ -5,6 +5,7 @@ commands:
   - {name: vet, run: go vet ./..., requires_approval: false, risk: verification}
   - {name: test, run: go test ./..., requires_approval: false, risk: verification}
   - {name: test-http-integration, run: go run ./cmd/ms-rbac-http-integration, requires_approval: true, risk: disposable-database-write}
+  - {name: signup-contract-regression, run: 'go test ./internal/infrastructure/persistence/postgres -run "TestAuthRBACStudentProvisioningV1Contract|TestSignupProvisioningSQL"', requires_approval: false, risk: disposable-integration-test}
   - {name: run, run: go run ./cmd/ms-rbac-service, requires_approval: true, risk: lifecycle}
   - {name: migrate-up, run: task migrate-up, requires_approval: true, risk: database-write}
   - {name: migrate-up-with-legacy-fixtures, run: task migrate-up-with-legacy-fixtures, requires_approval: true, risk: database-write}
