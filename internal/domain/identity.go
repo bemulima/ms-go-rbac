@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"context"
 	"encoding/hex"
 	"errors"
 	"strings"
@@ -8,8 +9,19 @@ import (
 
 var (
 	ErrUnauthenticated      = errors.New("authoritative access identity required")
+	ErrMutationForbidden    = errors.New("mutation grant is not approved")
 	ErrAuthorityUnavailable = errors.New("identity authority unavailable")
 )
+
+// VerifiedActor is identity established by the configured Auth authority.
+// Identity alone does not establish a grant to mutate RBAC data.
+type VerifiedActor struct {
+	PrincipalID string
+}
+
+type AccessIdentityVerifier interface {
+	VerifyAccessToken(context.Context, string) (VerifiedActor, error)
+}
 
 // ValidPrincipalID requires the canonical non-nil UUID representation.
 func ValidPrincipalID(id string) bool {

@@ -29,6 +29,11 @@ func bootstrap() (*http.Server, error) {
 		return nil, err
 	}
 
+	verifier, err := client.NewAuthVerifier(cfg.AuthVerifyURL)
+	if err != nil {
+		return nil, err
+	}
+	admission := usecase.NewMutationAdmission(verifier)
 	signupVerifier, err := client.NewSignupProofVerifier(cfg.AuthSignupPublicKey)
 	if err != nil {
 		return nil, err
@@ -58,13 +63,13 @@ func bootstrap() (*http.Server, error) {
 	principalPermissionUC := usecase.NewPrincipalPermissionUsecase(principalRoleRepo, rolePermissionRepo)
 
 	adminHandlers := &adminhandlers.AdminHandlers{
-		Service:        &adminhandlers.ServiceHandler{Usecase: serviceUC},
-		Role:           &adminhandlers.RoleHandler{Usecase: roleUC},
-		Permission:     &adminhandlers.PermissionHandler{Usecase: permissionUC},
-		RolePermission: &adminhandlers.RolePermissionHandler{Usecase: rolePermissionUC},
+		Service:        &adminhandlers.ServiceHandler{Admission: admission, Usecase: serviceUC},
+		Role:           &adminhandlers.RoleHandler{Admission: admission, Usecase: roleUC},
+		Permission:     &adminhandlers.PermissionHandler{Admission: admission, Usecase: permissionUC},
+		RolePermission: &adminhandlers.RolePermissionHandler{Admission: admission, Usecase: rolePermissionUC},
 	}
 	apiHandlers := &apihandlers.APIHandlers{
-		PrincipalRole:       &apihandlers.PrincipalRoleHandler{Usecase: principalRoleUC},
+		PrincipalRole:       &apihandlers.PrincipalRoleHandler{Admission: admission, Usecase: principalRoleUC},
 		PrincipalPermission: &apihandlers.PrincipalPermissionHandler{Usecase: principalPermissionUC},
 	}
 	router := httptransport.NewRouter(adminHandlers, apiHandlers)

@@ -56,7 +56,8 @@ type AdminHandlers struct {
 
 // ServiceHandler manages service CRUD endpoints.
 type ServiceHandler struct {
-	Usecase *usecase.ServiceUsecase
+	Admission *usecase.MutationAdmission
+	Usecase   *usecase.ServiceUsecase
 }
 
 func (h *ServiceHandler) Create(w http.ResponseWriter, r *http.Request) {
@@ -64,6 +65,10 @@ func (h *ServiceHandler) Create(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
+	if !common.AdmitMutation(w, r, h.Admission) {
+		return
+	}
+
 	if h.Usecase == nil {
 		common.WriteError(w, http.StatusInternalServerError, "service use case is unavailable")
 		return
@@ -86,6 +91,10 @@ func (h *ServiceHandler) Update(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
+	if !common.AdmitMutation(w, r, h.Admission) {
+		return
+	}
+
 	if h.Usecase == nil {
 		common.WriteError(w, http.StatusInternalServerError, "service use case is unavailable")
 		return
@@ -149,7 +158,8 @@ func (h *ServiceHandler) List(w http.ResponseWriter, r *http.Request) {
 
 // RoleHandler manages role CRUD endpoints.
 type RoleHandler struct {
-	Usecase *usecase.RoleUsecase
+	Admission *usecase.MutationAdmission
+	Usecase   *usecase.RoleUsecase
 }
 
 func (h *RoleHandler) Create(w http.ResponseWriter, r *http.Request) {
@@ -157,6 +167,10 @@ func (h *RoleHandler) Create(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
+	if !common.AdmitMutation(w, r, h.Admission) {
+		return
+	}
+
 	if h.Usecase == nil {
 		common.WriteError(w, http.StatusInternalServerError, "role use case is unavailable")
 		return
@@ -179,6 +193,10 @@ func (h *RoleHandler) Update(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
+	if !common.AdmitMutation(w, r, h.Admission) {
+		return
+	}
+
 	if h.Usecase == nil {
 		common.WriteError(w, http.StatusInternalServerError, "role use case is unavailable")
 		return
@@ -242,7 +260,8 @@ func (h *RoleHandler) List(w http.ResponseWriter, r *http.Request) {
 
 // PermissionHandler manages permission CRUD endpoints.
 type PermissionHandler struct {
-	Usecase *usecase.PermissionUsecase
+	Admission *usecase.MutationAdmission
+	Usecase   *usecase.PermissionUsecase
 }
 
 func (h *PermissionHandler) Create(w http.ResponseWriter, r *http.Request) {
@@ -250,6 +269,10 @@ func (h *PermissionHandler) Create(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
+	if !common.AdmitMutation(w, r, h.Admission) {
+		return
+	}
+
 	if h.Usecase == nil {
 		common.WriteError(w, http.StatusInternalServerError, "permission use case is unavailable")
 		return
@@ -272,6 +295,10 @@ func (h *PermissionHandler) Update(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
+	if !common.AdmitMutation(w, r, h.Admission) {
+		return
+	}
+
 	if h.Usecase == nil {
 		common.WriteError(w, http.StatusInternalServerError, "permission use case is unavailable")
 		return
@@ -346,7 +373,8 @@ func (h *PermissionHandler) List(w http.ResponseWriter, r *http.Request) {
 
 // RolePermissionHandler manages role-permission assignments.
 type RolePermissionHandler struct {
-	Usecase *usecase.RolePermissionUsecase
+	Admission *usecase.MutationAdmission
+	Usecase   *usecase.RolePermissionUsecase
 }
 
 func (h *RolePermissionHandler) Create(w http.ResponseWriter, r *http.Request) {
@@ -354,6 +382,10 @@ func (h *RolePermissionHandler) Create(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
+	if !common.AdmitMutation(w, r, h.Admission) {
+		return
+	}
+
 	if h.Usecase == nil {
 		common.WriteError(w, http.StatusInternalServerError, "role permission use case is unavailable")
 		return

@@ -27,7 +27,8 @@ type assignRoleRequest struct {
 
 // PrincipalRoleHandler handles principal role endpoints.
 type PrincipalRoleHandler struct {
-	Usecase *usecase.PrincipalRoleUsecase
+	Admission *usecase.MutationAdmission
+	Usecase   *usecase.PrincipalRoleUsecase
 }
 
 func (h *PrincipalRoleHandler) Update(w http.ResponseWriter, r *http.Request) {
@@ -35,6 +36,10 @@ func (h *PrincipalRoleHandler) Update(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
+	if !common.AdmitMutation(w, r, h.Admission) {
+		return
+	}
+
 	if h.Usecase == nil {
 		common.WriteError(w, http.StatusInternalServerError, "rbac principal role use case is unavailable")
 		return

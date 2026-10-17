@@ -13,6 +13,7 @@ type Config struct {
 	HTTPAddr            string
 	DBDSN               string
 	NATSURL             string
+	AuthVerifyURL       string
 	AuthSignupPublicKey string
 	AuthModeratorIss    string
 	AuthModeratorAud    string
@@ -26,6 +27,7 @@ func Load() (Config, error) {
 		HTTPAddr:            getEnv("HTTP_ADDR", ":8080"),
 		DBDSN:               os.Getenv("DB_DSN"),
 		NATSURL:             getEnv("NATS_URL", "nats://nats:4222"),
+		AuthVerifyURL:       os.Getenv("AUTH_VERIFY_URL"),
 		AuthSignupPublicKey: os.Getenv("AUTH_SIGNUP_PUBLIC_KEY"),
 		AuthModeratorIss:    os.Getenv("AUTH_MODERATOR_JWT_ISS"),
 		AuthModeratorAud:    os.Getenv("AUTH_MODERATOR_JWT_AUD"),
