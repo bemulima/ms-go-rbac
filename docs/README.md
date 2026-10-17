@@ -7,3 +7,5 @@ This repository owns RBAC architecture and its HTTP, NATS, and database contract
 - [Messaging](messaging-contract.md)
 - [Database](database-contract.md)
 - [Native development](native-development.md)
+
+- [C2-B isolated MENTOR bootstrap](c2-b-isolated-mentor-bootstrap-contract.md).
