@@ -10,4 +10,18 @@ admin:
   create_current: [{method: SET, path: /admin/v1/service}, {method: SET, path: /admin/v1/role}, {method: SET, path: /admin/v1/permission}]
   get_update_list: [service, role, permission]
   role_permission: {method: POST, path: /admin/v1/role-permission}
-authentication: none
+authentication:
+  reads: public
+  mutations:
+    authority: explicit AUTH_VERIFY_URL
+    verification: 'POST existing Auth /api/v1/auth/verify with JSON token'
+    credential: single Authorization bearer access token
+    caller_headers: never trusted
+    legacy_access_claims: typ and purpose may be absent; when present each must be access
+    missing_or_invalid_identity: 401
+    unavailable_authority: 503
+    redirects_or_fallback: forbidden
+authorization:
+  administrative_grant_matrix: unapproved
+  authenticated_http_mutations: 403 until approved grant rows are implemented
+  enforcement: every mutation handler before payload, usecase read, replay or write
