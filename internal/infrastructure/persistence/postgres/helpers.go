@@ -17,7 +17,9 @@ const (
 	defaultRoleKind   = model.PrincipalKindUser
 )
 
-func roleIDByKey(ctx context.Context, pool *pgxpool.Pool, roleKey string) (string, error) {
+func roleIDByKey(ctx context.Context, pool interface {
+	QueryRow(context.Context, string, ...any) pgx.Row
+}, roleKey string) (string, error) {
 	var roleID string
 	row := pool.QueryRow(ctx, `SELECT id::text FROM role WHERE key=$1`, roleKey)
 	if err := row.Scan(&roleID); err != nil {
@@ -41,7 +43,9 @@ func ensurePermissionExists(ctx context.Context, pool *pgxpool.Pool, permissionI
 	return nil
 }
 
-func withTx(ctx context.Context, pool *pgxpool.Pool, fn func(pgx.Tx) error) error {
+func withTx(ctx context.Context, pool interface {
+	Begin(context.Context) (pgx.Tx, error)
+}, fn func(pgx.Tx) error) error {
 	tx, err := pool.Begin(ctx)
 	if err != nil {
 		return err

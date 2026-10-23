@@ -10,7 +10,7 @@ Read .ai/rules/common.md, .ai/service.yaml, docs/README.md, and every affected c
 - ms-go-rbac owns role, permission, assignment, scope, override, and superadmin data.
 - rbac.assign-role and rbac.checkRole are Core NATS request/reply subjects and must remain queue-group safe.
 - Do not describe the PDP as active until it is wired into bootstrap and its repository interface matches the PostgreSQL adapter.
-- Current HTTP admin routes have no authentication middleware. Create service/role/permission handlers currently accept SET, not POST. Treat both as known defects, never as desired policy.
+- HTTP mutations are denied at the owner router; do not reopen them using actor headers. Reads remain legacy read-only. Service/role/permission handlers retain their SET-vs-POST defect behind that denial; do not broaden this patch. Administrative bootstrap is operator CLI only.
 
 ## Verification and delivery
 

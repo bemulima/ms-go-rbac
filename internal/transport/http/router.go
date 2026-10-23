@@ -34,5 +34,14 @@ func (r *Router) Handler() http.Handler {
 	private.RegisterRoutes(privateMux)
 	mux.Handle("/private/", http.StripPrefix("/private", privateMux))
 
-	return mux
+	// No network caller currently has a verified role-management authority.
+	// Keep read contracts and signed NATS signup; never trust actor headers.
+	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		switch req.Method {
+		case http.MethodGet, http.MethodHead, http.MethodOptions:
+			mux.ServeHTTP(w, req)
+		default:
+			http.Error(w, "HTTP mutations disabled; use operator bootstrap", http.StatusForbidden)
+		}
+	})
 }

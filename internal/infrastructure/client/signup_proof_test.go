@@ -52,6 +52,8 @@ func TestSignupProofStrictBindingAndFreshness(t *testing.T) {
 		{"purpose", func(g *domain.SignupGrant) { g.Purpose = "other" }, domain.ErrUnauthenticated},
 		{"version", func(g *domain.SignupGrant) { g.Version = 2 }, domain.ErrUnauthenticated},
 		{"subject", func(g *domain.SignupGrant) { g.Subject = "other" }, domain.ErrUnauthenticated},
+		{"admin-role", func(g *domain.SignupGrant) { g.Role = "admin" }, domain.ErrSignupConflict},
+		{"moderator-role", func(g *domain.SignupGrant) { g.Role = "moderator" }, domain.ErrSignupConflict},
 		{"role", func(g *domain.SignupGrant) { g.Role = "invalid" }, domain.ErrSignupConflict},
 		{"kind", func(g *domain.SignupGrant) { g.PrincipalKind = "invalid" }, domain.ErrSignupConflict},
 		{"tenant", func(g *domain.SignupGrant) { g.TenantID = g.PrincipalID }, domain.ErrSignupConflict},

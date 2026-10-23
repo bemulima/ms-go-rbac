@@ -1,5 +1,7 @@
 schema_version: 1
 commands:
+  - {name: operator-sql-source-check, run: "env -u RBAC_SIGNUP_TEST_DATABASE_URL go test -tags=integration ./internal/infrastructure/persistence/postgres -run '^TestOperatorBootstrapSQLConcurrentReceiptAndDrift$' -v", requires_approval: false, risk: compile-and-skip-no-database}
+  - {name: operator-bootstrap-tests, run: go test ./cmd/ms-rbac-operator-bootstrap ./internal/transport/http ./internal/infrastructure/persistence/postgres, requires_approval: false, risk: isolated-test-harness}
   - {name: agent-policy, run: ./scripts/check-agent-policy.sh, requires_approval: false, risk: verification}
   - {name: format-check, run: 'test -z "$(gofmt -l $(git ls-files ''*.go''))"', requires_approval: false, risk: verification}
   - {name: vet, run: go vet ./..., requires_approval: false, risk: verification}
