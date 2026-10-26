@@ -36,3 +36,21 @@ Do not roll back to the vulnerable public mutation surface. Retain fail-closed G
 ## Source verification and deferred PostgreSQL acceptance
 
 `go test ./...` covers direct HTTP denial, CLI guards and transaction protocol harnesses. `go vet ./...` and policy/format checks are required. `env -u RBAC_SIGNUP_TEST_DATABASE_URL go test -tags=integration ./internal/infrastructure/persistence/postgres -run '^TestOperatorBootstrapSQLConcurrentReceiptAndDrift$' -v` compiles the real PostgreSQL test and proves its no-database skip guard; it is NOT database acceptance. Real execution requires separately approved, already migrated owned loopback *_test DB and migration004, never canonical lw_rbac. The test creates no database or server. Future actual PostgreSQL receipt/concurrency/rollback/trigger validation remains a pre-activation acceptance gate; no canonical privileges are exercised by source tests.
+
+The opt-in `operator-sql-acceptance` command also covers real receipt-insert
+failure rollback, competing grants, unexpected existing roles, read-only
+transaction denial, immutable receipt update/delete, and refusal of populated
+004 rollback. Supply `RBAC_SIGNUP_TEST_DATABASE_URL` privately for the explicitly
+owned `_test` database and attest the actual backend with
+`RBAC_SIGNUP_POSTGRES_EXPECTED_SERVER_IP` when the loopback connection is forwarded
+to the existing PostgreSQL container. No test creates a database or role.
+
+The CLI identity test uses the production database opener against that isolated
+database for exact non-superuser identity and invalid credentials/user/port
+checks. The full CLI correctly refuses the `_test` database because its public
+operator command requires `--database lw_rbac`. Positive SQL grant/receipt
+acceptance exercises the production usecase/repository in `_test`; it is not a
+canonical CLI grant and does not relax the CLI guard. Real environment guards
+also remain covered by existing CLI unit tests. Canonical 004, registration of a
+new operator-approved test account, and its exact-principal grant still require
+their separate authorizations.
