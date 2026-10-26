@@ -1,7 +1,7 @@
 schema_version: 1
 documentation: docs/http-contract.md
 api:
-  - {method: PATCH, path: /api/v1/principal-role/update}
+  - {method: PATCH, path: /api/v1/principal-role/update, status: 403, retired: true}
   - {method: GET, path: /api/v1/principal-role/get}
   - {method: GET, path: /api/v1/principal-role/get-by-role}
   - {method: GET, path: /api/v1/principal-permission/list}
@@ -11,3 +11,9 @@ admin:
   get_update_list: [service, role, permission]
   role_permission: {method: POST, path: /admin/v1/role-permission}
 authentication: none
+
+mutation_policy:
+  all_http_non_read_methods: forbidden_403_before_dispatch
+  administrative_grants: standalone_operator_cli_only
+  actor_headers_are_authority: false
+  signed_student_signup: unchanged

@@ -129,3 +129,6 @@ loopback owned database ending in _test, already migrated by the root. A Docker
 backend requires its exact root-attested IP in RBAC_SIGNUP_POSTGRES_EXPECTED_SERVER_IP
 (or the existing T16_POSTGRES_EXPECTED_SERVER_IP). Tests retain receipt/data;
 they do not migrate, reset or clean tables and do not claim full Auth issuance.
+
+## Operator receipts (004, source only until approved migration)
+operator_bootstrap_receipt commits exact operator intent, prior-role expectation and timestamp atomically with the existing default-scope principal assignment. Request IDs and principals are unique; receipts reject UPDATE/DELETE. A global transaction advisory lock serializes CLI grants. Same intent verifies current assignment before replay; drift/conflict never repairs roles. Populated down migration refuses rollback. No startup/automatic grants.

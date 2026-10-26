@@ -6,18 +6,22 @@ import (
 
 	"github.com/example/ms-rbac-service/internal/domain/repository"
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 // PrincipalRoleUpdate contains fields for updating a principal role.
 type PrincipalRoleUpdate = repository.PrincipalRoleUpdate
 
 // PrincipalRoleRepository manages role assignments for principals.
-type PrincipalRoleRepository struct {
-	pool *pgxpool.Pool
+type principalRoleDB interface {
+	Begin(context.Context) (pgx.Tx, error)
+	QueryRow(context.Context, string, ...any) pgx.Row
 }
 
-func NewPrincipalRoleRepository(pool *pgxpool.Pool) *PrincipalRoleRepository {
+type PrincipalRoleRepository struct {
+	pool principalRoleDB
+}
+
+func NewPrincipalRoleRepository(pool principalRoleDB) *PrincipalRoleRepository {
 	return &PrincipalRoleRepository{pool: pool}
 }
 
@@ -27,17 +31,7 @@ func (r *PrincipalRoleRepository) Update(ctx context.Context, principalID string
 		return err
 	}
 	return withTx(ctx, r.pool, func(tx pgx.Tx) error {
-		_, err := tx.Exec(ctx, `DELETE FROM principal_role
-			WHERE principal_id=$1 AND principal_kind=$2 AND tenant_id=$3 AND service_id=$4 AND resource_kind=$5 AND resource_id=$6`,
-			principalID, string(defaultRoleKind), defaultTenantID, defaultServiceID, defaultScopeKind, defaultResourceID)
-		if err != nil {
-			return err
-		}
-		_, err = tx.Exec(ctx, `INSERT INTO principal_role
-			(principal_id, principal_kind, role_id, tenant_id, service_id, resource_kind, resource_id)
-			VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-			principalID, string(defaultRoleKind), roleID, defaultTenantID, defaultServiceID, defaultScopeKind, defaultResourceID)
-		return err
+		return replacePrincipalRole(ctx, tx, principalID, roleID)
 	})
 }
 
@@ -69,4 +63,19 @@ func (r *PrincipalRoleRepository) Get(ctx context.Context, principalID string) (
 		return "", err
 	}
 	return roleKey, nil
+}
+
+// Shared assignment persistence for the ordinary usecase and atomic operator bootstrap.
+func replacePrincipalRole(ctx context.Context, tx pgx.Tx, principalID, roleID string) error {
+	_, err := tx.Exec(ctx, `DELETE FROM principal_role
+			WHERE principal_id=$1 AND principal_kind=$2 AND tenant_id=$3 AND service_id=$4 AND resource_kind=$5 AND resource_id=$6`,
+		principalID, string(defaultRoleKind), defaultTenantID, defaultServiceID, defaultScopeKind, defaultResourceID)
+	if err != nil {
+		return err
+	}
+	_, err = tx.Exec(ctx, `INSERT INTO principal_role
+			(principal_id, principal_kind, role_id, tenant_id, service_id, resource_kind, resource_id)
+			VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+		principalID, string(defaultRoleKind), roleID, defaultTenantID, defaultServiceID, defaultScopeKind, defaultResourceID)
+	return err
 }
