@@ -9,26 +9,32 @@ import (
 
 // Config holds environment driven settings for the service.
 type Config struct {
-	AppEnv              string
-	HTTPAddr            string
-	DBDSN               string
-	NATSURL             string
-	AuthSignupPublicKey string
-	AuthModeratorIss    string
-	AuthModeratorAud    string
-	CacheTTL            time.Duration
+	AppEnv                               string
+	HTTPAddr                             string
+	DBDSN                                string
+	NATSURL                              string
+	AuthSignupPublicKey                  string
+	AuthJWTPublicKey                     string
+	AuthJWTIssuer                        string
+	ReviewerPermissionDecisionPrivateKey string
+	AuthModeratorIss                     string
+	AuthModeratorAud                     string
+	CacheTTL                             time.Duration
 }
 
 // Load reads configuration from environment variables applying defaults where necessary.
 func Load() (Config, error) {
 	cfg := Config{
-		AppEnv:              getEnv("APP_ENV", "dev"),
-		HTTPAddr:            getEnv("HTTP_ADDR", ":8080"),
-		DBDSN:               os.Getenv("DB_DSN"),
-		NATSURL:             getEnv("NATS_URL", "nats://nats:4222"),
-		AuthSignupPublicKey: os.Getenv("AUTH_SIGNUP_PUBLIC_KEY"),
-		AuthModeratorIss:    os.Getenv("AUTH_MODERATOR_JWT_ISS"),
-		AuthModeratorAud:    os.Getenv("AUTH_MODERATOR_JWT_AUD"),
+		AppEnv:                               getEnv("APP_ENV", "dev"),
+		HTTPAddr:                             getEnv("HTTP_ADDR", ":8080"),
+		DBDSN:                                os.Getenv("DB_DSN"),
+		NATSURL:                              getEnv("NATS_URL", "nats://nats:4222"),
+		AuthSignupPublicKey:                  os.Getenv("AUTH_SIGNUP_PUBLIC_KEY"),
+		AuthJWTPublicKey:                     os.Getenv("AUTH_JWT_PUBLIC_KEY"),
+		AuthJWTIssuer:                        getEnv("AUTH_JWT_ISSUER", "auth-service"),
+		ReviewerPermissionDecisionPrivateKey: os.Getenv("RBAC_REVIEWER_PERMISSION_DECISION_PRIVATE_KEY"),
+		AuthModeratorIss:                     os.Getenv("AUTH_MODERATOR_JWT_ISS"),
+		AuthModeratorAud:                     os.Getenv("AUTH_MODERATOR_JWT_AUD"),
 	}
 	ttl, err := parseDurationSeconds(getEnv("CACHE_TTL_SECONDS", "60"))
 	if err != nil {

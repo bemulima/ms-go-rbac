@@ -5,7 +5,7 @@ layers:
   transport: internal/transport
   infrastructure: internal/infrastructure
   composition_root: cmd/ms-rbac-service
-active_paths: [HTTP CRUD and principal lookups, rbac.assign-role RPC, rbac.checkRole RPC]
+active_paths: [HTTP CRUD and principal lookups, rbac.assign-role RPC, rbac.checkRole RPC, rbac.checkPermission RPC]
 inactive_or_incomplete:
   - PDP engine is not wired into bootstrap.
   - PDP repository does not implement the current domain interface because context parameters differ.

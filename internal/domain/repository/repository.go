@@ -36,6 +36,7 @@ type RolePermissionCreate struct {
 type RolePermissionRepository interface {
 	Create(context.Context, RolePermissionCreate) error
 	ListByRoleKey(context.Context, string) ([]model.Permission, error)
+	HasDefaultPermission(context.Context, string, string, string) (bool, error)
 }
 
 type PrincipalRoleUpdate struct {
@@ -45,4 +46,9 @@ type PrincipalRoleUpdate struct {
 type PrincipalRoleRepository interface {
 	Update(context.Context, string, PrincipalRoleUpdate) error
 	Get(context.Context, string) (string, error)
+}
+
+type PrincipalPermissionRoleRepository interface {
+	PrincipalRoleRepository
+	GetDefaultRole(context.Context, string) (string, error)
 }
