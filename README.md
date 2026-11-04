@@ -11,9 +11,10 @@ This repository provides a lightweight RBAC microservice implemented in Go. The 
 - `internal/infrastructure/persistence/postgres` — Postgres repository implementations.
 
 ## Messaging Boundary
-- Retained broker scope for this service is limited to Core NATS RPC: `rbac.assign-role` and `rbac.checkRole`.
-- Both subjects are request/reply only and queue-group-safe by design.
+- Retained broker scope for this service is limited to Core NATS RPC: `rbac.assign-role`, `rbac.checkRole`, and `rbac.checkPermission`.
+- All subjects are request/reply only and queue-group-safe by design.
 - `rbac.assign-role` is a mutating RPC and must remain idempotent for duplicate retries.
+- `rbac.checkPermission` accepts only a short-lived Auth-signed reviewer proof and checks the fixed `knowledge_graph.review` permission.
 
 ## Running locally
 

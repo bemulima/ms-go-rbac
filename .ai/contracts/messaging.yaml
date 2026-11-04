@@ -4,6 +4,39 @@ core_nats_rpc:
   consumes:
     - {subject: rbac.assign-role, queue: ms-go-rbac, request: [key_id, payload, signature], response: [ok, error]}
     - {subject: rbac.checkRole, queue: ms-go-rbac, request: [user_id, role], response: [ok, error]}
+    - {subject: rbac.checkPermission, queue: ms-go-rbac, request: [proof], response: [decision_jwt, error]}
+reviewer_permission_lookup:
+  request_fields: [proof]
+  jwt_header: {alg: RS256, typ: JWT}
+  jwt_claims: [iss, aud, sub, typ, purpose, permission, jti, iat, exp]
+  audience: ms-go-rbac-knowledge-review
+  purpose: AUTH_RBAC_KNOWLEDGE_GRAPH_REVIEW_PERMISSION_V1
+  proof_type: knowledge_graph_permission_check
+  permission: knowledge_graph.review
+  signing_algorithm: RS256
+  public_key_config: AUTH_JWT_PUBLIC_KEY
+  issuer: {config: AUTH_JWT_ISSUER, default: auth-service}
+  subject_and_jti: canonical_nonzero_uuid
+  maximum_lifetime_seconds: 30
+  future_iat_skew_seconds: 5
+  request_identity_fields: forbidden
+  signed_decision:
+    envelope: [decision_jwt]
+    algorithm: RS256
+    header: {alg: RS256, typ: JWT}
+    claims: [iss, aud, sub, typ, purpose, permission, decision, jti, request_jti, request_digest, iat, exp]
+    issuer: ms-go-rbac
+    audience: ms-go-auth-knowledge-review-permission-decision
+    type: knowledge_graph_permission_decision
+    purpose: RBAC_AUTH_KNOWLEDGE_GRAPH_REVIEW_DECISION_V1
+    permission: knowledge_graph.review
+    decision_values: [ALLOW, DENY]
+    response_jti: fresh_nonzero_canonical_uuid
+    request_binding: [verified_proof_jti, lowercase_sha256_of_exact_proof]
+    private_key_config: RBAC_REVIEWER_PERMISSION_DECISION_PRIVATE_KEY
+    lifetime_seconds: 15
+    maximum_lifetime_seconds: 30
+    no_signer: fail_closed
 signup_assignment:
   contract: AUTH_RBAC_STUDENT_PROVISIONING_V1
   contract_documentation: .ai/contracts/auth-rbac-student-provisioning-v1.md

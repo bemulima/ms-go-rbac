@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/example/ms-rbac-service/internal/domain"
 	"github.com/example/ms-rbac-service/internal/domain/repository"
 	"github.com/jackc/pgx/v5"
 )
@@ -61,6 +62,27 @@ func (r *PrincipalRoleRepository) Get(ctx context.Context, principalID string) (
 			return "", nil
 		}
 		return "", err
+	}
+	return roleKey, nil
+}
+
+// GetDefaultRole returns the principal's role at the canonical global default
+// scope. Multiple role bindings at that scope are ambiguous and fail closed.
+func (r *PrincipalRoleRepository) GetDefaultRole(ctx context.Context, principalID string) (string, error) {
+	var roleKey string
+	var count int64
+	err := r.pool.QueryRow(ctx, `SELECT COALESCE(MIN(r.key), ''), COUNT(*)
+		FROM principal_role pr
+		JOIN role r ON r.id = pr.role_id
+		WHERE pr.principal_id=$1 AND pr.principal_kind=$2
+			AND pr.tenant_id=$3 AND pr.service_id=$4 AND pr.resource_kind=$5 AND pr.resource_id=$6`,
+		principalID, string(defaultRoleKind), defaultTenantID, defaultServiceID, defaultScopeKind, defaultResourceID).
+		Scan(&roleKey, &count)
+	if err != nil {
+		return "", err
+	}
+	if count > 1 {
+		return "", domain.ErrAmbiguousPrincipalRole
 	}
 	return roleKey, nil
 }

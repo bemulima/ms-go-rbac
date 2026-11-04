@@ -4,6 +4,7 @@ import (
 	"context"
 	"strings"
 
+	"github.com/example/ms-rbac-service/internal/domain"
 	"github.com/example/ms-rbac-service/internal/domain/model"
 	"github.com/example/ms-rbac-service/internal/domain/repository"
 )
@@ -48,12 +49,12 @@ func (uc *PrincipalRoleUsecase) GetByRole(ctx context.Context, principalID, role
 
 // PrincipalPermissionUsecase resolves permissions for principals.
 type PrincipalPermissionUsecase struct {
-	roleRepo       repository.PrincipalRoleRepository
+	roleRepo       repository.PrincipalPermissionRoleRepository
 	permissionRepo repository.RolePermissionRepository
 }
 
 // NewPrincipalPermissionUsecase constructs a new PrincipalPermissionUsecase instance.
-func NewPrincipalPermissionUsecase(roleRepo repository.PrincipalRoleRepository, permissionRepo repository.RolePermissionRepository) *PrincipalPermissionUsecase {
+func NewPrincipalPermissionUsecase(roleRepo repository.PrincipalPermissionRoleRepository, permissionRepo repository.RolePermissionRepository) *PrincipalPermissionUsecase {
 	return &PrincipalPermissionUsecase{roleRepo: roleRepo, permissionRepo: permissionRepo}
 }
 
@@ -97,6 +98,22 @@ func (uc *PrincipalPermissionUsecase) GetByPermission(ctx context.Context, princ
 		}
 	}
 	return false, nil
+}
+
+// HasKnowledgeGraphReview checks only the fixed reviewer entitlement at the
+// canonical default scope. It fails closed when that scope is ambiguous.
+func (uc *PrincipalPermissionUsecase) HasKnowledgeGraphReview(ctx context.Context, principalID string) (bool, error) {
+	if !domain.ValidPrincipalID(principalID) {
+		return false, domain.ErrUnauthenticated
+	}
+	role, err := uc.roleRepo.GetDefaultRole(ctx, principalID)
+	if err != nil {
+		return false, err
+	}
+	if role == "" {
+		return false, nil
+	}
+	return uc.permissionRepo.HasDefaultPermission(ctx, role, domain.KnowledgeGraphReviewPermission, "")
 }
 
 func permissionIdentifier(perm model.Permission) string {

@@ -59,3 +59,17 @@ func (r *RolePermissionRepository) ListByRoleKey(ctx context.Context, roleKey st
 	}
 	return items, nil
 }
+
+// HasDefaultPermission checks an exact action/resource-kind pair attached to
+// the role's canonical default resource binding.
+func (r *RolePermissionRepository) HasDefaultPermission(ctx context.Context, roleKey, action, resourceKind string) (bool, error) {
+	var allowed bool
+	err := r.pool.QueryRow(ctx, `SELECT EXISTS (
+		SELECT 1
+		FROM role_permission rp
+		JOIN role r ON r.id = rp.role_id
+		JOIN permission p ON p.id = rp.permission_id
+		WHERE r.key=$1 AND p.action=$2 AND p.resource_kind=$3 AND rp.resource_id=$4
+	)`, roleKey, action, resourceKind, defaultResourceID).Scan(&allowed)
+	return allowed, err
+}

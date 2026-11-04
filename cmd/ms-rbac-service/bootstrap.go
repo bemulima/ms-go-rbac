@@ -33,6 +33,15 @@ func bootstrap() (*http.Server, error) {
 	if err != nil {
 		return nil, err
 	}
+	reviewerProofVerifier, err := client.NewAuthReviewerPermissionProofVerifier(cfg.AuthJWTPublicKey, cfg.AuthJWTIssuer)
+	if err != nil {
+		return nil, err
+	}
+	reviewerDecisionSigner, err := client.NewReviewerPermissionDecisionSigner(cfg.ReviewerPermissionDecisionPrivateKey)
+	if err != nil {
+		log.Printf("reviewer permission decisions disabled: %v", err)
+		reviewerDecisionSigner = nil
+	}
 
 	if cfg.DBDSN == "" {
 		return nil, fmt.Errorf("DB_DSN is required")
@@ -94,6 +103,14 @@ func bootstrap() (*http.Server, error) {
 		}
 		if err := checker.Listen(); err != nil {
 			log.Printf("nats subscribe failed (rbac.checkRole): %v", err)
+		}
+
+		permissionChecker := natstransport.PermissionChecker{
+			Conn: conn, Subject: "rbac.checkPermission", Queue: "ms-go-rbac",
+			ProofVerifier: reviewerProofVerifier, DecisionSigner: reviewerDecisionSigner, Permission: principalPermissionUC,
+		}
+		if err := permissionChecker.Listen(); err != nil {
+			log.Printf("nats subscribe failed (rbac.checkPermission): %v", err)
 		}
 	}
 	httpServer := &http.Server{
