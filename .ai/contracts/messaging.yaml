@@ -6,6 +6,7 @@ core_nats_rpc:
     - {subject: rbac.checkRole, queue: ms-go-rbac, request: [user_id, role], response: [ok, error]}
     - {subject: rbac.checkPermission, queue: ms-go-rbac, request: [proof], response: [decision_jwt, error]}
 reviewer_permission_lookup:
+  super_admin: {canonical_default_role: admin, individual_permission_grant_required: false, caller_role_claims: forbidden}
   request_fields: [proof]
   jwt_header: {alg: RS256, typ: JWT}
   jwt_claims: [iss, aud, sub, typ, purpose, permission, jti, iat, exp]

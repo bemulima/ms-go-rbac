@@ -119,3 +119,5 @@ callers lose unsigned assignment authority; unknown grant policy remains
 HUMAN_POLICY_DECISION_REQUIRED. Auth, User and other consumers must follow their
 owned policy rather than manufacture signup authority. Public role readback and
 HTTP reads are preserved.
+
+Verified canonical default-scope `admin` is Super Admin and receives reviewer ALLOW without an individual `knowledge_graph.review` grant. Other roles retain exact permission lookup. Caller role headers and non-default assignments never establish this authority.
