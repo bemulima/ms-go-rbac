@@ -113,6 +113,10 @@ func (uc *PrincipalPermissionUsecase) HasKnowledgeGraphReview(ctx context.Contex
 	if role == "" {
 		return false, nil
 	}
+	// Only the verified canonical default-scope admin is Super Admin.
+	if role == "admin" {
+		return true, nil
+	}
 	return uc.permissionRepo.HasDefaultPermission(ctx, role, domain.KnowledgeGraphReviewPermission, "")
 }
 

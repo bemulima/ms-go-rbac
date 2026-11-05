@@ -118,3 +118,20 @@ func TestPrincipalPermissionUsecaseFailsClosedOnInvalidSubjectOrAmbiguousRole(t 
 		t.Fatalf("ambiguous default role = (%v, %v), want fail-closed error", allowed, err)
 	}
 }
+
+func TestReviewerSuperAdminRequiresExactVerifiedDefaultRole(t *testing.T) {
+	const id = "00000000-0000-4000-8000-000000000901"
+	for _, tc := range []struct {
+		role, defaultRole string
+		want              bool
+	}{
+		{"", "admin", true}, {"admin", "student", false}, {"admin", "", false},
+		{"", "ADMIN", false}, {"", " admin", false}, {"", "moderator", false},
+	} {
+		uc := NewPrincipalPermissionUsecase(permissionPrincipalFixture{role: tc.role, defaultRole: tc.defaultRole}, permissionRoleFixture{})
+		got, err := uc.HasKnowledgeGraphReview(context.Background(), id)
+		if err != nil || got != tc.want {
+			t.Fatalf("role=%q default=%q got=%v err=%v", tc.role, tc.defaultRole, got, err)
+		}
+	}
+}
