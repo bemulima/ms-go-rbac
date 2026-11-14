@@ -105,6 +105,13 @@ func bootstrap() (*http.Server, error) {
 			log.Printf("nats subscribe failed (rbac.checkRole): %v", err)
 		}
 
+		defaultStudentChecker := natstransport.DefaultStudentRoleChecker{
+			Conn: conn, Roles: principalRoleRepo,
+		}
+		if err := defaultStudentChecker.Listen(); err != nil {
+			log.Printf("nats subscribe failed (rbac.checkDefaultStudentRole): %v", err)
+		}
+
 		permissionChecker := natstransport.PermissionChecker{
 			Conn: conn, Subject: "rbac.checkPermission", Queue: "ms-go-rbac",
 			ProofVerifier: reviewerProofVerifier, DecisionSigner: reviewerDecisionSigner, Permission: principalPermissionUC,
