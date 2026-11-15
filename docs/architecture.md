@@ -11,3 +11,11 @@ The NATS role assignment consumer now admits only a dedicated Auth Ed25519-signe
 The reviewer permission RPC accepts only a short-lived Auth RS256 proof. RBAC pins the configured Auth issuer, a fixed audience, proof purpose/type, exact permission, subject/JTI shape, and lifetime before deriving the principal from `sub`. It evaluates only the unique canonical default-scope role and returns false for missing grants; ambiguous role bindings or dependency failures deny the lookup.
 
 Operator-only initial grants use PrincipalRoleUsecase.Bootstrap and the existing assignment persistence helper, committing an immutable receipt with the grant. See operator-bootstrap.md. No HTTP/NATS administrative grant is composed.
+
+Mentor's dedicated source-only mutation follows domain/usecase/outbound-adapter
+boundaries: a fresh Auth proof enters MentorRoleMutation; its atomic store
+rechecks current canonical Admin and writes only the dedicated Mentor scope,
+immutable receipt and terminal fence. See mentor-role-owner.md. The usecase,
+store and prior signed lookup providers are not wired into the composition root.
+No public mutation route, active PDP path or legacy role-management authority
+is added by these files.

@@ -132,3 +132,22 @@ they do not migrate, reset or clean tables and do not claim full Auth issuance.
 
 ## Operator receipts (004, source only until approved migration)
 operator_bootstrap_receipt commits exact operator intent, prior-role expectation and timestamp atomically with the existing default-scope principal assignment. Request IDs and principals are unique; receipts reject UPDATE/DELETE. A global transaction advisory lock serializes CLI grants. Same intent verifies current assignment before replay; drift/conflict never repairs roles. Populated down migration refuses rollback. No startup/automatic grants.
+
+## Mentor owner metadata, receipts and terminal fence (005, source only)
+
+See [the owning mutation contract](mentor-role-owner.md). Additive 005 creates
+dedicated Mentor role/service metadata only when their keys are absent, an
+immutable marker of the created IDs, immutable command receipts, and one
+bilaterally indexed terminal revision fence. It creates no principal grants,
+permissions or hierarchy and does not alter 001–004 or base reference data.
+
+The new unmounted adapter serializes current canonical Admin, exact Mentor
+assignment, receipt and fence under metadata-first table locks in an explicit
+READ COMMITTED transaction. Replay rechecks current authority and physical
+assignment; historical approval cannot restore a revoked grant. Default
+Student and unrelated scopes remain untouched.
+
+005 DOWN refuses history, drift, metadata usages and unknown foreign-key
+consumers; it only removes an empty owner schema and the exact marker-owned
+metadata. Migration source checks and pgx transaction fixtures are not actual
+PostgreSQL acceptance. No 005 SQL or runtime activation has been executed.

@@ -1,13 +1,17 @@
 # Mentor role admission and pure revision-fence planner
 
-Status: **source-only, unmounted; no grant authority or durable adapter**.
+Status: **source-only, unmounted**. The separate
+[atomic owner adapter](mentor-role-owner.md) now exists in source;
+PostgreSQL acceptance and runtime authority are not established by these files.
 Parent task: `bemulima/learning-platform-business#27`, MENT-01A.
 
-This additive cut supplies a cryptographic consumer and a pure domain planner.
-It does not add a route, subscription, role seed, scope metadata, migration,
-runtime key configuration, SQL transaction, production in-memory repository or
-service activation. Existing signup, reviewer, default Student, operator and
-CAT behavior remains unchanged. MENT-01A is not complete on this evidence.
+This document covers the cryptographic consumer and pure domain planner.
+The following owner slice adds an unmounted PostgreSQL adapter and source
+migration 005 for dedicated metadata, receipts and terminal fences. Neither
+slice adds a route, subscription, runtime key configuration, production
+in-memory repository or service activation. Existing signup, reviewer,
+default Student, operator and CAT behavior remains unchanged. MENT-01A is
+not complete on this evidence.
 
 ## Contract ownership and admission
 
@@ -15,7 +19,7 @@ Auth owns the canonical assertion contract at
 `ms-go-auth/.ai/contracts/mentor-role-decision-v1.md` and its adjacent JSON
 manifest. Those files are not copied into RBAC. Mentor owns the committed
 application lifecycle and decision intent. RBAC owns this admission code and
-its future assignment, immutable receipt and revision-fence transaction.
+its separate assignment, immutable receipt and revision-fence transaction.
 
 `client.NewAuthMentorRoleProofVerifier(publicKeyPEM)` accepts one separately
 supplied Mentor RSA public key. Missing configuration yields an unavailable
@@ -92,7 +96,12 @@ role grant nor evidence that a real user, Admin or database was consulted.
 future current scoped readback, not the historical receipt, establishes actual
 assignment state for Mentor finalization.
 
-## Mandatory future adapter prerequisites
+## Mandatory composition prerequisites
+
+The [atomic owner implementation](mentor-role-owner.md) supplies the following
+transaction protocol in source. SQL behavior is still NOT_RUN, and fresh signed
+scoped readback is still a following slice. These requirements remain mandatory
+before any endpoint or runtime is composed.
 
 The source helpers MUST NOT be composed as a mutation endpoint before all of
 the following owner work is implemented and accepted:
@@ -121,7 +130,8 @@ the following owner work is implemented and accepted:
    new application. The current fixed v1 lifecycle has no reactivation.
 6. Create/revoke only the fixed Mentor service scope. Preserve the user's
    existing canonical-default Student assignment and unrelated scopes. Missing
-   or ambiguous scope/role metadata must deny; this cut deliberately adds none.
+   or ambiguous scope/role metadata must deny; source migration 005 creates only
+   dedicated metadata with an immutable ownership marker, never principal grants.
 7. Return an authenticated fresh scoped readback tied to a new lookup nonce,
    the exact presented proof-byte digest and the current application/target
    fence. An old receipt, stable operation request ID or unsigned boolean is
@@ -130,7 +140,7 @@ the following owner work is implemented and accepted:
    for the same immutable command may replay without writes, but cannot mint a
    new grant. Do not persist bearer/refresh tokens or raw assertions.
 
-No production store or mounted canonical-Admin adapter exists in this slice.
+The store and canonical-Admin lookup providers exist in source only; none is mounted.
 SQL durability, live session validation, authenticated owner transports,
 broker authorization, migration behavior, actual Student-role preservation and
 Mentor runtime activation remain **not verified**, not implicitly passing.
