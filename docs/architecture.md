@@ -19,3 +19,8 @@ immutable receipt and terminal fence. See mentor-role-owner.md. The usecase,
 store and prior signed lookup providers are not wired into the composition root.
 No public mutation route, active PDP path or legacy role-management authority
 is added by these files.
+
+The signed Mentor scoped-role readback uses dedicated service proof admission,
+a narrow usecase, a coherent read-only PostgreSQL snapshot and nonce/digest-bound
+reply signing. It does not recheck the historical Admin or mutate roles.
+Provider and consumer remain unmounted; see mentor-scoped-role-readback.md.

@@ -1,5 +1,7 @@
 schema_version: 1
 commands:
+  - {name: mentor-role-readback-tests, run: "go test ./internal/domain ./internal/usecase ./internal/infrastructure/persistence/postgres ./internal/infrastructure/client ./internal/transport/message/nats -run '^TestMentorRoleReadback' -count=1", requires_approval: false, risk: source-only-fixtures-no-database}
+  - {name: mentor-role-readback-race, run: "go test -race ./internal/domain ./internal/usecase ./internal/infrastructure/persistence/postgres ./internal/infrastructure/client ./internal/transport/message/nats -run '^TestMentorRoleReadback' -count=1", requires_approval: false, risk: source-only-fixtures-no-database}
   - {name: mentor-role-owner-tests, run: "go test ./internal/domain ./internal/usecase ./internal/infrastructure/persistence/postgres ./cmd/ms-rbac-migrate -run '^TestMentorRole' -count=1", requires_approval: false, risk: source-only-fixtures-no-database}
   - {name: mentor-role-owner-race, run: "go test -race ./internal/domain ./internal/usecase ./internal/infrastructure/persistence/postgres -run '^TestMentorRole' -count=1", requires_approval: false, risk: source-only-fixtures-no-database}
   - {name: source-build-without-vcs, run: go build -buildvcs=false ./..., requires_approval: false, risk: source-build-only}

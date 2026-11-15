@@ -186,9 +186,14 @@ identity is checked separately.
 disposable PostgreSQL environment; test real lock contention, concurrent grant/
 revoke/replay, unique/FK/trigger enforcement, rollback and restart; confirm
 preserved Student/current Admin. Then complete signed fresh nonce/proof-digest
-bound scoped readback, Mentor live-session handoff/recovery and reviewed runtime
+bound scoped readback composition, Mentor live-session handoff/recovery and reviewed runtime
 wiring. This internal result is not authenticated transport or fresh readback,
 and cannot by itself finalize Mentor private access.
+
+The separate [signed scoped readback](mentor-scoped-role-readback.md) now has
+source adapters and producer/consumer conformance. It confirms only a current
+exact receipt/fence/physical assignment, not this mutation method's replay
+result. It remains unmounted pending the gates above.
 
 Executable Gherkin belongs in `learning-platform-verification`; MENT-00
 acceptance references remain available, but no Gherkin business PASS, MCP,
