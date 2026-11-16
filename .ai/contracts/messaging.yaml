@@ -76,6 +76,27 @@ mcp_student_role_candidate:
     auth_public_key_verifier: not_implemented
   mcp_scope_grant: none_role_only
   bootstrap_subscription: forbidden_until_auth_consumer_accepted
+mcp_student_read_scope_policy_candidate:
+  epic: https://github.com/bemulima/learning-platform-business/issues/53
+  status: dormant_source_only_not_externally_callable
+  documentation: docs/mcp00-student-read-scope-policy.md
+  prerequisite: unique_current_canonical_default_student_role
+  request: canonical_lowercase_nonzero_principal_uuid_and_sorted_unique_pilot_scopes
+  scope_limit: 3
+  explicit_default_role_permissions:
+    - {scope: "profile:read", role: student, action: mcp.profile.read, resource_kind: empty, resource_id: canonical_zero}
+    - {scope: "courses:read", role: student, action: mcp.courses.read, resource_kind: empty, resource_id: canonical_zero}
+    - {scope: "tasks:read", role: student, action: mcp.tasks.read, resource_kind: empty, resource_id: canonical_zero}
+  grants_seeded: false
+  unknown_or_write_scopes: denied
+  admin_bypass: forbidden
+  missing_permission: denied
+  missing_or_ambiguous_role: denied
+  dependency_failure: no_partial_scopes
+  signed_scope_decision: not_implemented
+  auth_consent_client_platform_intersection: not_implemented
+  domain_object_acl: required_at_domain_owner_not_implemented_here
+  bootstrap_subscription: forbidden
 signup_assignment:
   contract: AUTH_RBAC_STUDENT_PROVISIONING_V1
   contract_documentation: .ai/contracts/auth-rbac-student-provisioning-v1.md

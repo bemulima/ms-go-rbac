@@ -116,6 +116,25 @@ exchange. Configuration and runtime wiring are deliberately deferred.
 reviewed scope-to-RBAC/owner-policy mapping, then join it with its fresh
 client/consent snapshot. No OAuth token or MCP endpoint is activated.
 
+## MCP Student pilot read-scope policy — DORMANT (MCP-00C3D3)
+
+This is an internal **source-only** evaluator layered after the canonical
+Student role lookup, not a new request/reply subject or JWT decision. The
+exact pilot mappings are `profile:read` → `mcp.profile.read`, `courses:read`
+→ `mcp.courses.read`, and `tasks:read` → `mcp.tasks.read`; all map to empty
+`resource_kind` at the canonical default zero resource ID. Each must have its
+own explicit current `student` role-permission link; none are seeded here.
+Absence means DENY; `admin`, ambiguous/non-default roles, unknown or write
+scopes, and unavailable storage cannot authorize read scopes. The requested
+set must be strictly sorted and duplicate-free and contain one to three pilot
+scopes. Errors never yield partially allowed scopes.
+
+See [pilot policy](mcp00-student-read-scope-policy.md) for the exact local
+contract and the still-missing signed Auth↔RBAC scope request/decision,
+Auth client/consent/platform-policy intersection, and domain-owner object ACL.
+The existing signed role-only candidate stays dormant and must not be used to
+mint token scope claims. No MCP runtime is enabled by this policy.
+
 ## Dedicated Auth signup proof
 
 The application boundary is
