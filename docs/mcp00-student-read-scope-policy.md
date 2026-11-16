@@ -32,10 +32,12 @@ partial successful scope set. A successful evaluation returns only the
 explicitly granted subset of the requested scopes.
 
 The evaluator is **not** a credential or externally callable RPC. It cannot
-populate `RBACStudentScopes` in Auth today. A separate future change must:
+populate `RBACStudentScopes` in Auth today. A later dormant RBAC producer
+candidate is documented in [MCP-00C3D4A](mcp00-student-scope-decision-source.md),
+but Auth-side verification/composition remains missing. The complete flow must:
 
-1. Define and sign an Auth-to-RBAC scope request and a fresh, replay-bound
-   RBAC-to-Auth decision; the MCP-00C3D1 **role-only** JWT is insufficient.
+1. Have Auth issue a distinct scope proof, verify the fresh and replay-bound
+   RBAC response, and reject the MCP-00C3D1 **role-only** JWT as a scope grant.
 2. Have Auth validate the MCP client, Student session, consent snapshot,
    platform policy, and signed RBAC decision before composing token scopes.
 3. Require the domain owner of each object to authorize the actual profile,

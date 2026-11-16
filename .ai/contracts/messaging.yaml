@@ -93,9 +93,51 @@ mcp_student_read_scope_policy_candidate:
   missing_permission: denied
   missing_or_ambiguous_role: denied
   dependency_failure: no_partial_scopes
-  signed_scope_decision: not_implemented
+  signed_scope_decision: dormant_producer_candidate_only
   auth_consent_client_platform_intersection: not_implemented
   domain_object_acl: required_at_domain_owner_not_implemented_here
+  bootstrap_subscription: forbidden
+mcp_student_scope_decision_candidate:
+  status: dormant_source_only_not_subscribed
+  epic: https://github.com/bemulima/learning-platform-business/issues/53
+  documentation: docs/mcp00-student-scope-decision-source.md
+  rpc_subject: rbac.checkMCPStudentScopes
+  queue: ms-go-rbac
+  request_fields: [proof]
+  proof:
+    header: {alg: RS256, typ: JWT}
+    claims: [iss, aud, sub, typ, purpose, scopes, jti, iat, exp]
+    audience: ms-go-rbac-mcp-student-scopes
+    type: mcp_student_scope_check
+    purpose: AUTH_RBAC_MCP_STUDENT_SCOPES_V1
+    identity: canonical_lowercase_nonzero_uuid
+    scopes: strictly_sorted_unique_pilot_read_only_1_to_3
+    maximum_lifetime_seconds: 30
+    future_iat_skew_seconds: 5
+    auth_public_key_config: AUTH_JWT_PUBLIC_KEY
+    raw_identity_and_scopes_in_rpc: denied
+  decision:
+    envelope: [decision_jwt]
+    algorithm: RS256
+    header: {alg: RS256, typ: JWT}
+    claims: [iss, aud, sub, typ, purpose, requested_scopes, allowed_scopes, jti, request_jti, request_digest, iat, exp]
+    issuer: ms-go-rbac
+    audience: ms-go-auth-mcp-student-scopes-decision
+    type: mcp_student_scopes_decision
+    purpose: RBAC_AUTH_MCP_STUDENT_SCOPES_DECISION_V1
+    requested: exact_verified_proof_scopes
+    allowed: exact_current_default_student_role_permission_subset_or_empty
+    response_jti: fresh_canonical_lowercase_nonzero_uuid
+    request_binding: [verified_request_jti, sha256_exact_raw_auth_proof]
+    ttl_seconds: 15
+    future_dedicated_private_key: required_not_configured
+    auth_public_key_verifier: not_implemented
+  unknown_or_write_scopes: denied
+  missing_permission: signed_empty_or_partial_subset
+  ambiguous_role_or_store_failure: generic_error_no_signed_decision
+  grants_seeded: false
+  auth_client_consent_platform_policy: not_implemented
+  domain_owner_acl: required_separately
   bootstrap_subscription: forbidden
 signup_assignment:
   contract: AUTH_RBAC_STUDENT_PROVISIONING_V1

@@ -135,6 +135,32 @@ Auth client/consent/platform-policy intersection, and domain-owner object ACL.
 The existing signed role-only candidate stays dormant and must not be used to
 mint token scope claims. No MCP runtime is enabled by this policy.
 
+## MCP Student signed scopes readback — DORMANT RBAC producer (MCP-00C3D4A)
+
+The additional, **unsubscribed** Core NATS subject is
+`rbac.checkMCPStudentScopes` (queue `ms-go-rbac`). It accepts only the exact
+`{"proof":"<JWT>"}` request. The signed Auth proof has distinct exact
+audience `ms-go-rbac-mcp-student-scopes`, purpose
+`AUTH_RBAC_MCP_STUDENT_SCOPES_V1`, type `mcp_student_scope_check`, and nine
+claims: `iss,aud,sub,typ,purpose,scopes,jti,iat,exp`. All one to three
+requested scopes must be sorted, distinct and among the three explicit
+read-only pilot scopes above. JWT signature, strict shape, canonical subject,
+freshness and purpose are verified before policy evaluation. The role-only
+Auth proof cannot replace it.
+
+On successful evaluation the response has only a signed `decision_jwt` with
+exact `requested_scopes` and `allowed_scopes`, fresh `jti`, bound
+`request_jti` and SHA-256 of the exact raw proof, 15-second TTL and distinct
+audience/type/purpose. RBAC signs **only** the explicit permission-granted
+subset (which can be empty); a missing key, ambiguous role, failed proof or
+permission store outage returns a generic error without a signed decision.
+The decision private key remains RBAC-only and is **not provisioned** here.
+
+The [producer contract](mcp00-student-scope-decision-source.md) documents all
+claims and the still-missing Auth consumer. Auth must separately verify the
+signed scopes, client/consent/platform policy, fresh grant and owner ACL.
+No OAuth tokens, bootstrap subscriptions or data access are activated.
+
 ## Dedicated Auth signup proof
 
 The application boundary is
