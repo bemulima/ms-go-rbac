@@ -20,7 +20,7 @@ func (f *mcpRoleProofVerifierFixture) VerifyMCPStudentRoleProof(_ context.Contex
 	f.proof = raw
 	return domain.MCPStudentRoleProof{
 		Subject: "00000000-0000-4000-8000-000000000901",
-		JWTID: "00000000-0000-4000-8000-000000000902",
+		JWTID:   "00000000-0000-4000-8000-000000000902",
 	}, f.err
 }
 

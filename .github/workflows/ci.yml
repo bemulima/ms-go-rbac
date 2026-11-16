@@ -28,7 +28,7 @@ jobs:
       - uses: actions/setup-go@v6
         with: {go-version-file: go.mod, cache: true}
       - run: ./scripts/check-agent-policy.sh
-      - run: gofmt -d $(git ls-files '*.go') && test -z "$(gofmt -l $(git ls-files '*.go'))"
+      - run: test -z "$(gofmt -l $(git ls-files '*.go'))"
       - run: go vet ./...
       - run: go test ./...
       - run: go run ./cmd/ms-rbac-http-integration

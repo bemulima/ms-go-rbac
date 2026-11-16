@@ -45,7 +45,7 @@ func TestMCPStudentProofVerifierAcceptsOnlyDedicatedSignedAssertion(t *testing.T
 	for _, tc := range []struct {
 		name string
 		edit func(map[string]any)
-	}{
+	} {
 		{"issuer", func(c map[string]any) { c["iss"] = "other" }},
 		{"audience", func(c map[string]any) { c["aud"] = domain.ReviewerPermissionProofAudience }},
 		{"purpose", func(c map[string]any) { c["purpose"] = domain.ReviewerPermissionProofPurpose }},
@@ -59,7 +59,7 @@ func TestMCPStudentProofVerifierAcceptsOnlyDedicatedSignedAssertion(t *testing.T
 		{"too old", func(c map[string]any) { c["exp"] = now.Unix() + domain.MCPStudentRoleProofMaxAgeSeconds + 1 }},
 		{"extra field", func(c map[string]any) { c["permission"] = "knowledge_graph.review" }},
 		{"missing role", func(c map[string]any) { delete(c, "role") }},
-	}{
+	} {
 		t.Run(tc.name, func(t *testing.T) {
 			claims := mcpStudentProofClaims(now.Unix())
 			tc.edit(claims)
