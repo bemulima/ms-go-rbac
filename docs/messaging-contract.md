@@ -68,6 +68,54 @@ Ambiguous default-scope role bindings, verification failures, or storage
 failures deny the lookup; dependency details are not returned. The lookup
 itself creates no grants and does not activate reviewer publication.
 
+## MCP Student signed role readback — DORMANT candidate (MCP-00C3D1)
+
+Parent: [MCP Epic #53](https://github.com/bemulima/learning-platform-business/issues/53).
+`MCPStudentRoleChecker` is source-only and **not registered in bootstrap**.
+The distinct future Core NATS request/reply subject is
+`rbac.checkMCPStudentRole` (queue `ms-go-rbac`); it is NOT a variant of the
+legacy unsigned `rbac.checkRole` or the active reviewer `rbac.checkPermission`.
+No operator should route traffic to it until both owners have approved the
+Auth-issued proof and Auth-side decision verifier/consumer.
+
+The only request field is `{"proof":"<JWT>"}` (max 9 KiB envelope). An Auth
+RS256 proof uses the existing configured Auth public verification key and
+issuer but **separate, exact** audience `ms-go-rbac-mcp-student-role`,
+type `mcp_student_role_check`, purpose `AUTH_RBAC_MCP_STUDENT_ROLE_V1`, and
+`role=student`. Its exact JWT header is `alg=RS256, typ=JWT`, with claims
+`iss,aud,sub,typ,purpose,role,jti,iat,exp`, canonical lowercase nonzero UUID
+`sub` and `jti`, at most 30 seconds from `iat` to `exp`, at most 5 seconds
+of future `iat` skew. The raw role claim is a fixed request purpose, **not
+evidence of RBAC assignment**. Extra or duplicated fields, unsigned `ok`,
+wrong-purpose reviewer JWTs, wrong keys, and public user headers are denied.
+
+RBAC checks the **current, unique role at the canonical default user/global
+scope** via `GetDefaultRole`. It returns signed `DENY` when that role is
+absent or not exactly `student` (including `admin`). Other-scope fallback
+from `GetByRole` is never consulted. An ambiguous default role, unavailable
+storage, malformed signature, or missing signing key returns only a generic
+error, not a successful unsigned decision.
+
+For a valid proof and successful lookup the reply has exactly
+`{"decision_jwt":"<RS256 JWT>"}`. It uses issuer `ms-go-rbac`, audience
+`ms-go-auth-mcp-student-role-decision`, type
+`mcp_student_role_decision`, purpose
+`RBAC_AUTH_MCP_STUDENT_ROLE_DECISION_V1`, fixed role `student`, `ALLOW` or
+`DENY` decision, a fresh canonical nonzero response `jti`, the verified
+request `request_jti`, a lowercase SHA-256 `request_digest` of the complete
+raw Auth proof, and integer `iat/exp` limited to 15 seconds. The exact JWT
+fields are `iss,aud,sub,typ,purpose,role,decision,jti,request_jti,request_digest,iat,exp`.
+Only RBAC holds the future **dedicated** private decision key; Auth must
+validate its matching public key, strict response shape, signature, audience,
+purpose, subject, request binding, freshness and replay before any token
+exchange. Configuration and runtime wiring are deliberately deferred.
+
+**This is a role-only decision**. It does not grant `courses:read`,
+`tasks:write`, or any other MCP scope and cannot populate
+`RBACStudentScopes` in Auth token intent. Auth must separately implement a
+reviewed scope-to-RBAC/owner-policy mapping, then join it with its fresh
+client/consent snapshot. No OAuth token or MCP endpoint is activated.
+
 ## Dedicated Auth signup proof
 
 The application boundary is
