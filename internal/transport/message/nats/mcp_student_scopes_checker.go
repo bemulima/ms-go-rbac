@@ -12,8 +12,8 @@ import (
 
 const mcpStudentScopesSubject = "rbac.checkMCPStudentScopes"
 
-// MCPStudentScopesChecker is a dormant source-only RPC candidate. It is never
-// registered in bootstrap and cannot be used as a generic permission lookup.
+// MCPStudentScopesChecker is registered only under the MCP RBAC opt-in gate;
+// it cannot be used as a generic permission lookup.
 type MCPStudentScopesChecker struct {
 	Conn           *natsgo.Conn
 	Subject        string

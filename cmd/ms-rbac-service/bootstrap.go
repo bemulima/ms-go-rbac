@@ -65,6 +65,10 @@ func bootstrap() (*http.Server, error) {
 	principalRoleUC := usecase.NewPrincipalRoleUsecase(principalRoleRepo)
 	signupUC := usecase.NewSignupProvisioner(signupVerifier, repo.NewSignupProvisioningRepository(pool))
 	principalPermissionUC := usecase.NewPrincipalPermissionUsecase(principalRoleRepo, rolePermissionRepo)
+	if cfg.MCPStudentRBACEnabled && cfg.NATSURL == "" {
+		pool.Close()
+		return nil, fmt.Errorf("MCP Student RBAC requires NATS")
+	}
 
 	adminHandlers := &adminhandlers.AdminHandlers{
 		Service:        &adminhandlers.ServiceHandler{Usecase: serviceUC},
@@ -111,6 +115,13 @@ func bootstrap() (*http.Server, error) {
 		}
 		if err := permissionChecker.Listen(); err != nil {
 			log.Printf("nats subscribe failed (rbac.checkPermission): %v", err)
+		}
+		if cfg.MCPStudentRBACEnabled {
+			if err := registerMCPStudentHandlers(conn, cfg, principalPermissionUC); err != nil {
+				conn.Close()
+				pool.Close()
+				return nil, fmt.Errorf("MCP Student RBAC bootstrap failed: %w", err)
+			}
 		}
 	}
 	httpServer := &http.Server{

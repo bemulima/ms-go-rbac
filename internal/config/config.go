@@ -17,6 +17,9 @@ type Config struct {
 	AuthJWTPublicKey                     string
 	AuthJWTIssuer                        string
 	ReviewerPermissionDecisionPrivateKey string
+	MCPStudentRBACEnabled                bool
+	MCPStudentRoleDecisionPrivateKey     string
+	MCPStudentScopeDecisionPrivateKey    string
 	AuthModeratorIss                     string
 	AuthModeratorAud                     string
 	CacheTTL                             time.Duration
@@ -33,6 +36,8 @@ func Load() (Config, error) {
 		AuthJWTPublicKey:                     os.Getenv("AUTH_JWT_PUBLIC_KEY"),
 		AuthJWTIssuer:                        getEnv("AUTH_JWT_ISSUER", "auth-service"),
 		ReviewerPermissionDecisionPrivateKey: os.Getenv("RBAC_REVIEWER_PERMISSION_DECISION_PRIVATE_KEY"),
+		MCPStudentRoleDecisionPrivateKey:     os.Getenv("RBAC_MCP_STUDENT_ROLE_DECISION_PRIVATE_KEY"),
+		MCPStudentScopeDecisionPrivateKey:    os.Getenv("RBAC_MCP_STUDENT_SCOPE_DECISION_PRIVATE_KEY"),
 		AuthModeratorIss:                     os.Getenv("AUTH_MODERATOR_JWT_ISS"),
 		AuthModeratorAud:                     os.Getenv("AUTH_MODERATOR_JWT_AUD"),
 	}
@@ -41,6 +46,11 @@ func Load() (Config, error) {
 		return Config{}, fmt.Errorf("invalid CACHE_TTL_SECONDS: %w", err)
 	}
 	cfg.CacheTTL = ttl
+	mcpEnabled, err := strconv.ParseBool(getEnv("MCP_STUDENT_RBAC_ENABLED", "false"))
+	if err != nil {
+		return Config{}, fmt.Errorf("invalid MCP_STUDENT_RBAC_ENABLED: %w", err)
+	}
+	cfg.MCPStudentRBACEnabled = mcpEnabled
 	return cfg, nil
 }
 

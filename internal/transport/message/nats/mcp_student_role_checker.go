@@ -12,8 +12,8 @@ import (
 
 const mcpStudentRoleSubject = "rbac.checkMCPStudentRole"
 
-// MCPStudentRoleChecker is a DORMANT, distinct RPC consumer. It is NOT wired
-// into service bootstrap. Legacy unsigned checkRole remains unchanged and
+// MCPStudentRoleChecker is a distinct RPC consumer, enabled only under the
+// explicit MCP_STUDENT_RBAC_ENABLED bootstrap gate. Legacy unsigned checkRole
 // must never authorize an MCP token exchange.
 type MCPStudentRoleChecker struct {
 	Conn           *natsgo.Conn
