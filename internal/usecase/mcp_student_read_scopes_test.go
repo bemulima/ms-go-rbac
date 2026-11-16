@@ -42,12 +42,13 @@ func TestMCPStudentReadScopesRequireExplicitDefaultRolePermissionForEachScope(t 
 		domain.MCPStudentTasksReadPermission:   true,
 	}}
 	uc := NewPrincipalPermissionUsecase(permissionPrincipalFixture{defaultRole: "student"}, permissions)
-	requested := []string{domain.MCPStudentCoursesReadScope, domain.MCPStudentProfileReadScope, domain.MCPStudentTasksReadScope}
+	requested := []string{domain.MCPStudentCalendarReadScope, domain.MCPStudentCoursesReadScope, domain.MCPStudentProfileReadScope, domain.MCPStudentTasksReadScope}
 	allowed, err := uc.AllowedMCPStudentReadScopes(context.Background(), mcpScopeTestStudent, requested)
 	if err != nil || !reflect.DeepEqual(allowed, []string{domain.MCPStudentProfileReadScope, domain.MCPStudentTasksReadScope}) {
 		t.Fatalf("exact allowed subset = %#v, %v", allowed, err)
 	}
 	wantQueries := []string{
+		"student/" + domain.MCPStudentCalendarReadPermission + "/",
 		"student/" + domain.MCPStudentCoursesReadPermission + "/",
 		"student/" + domain.MCPStudentProfileReadPermission + "/",
 		"student/" + domain.MCPStudentTasksReadPermission + "/",
@@ -61,6 +62,29 @@ func TestMCPStudentReadScopesRequireExplicitDefaultRolePermissionForEachScope(t 
 	allowed, err = uc.AllowedMCPStudentReadScopes(context.Background(), mcpScopeTestStudent, requested)
 	if err != nil || len(allowed) != 0 {
 		t.Fatalf("revoked permissions were reused: %#v, %v", allowed, err)
+	}
+}
+
+func TestMCP53CalendarPermissionRequiresSeparateDefaultStudentGrant(t *testing.T) {
+	permissions := &mcpReadPermissionFixture{granted: map[string]bool{
+		domain.MCPStudentProfileReadPermission: true,
+		domain.MCPStudentTasksReadPermission:   true,
+	}}
+	uc := NewPrincipalPermissionUsecase(permissionPrincipalFixture{defaultRole: "student"}, permissions)
+	requested := []string{domain.MCPStudentCalendarReadScope, domain.MCPStudentProfileReadScope}
+	allowed, err := uc.AllowedMCPStudentReadScopes(context.Background(), mcpScopeTestStudent, requested)
+	if err != nil || !reflect.DeepEqual(allowed, []string{domain.MCPStudentProfileReadScope}) {
+		t.Fatalf("ungranted Calendar permission was inferred: %#v err=%v", allowed, err)
+	}
+	permissions.granted[domain.MCPStudentCalendarReadPermission] = true
+	allowed, err = uc.AllowedMCPStudentReadScopes(context.Background(), mcpScopeTestStudent, requested)
+	if err != nil || !reflect.DeepEqual(allowed, requested) {
+		t.Fatalf("explicit Calendar permission not projected: %#v err=%v", allowed, err)
+	}
+	permissions.granted[domain.MCPStudentCalendarReadPermission] = false
+	allowed, err = uc.AllowedMCPStudentReadScopes(context.Background(), mcpScopeTestStudent, requested)
+	if err != nil || !reflect.DeepEqual(allowed, []string{domain.MCPStudentProfileReadScope}) {
+		t.Fatalf("revoked Calendar permission persisted: %#v err=%v", allowed, err)
 	}
 }
 
