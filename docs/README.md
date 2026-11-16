@@ -5,6 +5,7 @@ This repository owns RBAC architecture and its HTTP, NATS, and database contract
 - [Architecture](architecture.md)
 - [HTTP](http-contract.md)
 - [Messaging](messaging-contract.md)
+- [Dormant MCP Student read-scope policy](mcp00-student-read-scope-policy.md)
 - [Database](database-contract.md)
 - [Native development](native-development.md)
 
