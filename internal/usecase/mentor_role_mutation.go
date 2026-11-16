@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
-	"errors"
 	"reflect"
 
 	"github.com/example/ms-rbac-service/internal/domain"
@@ -90,7 +89,9 @@ func validMentorMutationResult(command domain.MentorRoleCommand, result domain.M
 }
 
 func mentorMutationAdmissionError(err error) error {
-	if errors.Is(err, domain.ErrUnauthenticated) || errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+	// Only exact owner sentinels establish a known semantic denial. A wrapped
+	// or joined denial may also contain an outage and must remain unavailable.
+	if err == domain.ErrUnauthenticated || err == context.Canceled || err == context.DeadlineExceeded {
 		return domain.ErrUnauthenticated
 	}
 	return domain.ErrAuthorityUnavailable
@@ -101,7 +102,7 @@ func mentorMutationStoreError(err error) error {
 		domain.ErrMentorRoleForbidden, domain.ErrMentorRoleInvalidCommand, domain.ErrMentorRoleConflict,
 		domain.ErrMentorRoleStaleRevision, domain.ErrMentorRoleInvalidSnapshot,
 	} {
-		if errors.Is(err, allowed) {
+		if err == allowed {
 			return allowed
 		}
 	}

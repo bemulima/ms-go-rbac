@@ -1,5 +1,7 @@
 schema_version: 1
 commands:
+  - {name: mentor-role-mutation-rpc-tests, run: "go test ./internal/transport/message/nats ./internal/usecase -run '^TestMentorRoleMutationRPC' -count=1", requires_approval: false, risk: source-only-crypto-fixtures-no-database}
+  - {name: mentor-role-mutation-rpc-race, run: "go test -race ./internal/transport/message/nats ./internal/usecase -run '^TestMentorRoleMutationRPC' -count=1", requires_approval: false, risk: source-only-crypto-fixtures-no-database}
   - {name: mentor-role-readback-tests, run: "go test ./internal/domain ./internal/usecase ./internal/infrastructure/persistence/postgres ./internal/infrastructure/client ./internal/transport/message/nats -run '^TestMentorRoleReadback' -count=1", requires_approval: false, risk: source-only-fixtures-no-database}
   - {name: mentor-role-readback-race, run: "go test -race ./internal/domain ./internal/usecase ./internal/infrastructure/persistence/postgres ./internal/infrastructure/client ./internal/transport/message/nats -run '^TestMentorRoleReadback' -count=1", requires_approval: false, risk: source-only-fixtures-no-database}
   - {name: mentor-role-owner-tests, run: "go test ./internal/domain ./internal/usecase ./internal/infrastructure/persistence/postgres ./cmd/ms-rbac-migrate -run '^TestMentorRole' -count=1", requires_approval: false, risk: source-only-fixtures-no-database}

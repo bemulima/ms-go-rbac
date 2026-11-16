@@ -4,6 +4,9 @@ Parent: `bemulima/learning-platform-business#27`, MENT-01A.
 This is the RBAC-owned internal mutation/store contract. It is **unmounted**:
 no HTTP route, NATS subscription, composition, runtime key configuration,
 database migration execution or live grant is introduced by publishing it.
+The additive [mutation RPC contract](../.ai/contracts/mentor-role-mutation-rpc-v1.md)
+now exposes a strict source-only handler for `rbac.applyMentorRole.v1`; it does
+not register a listener and its ACK is not current-role authority.
 
 Auth remains the canonical owner of
 `ms-go-auth/.ai/contracts/mentor-role-decision-v1.{md,json}`.
@@ -35,6 +38,9 @@ and unavailable authority fail closed. A known non-Admin returns
 `ErrMentorRoleForbidden`; ambiguous canonical roles or database failure are
 unavailable, not a false successful or signed negative result. Error returns
 carry a zero result and sanitized categories, not SQL/credential diagnostics.
+Only exact known error sentinels receive semantic categories; wrapped or mixed
+failures remain unavailable rather than impersonating a known denial. The
+mutation RPC adds no authorization bypass and does not change the atomic store.
 
 ## Transaction boundary
 

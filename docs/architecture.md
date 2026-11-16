@@ -20,6 +20,13 @@ store and prior signed lookup providers are not wired into the composition root.
 No public mutation route, active PDP path or legacy role-management authority
 is added by these files.
 
+The source-only `rbac.applyMentorRole.v1` handler accepts only the exact Auth
+proof envelope and calls this concrete mutation use case under a bounded
+context. It exposes neither historical receipt nor role state; an unsigned ACK
+never replaces signed readback. Fixed error categories use exact owner
+sentinels, with mixed/wrapped failures kept unavailable. It has no subscription
+or bootstrap registration; the atomic store and migrations are unchanged.
+
 The signed Mentor scoped-role readback uses dedicated service proof admission,
 a narrow usecase, a coherent read-only PostgreSQL snapshot and nonce/digest-bound
 reply signing. It does not recheck the historical Admin or mutate roles.
