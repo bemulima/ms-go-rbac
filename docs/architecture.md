@@ -16,7 +16,7 @@ Mentor's dedicated source-only mutation follows domain/usecase/outbound-adapter
 boundaries: a fresh Auth proof enters MentorRoleMutation; its atomic store
 rechecks current canonical Admin and writes only the dedicated Mentor scope,
 immutable receipt and terminal fence. See mentor-role-owner.md. The usecase,
-store and prior signed lookup providers are not wired into the composition root.
+store and prior signed lookup providers are not wired into active bootstrap.
 No public mutation route, active PDP path or legacy role-management authority
 is added by these files.
 
@@ -31,3 +31,10 @@ The signed Mentor scoped-role readback uses dedicated service proof admission,
 a narrow usecase, a coherent read-only PostgreSQL snapshot and nonce/digest-bound
 reply signing. It does not recheck the historical Admin or mutate roles.
 Provider and consumer remain unmounted; see mentor-scoped-role-readback.md.
+
+An explicit default-off source constructor now assembles the three existing
+Mentor consumers in `cmd/ms-rbac-service`, using an already-owned pool and
+dedicated validated keys. Its fixed dispatcher preserves the actual subject;
+it does not connect, subscribe, listen or change active bootstrap. See
+[Mentor owner composition](mentor-owner-composition.md). Construction tests
+prove wiring and denial paths, not SQL or mounted owner acceptance.
