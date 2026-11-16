@@ -18,8 +18,9 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-// MentorOwnerCompositionConfig is explicit, source-only configuration. No field
-// is loaded from the environment, and Enabled's zero value exposes no handlers.
+// MentorOwnerCompositionConfig is explicit constructor configuration. The
+// default-off executable preflight maps environment settings into this value;
+// the constructor itself reads no environment/files and opens no resources.
 // All five purpose keys must use different RSA moduli, including aliases encoded
 // using another PEM format or exponent. The two owner reply pairs must match.
 type MentorOwnerCompositionConfig struct {
@@ -47,7 +48,7 @@ var _ MentorOwnerPool = (*pgxpool.Pool)(nil)
 
 // MentorOwnerComposition is an unmounted dispatcher, not a NATS connection or
 // subscription. Its consumers cannot be replaced through the returned value.
-// Active bootstrap deliberately does not call NewMentorOwnerComposition.
+// The explicitly enabled executable runtime mounts this dispatcher unchanged.
 type MentorOwnerComposition struct {
 	admin    *natstransport.MentorCanonicalAdminConsumer
 	mutation *natstransport.MentorRoleMutationConsumer
@@ -108,7 +109,7 @@ func (c *MentorOwnerComposition) Subjects() []string {
 }
 
 // Handle passes the actual received subject and body unchanged to its existing
-// owner consumer. A future authorized queue subscription must supply msg.Subject,
+// owner consumer. The explicitly enabled queue subscription supplies msg.Subject,
 // never the subscription's constant or a caller header. No subscription is made
 // here. The context bound preserves earlier deadlines and is not rollback proof.
 func (c *MentorOwnerComposition) Handle(ctx context.Context, actualSubject string, body []byte) ([]byte, error) {

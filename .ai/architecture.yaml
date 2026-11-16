@@ -7,7 +7,7 @@ layers:
   composition_root: cmd/ms-rbac-service
 active_paths: [HTTP CRUD and principal lookups, rbac.assign-role RPC, rbac.checkRole RPC, rbac.checkPermission RPC]
 inactive_or_incomplete:
-  - Mentor atomic mutation, owner confirmations and signed scoped readback are source-only and unmounted; SQL, live-session handoff and runtime acceptance remain open.
+  - Mentor atomic mutation, owner confirmations and signed scoped readback have default-off executable wiring; SQL, live-session and runtime acceptance remain open, no activation is claimed.
   - PDP engine is not wired into bootstrap.
   - PDP repository does not implement the current domain interface because context parameters differ.
 known_security_defects:

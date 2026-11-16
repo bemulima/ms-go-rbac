@@ -20,6 +20,7 @@ type Config struct {
 	AuthModeratorIss                     string
 	AuthModeratorAud                     string
 	CacheTTL                             time.Duration
+	MentorOwner                          MentorOwnerConfig
 }
 
 // Load reads configuration from environment variables applying defaults where necessary.
@@ -41,6 +42,10 @@ func Load() (Config, error) {
 		return Config{}, fmt.Errorf("invalid CACHE_TTL_SECONDS: %w", err)
 	}
 	cfg.CacheTTL = ttl
+	cfg.MentorOwner, err = loadMentorOwner()
+	if err != nil {
+		return Config{}, err
+	}
 	return cfg, nil
 }
 

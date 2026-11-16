@@ -2,7 +2,7 @@
   "contract": "RBAC_AUTH_MENTOR_CANONICAL_ADMIN_DECISION_V1",
   "owner": "ms-go-rbac",
   "consumer": "ms-go-auth",
-  "status": "source_only_unmounted_read_only",
+  "status": "source_only_default_off_executable_read_only",
   "request_owner_contract": "ms-go-auth/.ai/contracts/mentor-owner-lookups-v1.json",
   "subject": "rbac.checkMentorCanonicalAdmin.v1",
   "algorithm": "RS256",

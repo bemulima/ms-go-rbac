@@ -1,7 +1,7 @@
 {
   "contract": "RBAC_MENTOR_ROLE_OWNER_V1",
   "owner": "ms-go-rbac",
-  "status": "source_only_unmounted_sql_not_run",
+  "status": "source_only_default_off_executable_sql_not_run",
   "documentation": "docs/mentor-role-owner.md",
   "upstream_assertion_owner": "ms-go-auth",
   "upstream_assertion_contract": "AUTH_RBAC_MENTOR_ROLE_DECISION_V1",
@@ -9,7 +9,8 @@
   "store_port": "domain.MentorRoleMutationStore.ApplyMentorRole",
   "network_subject": "rbac.applyMentorRole.v1",
   "network_contract": "RBAC_MENTOR_ROLE_MUTATION_RPC_V1",
-  "network_status": "source_only_handle_unmounted",
+  "network_status": "source_only_default_off_executable",
+  "runtime_documentation": "docs/mentor-owner-runtime.md",
   "proof_rechecks": ["before_store", "before_begin", "after_locks", "before_commit_initiation"],
   "isolation": "read_committed",
   "access_mode": "read_write",
@@ -55,5 +56,5 @@
   "persist_raw_proof_or_bearer": false,
   "automatic_retry": false,
   "uncertain_commit": "unavailable; recover by fresh authenticated exact-command replay",
-  "remaining_gates": ["isolated PostgreSQL acceptance", "signed fresh scoped readback", "Mentor live-session handoff and recovery", "runtime composition", "executable verification Gherkin"]
+  "remaining_gates": ["isolated PostgreSQL acceptance", "live signed fresh scoped readback", "Mentor live-session handoff and recovery acceptance", "broker identity and ACL acceptance", "executable verification Gherkin"]
 }

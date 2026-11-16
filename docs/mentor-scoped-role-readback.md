@@ -1,6 +1,6 @@
 # Signed Mentor scoped-role readback
 
-Status: **source-only, unmounted, SQL acceptance NOT_RUN**.
+Status: **source-only, default-off executable wiring, SQL/runtime acceptance NOT_RUN**.
 Parent: `bemulima/learning-platform-business#27`, MENT-01A.
 
 Mentor owns the lookup request in
@@ -101,6 +101,7 @@ PostgreSQL, live NATS or Gherkin acceptance.
 Remaining gates: Mentor current-session handoff and exact-binding RoleAuthority
 integration/recovery; separately authorized disposable PostgreSQL acceptance;
 key custody/distribution and broker ACLs; owner/Gateway/runtime integration.
-No bootstrap, migration, service startup or full MENT-01A completion is claimed.
+The separate [default-off runtime](mentor-owner-runtime.md) now wires this
+consumer. No migration, service startup or full MENT-01A completion is claimed.
 Executable Gherkin and MENT-00 relocation belong in
 `learning-platform-verification`.

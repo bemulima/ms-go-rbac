@@ -1,7 +1,7 @@
 # RBAC_MENTOR_ROLE_MUTATION_RPC_V1
 
 Owner: RBAC. Consumer: Mentor. Parent: `bemulima/learning-platform-business#27`.
-Status: **source-only, unmounted, SQL/runtime acceptance NOT_RUN**.
+Status: **source-only, disabled by default, SQL/runtime acceptance NOT_RUN**.
 The machine-readable companion is [mentor-role-mutation-rpc-v1.json](mentor-role-mutation-rpc-v1.json).
 
 This additive wire contract exposes the existing
@@ -76,9 +76,11 @@ role stays inactive; only the separate signed readback decides currentness.
 ## Mounting and verification boundary
 
 `Handle(ctx, actualSubject, body) ([]byte, error)` has no `Listen` method and does
-not register a subscription or alter bootstrap. Future Core NATS wiring must
-use the service queue group, preserve exact subject/body handling and enforce
-reviewed broker credentials/ACLs. No HTTP mutation endpoint is introduced.
+not register a subscription itself. The separate
+[executable opt-in](../../docs/mentor-owner-runtime.md) uses the service queue
+group, actual subject/body and dedicated authenticated TLS broker configuration.
+Default bootstrap stays unchanged; real broker ACL acceptance remains pending.
+No HTTP mutation endpoint is introduced.
 
 Targeted tests use the actual handler, actual Auth proof verifier and actual
 mutation use case, with ephemeral test signing keys and a controlled store.

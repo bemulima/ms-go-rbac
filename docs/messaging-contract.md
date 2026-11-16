@@ -1,14 +1,16 @@
 # Messaging contract
 
-## Unmounted Mentor mutation RPC
+## Default-off Mentor owner RPCs
 
 The additive [RBAC_MENTOR_ROLE_MUTATION_RPC_V1](../.ai/contracts/mentor-role-mutation-rpc-v1.md)
 specifies `rbac.applyMentorRole.v1`: one strict Auth-signed `proof` request and
 only an ACK or fixed error response. The actual mutation use case performs
 proof admission and current-Admin/receipt/fence/scoped assignment through its
 atomic store. ACK is not permission; Mentor still requires fresh signed scoped
-readback. Its source handler remains unmounted: no subscription, bootstrap or
-existing RPC behavior changes, and SQL/runtime acceptance is NOT_RUN.
+readback. The [explicit runtime opt-in](mentor-owner-runtime.md) mounts this and
+the existing canonical-Admin and scoped-readback consumers on a separate secured
+connection only when `RBAC_MENTOR_OWNER_ENABLED=true`. Default behavior and
+legacy RPCs remain unchanged; SQL/runtime acceptance is NOT_RUN.
 
 ## Existing active RPCs
 

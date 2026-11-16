@@ -1,12 +1,13 @@
 # Read-only Mentor canonical Admin confirmation
 
-Status: **source-only, unmounted**. Parent:
+Status: **source-only, disabled by default**. Parent:
 `bemulima/learning-platform-business#27`, MENT-01A.
 
 This slice implements a real cryptographic request consumer, the existing
 canonical-default role read through a narrow port, and a dedicated signed
-response. There is no subscription, bootstrap wiring, role mutation, migration,
-runtime key configuration, SQL activation or authority cache. It does not
+response. This provider has no direct lifecycle or role mutation. Its separate
+[default-off runtime](mentor-owner-runtime.md) owns explicit key/transport
+configuration; no migration, SQL activation or authority cache is added. It does not
 complete MENT-01A or replace the later transaction-level Admin recheck.
 
 ## Ownership and API
@@ -16,7 +17,7 @@ Auth owns the request and acceptance contract at
 [the reply manifest](../.ai/contracts/mentor-canonical-admin-decision-v1.json).
 The Auth-owned canonical files are referenced, not copied here.
 
-The unmounted provider is:
+The lifecycle-independent provider is:
 
 ```go
 (*nats.MentorCanonicalAdminConsumer).Handle(

@@ -1,11 +1,13 @@
 # Default-off Mentor owner composition
 
 Parent: `bemulima/learning-platform-business#27`, MENT-01A.
-Status: **source-only construction; unmounted; SQL/runtime/Gherkin NOT_RUN**.
+Status: **source-only construction and default-off executable wiring;
+SQL/runtime/Gherkin NOT_RUN**.
 
 `cmd/ms-rbac-service/mentor_composition.go` adds
-`NewMentorOwnerComposition(config, pool)` without invoking it from active
-`bootstrap` or `main`. This is not service activation. The returned dispatcher
+`NewMentorOwnerComposition(config, pool)`. The separate
+[explicit runtime](mentor-owner-runtime.md) invokes it only when
+`RBAC_MENTOR_OWNER_ENABLED=true`. This is not evidence of service activation. The returned dispatcher
 only exposes these fixed, existing owner contracts:
 
 | Actual subject | Concrete existing composition |
@@ -31,7 +33,8 @@ The port comprises existing pgx `Begin`, `BeginTx` and `QueryRow` methods;
 never opens, pings, migrates, closes or takes lifecycle ownership of a pool.
 It cannot establish that a supplied pool is connected or that SQL is qualified.
 
-All configuration is passed explicitly; no environment or key files are read.
+The constructor's configuration is passed explicitly; it reads no environment
+or key files. Executable preflight owns the explicit mapping.
 Required keys are:
 
 - `AuthAdminLookupPublicKeyPEM`
@@ -46,9 +49,9 @@ encoding or exponent cannot hide key reuse. Configuration failures return only
 `ErrAuthorityUnavailable` and no partially usable dispatcher. Existing client
 factories remain responsible for their purpose-specific crypto. No runtime
 credentials are generated, provisioned, printed or selected automatically.
-An operator still has to prove these explicitly supplied keys are not reused
-by unrelated legacy JWT/signup/reviewer configuration, which this constructor
-does not read.
+The constructor does not read legacy configuration. Executable preflight also
+checks configured legacy JWT/reviewer RSA moduli; an operator still must prove
+cross-service key custody and absence of reuse outside visible configuration.
 
 `Subjects()` returns a fresh list, not a mutable handler map. `Handle(ctx,
 actualSubject, body)` passes the actual subject and original body unchanged to
@@ -57,10 +60,10 @@ cancelled context fail closed. The dispatcher bounds the operation context to
 five seconds and preserves earlier deadlines. Existing transaction cleanup may
 extend total return time; cancellation is not proof that a mutation rolled back.
 
-Future separately authorised mounting must use the existing service queue group
-and pass the actual received `msg.Subject`, not the subscription constant or
-caller headers. This source constructor never calls Connect, Subscribe or
-Listen and does not provide a broker authentication or ACL fallback.
+The default-off runtime uses the existing service queue group and actual
+received `msg.Subject`, not a subscription constant or caller header. This
+constructor itself never calls Connect, Subscribe or Listen and provides no
+broker authentication or ACL fallback. Actual activation remains separately gated.
 
 ## Narrow verification boundary
 

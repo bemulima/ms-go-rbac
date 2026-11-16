@@ -2,7 +2,7 @@
   "contract": "RBAC_MENTOR_SCOPED_ROLE_READBACK_DECISION_V1",
   "owner": "ms-go-rbac",
   "consumer": "ms-go-mentor",
-  "status": "source_only_unmounted_read_only_sql_not_run",
+  "status": "source_only_default_off_executable_read_only_sql_not_run",
   "documentation": "docs/mentor-scoped-role-readback.md",
   "request_contract": "ms-go-mentor/.ai/contracts/scoped-role-readback-request-v1.json",
   "subject": "rbac.checkRoleScoped.v1",

@@ -1,9 +1,9 @@
 # Atomic Mentor role owner (source only)
 
 Parent: `bemulima/learning-platform-business#27`, MENT-01A.
-This is the RBAC-owned internal mutation/store contract. It is **unmounted**:
-no HTTP route, NATS subscription, composition, runtime key configuration,
-database migration execution or live grant is introduced by publishing it.
+This is the RBAC-owned internal mutation/store contract. It is **disabled by
+default**. The separate [executable opt-in](mentor-owner-runtime.md) can mount
+its existing consumer; source publication executes no migration or live grant.
 The additive [mutation RPC contract](../.ai/contracts/mentor-role-mutation-rpc-v1.md)
 now exposes a strict source-only handler for `rbac.applyMentorRole.v1`; it does
 not register a listener and its ACK is not current-role authority.
@@ -199,7 +199,7 @@ and cannot by itself finalize Mentor private access.
 The separate [signed scoped readback](mentor-scoped-role-readback.md) now has
 source adapters and producer/consumer conformance. It confirms only a current
 exact receipt/fence/physical assignment, not this mutation method's replay
-result. It remains unmounted pending the gates above.
+result. It remains disabled by default, with runtime acceptance pending the gates above.
 
 Executable Gherkin belongs in `learning-platform-verification`; MENT-00
 acceptance references remain available, but no Gherkin business PASS, MCP,

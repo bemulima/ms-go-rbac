@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -21,10 +22,18 @@ import (
 )
 
 var dbPool *pgxpool.Pool
+var legacyNATSConnection *natsgo.Conn
+var mentorOwnerRuntime *MentorOwnerRuntime
 
 // bootstrap is the service composition root.
 func bootstrap() (*http.Server, error) {
 	cfg, err := config.Load()
+	if err != nil {
+		return nil, err
+	}
+	// Explicit opt-in is preflighted before any database or broker connection.
+	// Disabled mode does not consult Mentor keys, files or transport settings.
+	mentorPrepared, err := prepareMentorOwner(cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -51,7 +60,6 @@ func bootstrap() (*http.Server, error) {
 	if err != nil {
 		return nil, err
 	}
-	dbPool = pool
 	serviceRepo := repo.NewServiceRepository(pool)
 	roleRepo := repo.NewRoleRepository(pool)
 	permissionRepo := repo.NewPermissionRepository(pool)
@@ -78,12 +86,14 @@ func bootstrap() (*http.Server, error) {
 	}
 	router := httptransport.NewRouter(adminHandlers, apiHandlers)
 
+	var legacyConn *natsgo.Conn
 	if cfg.NATSURL != "" {
 		conn, err := connectNATSWithRetry(cfg.NATSURL)
 		if err != nil {
 			pool.Close()
 			return nil, err
 		}
+		legacyConn = conn
 
 		assigner := natstransport.RoleAssigner{
 			Conn:     conn,
@@ -113,6 +123,15 @@ func bootstrap() (*http.Server, error) {
 			log.Printf("nats subscribe failed (rbac.checkPermission): %v", err)
 		}
 	}
+	mentorRuntime, err := startMentorOwner(context.Background(), mentorPrepared, pool, dialMentorOwner)
+	if err != nil {
+		if legacyConn != nil {
+			legacyConn.Close()
+		}
+		pool.Close()
+		return nil, err
+	}
+	dbPool, legacyNATSConnection, mentorOwnerRuntime = pool, legacyConn, mentorRuntime
 	httpServer := &http.Server{
 		Addr:    cfg.HTTPAddr,
 		Handler: router.Handler(),
@@ -120,17 +139,28 @@ func bootstrap() (*http.Server, error) {
 	return httpServer, nil
 }
 
-// shutdown gracefully terminates the HTTP server.
+// shutdown always cleans owned resources, including after listener failure.
+// Mentor is drained before its pool is closed; a deadline forces transport close.
 func shutdown(ctx context.Context, srv *http.Server) error {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
-	if err := srv.Shutdown(ctx); err != nil {
-		return err
+	var failures []error
+	if srv != nil {
+		if err := srv.Shutdown(ctx); err != nil {
+			_ = srv.Close()
+			failures = append(failures, err)
+		}
+	}
+	if err := mentorOwnerRuntime.Close(ctx); err != nil {
+		failures = append(failures, err)
+	}
+	if legacyNATSConnection != nil {
+		legacyNATSConnection.Close()
 	}
 	if dbPool != nil {
 		dbPool.Close()
 	}
-	return nil
+	return errors.Join(failures...)
 }
 
 func connectPostgresWithRetry(dsn string) (*pgxpool.Pool, error) {

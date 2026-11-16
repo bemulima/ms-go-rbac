@@ -1,17 +1,20 @@
 # Mentor role admission and pure revision-fence planner
 
-Status: **source-only, unmounted**. The separate
+Status: **source-only, disabled by default**. The separate
 [atomic owner adapter](mentor-role-owner.md) now exists in source;
 PostgreSQL acceptance and runtime authority are not established by these files.
 Parent task: `bemulima/learning-platform-business#27`, MENT-01A.
 
 This document covers the cryptographic consumer and pure domain planner.
-The following owner slice adds an unmounted PostgreSQL adapter and source
+The following owner slice adds a PostgreSQL adapter and source
 migration 005 for dedicated metadata, receipts and terminal fences. Neither
 slice adds a route, subscription, runtime key configuration, production
 in-memory repository or service activation. Existing signup, reviewer,
 default Student, operator and CAT behavior remains unchanged. MENT-01A is
 not complete on this evidence.
+
+The subsequent [default-off executable runtime](mentor-owner-runtime.md) wires
+the existing owner components without changing this admission contract.
 
 ## Contract ownership and admission
 
@@ -140,7 +143,7 @@ the following owner work is implemented and accepted:
    for the same immutable command may replay without writes, but cannot mint a
    new grant. Do not persist bearer/refresh tokens or raw assertions.
 
-The store and canonical-Admin lookup providers exist in source only; none is mounted.
+The store and canonical-Admin lookup providers are source-only and disabled by default.
 SQL durability, live session validation, authenticated owner transports,
 broker authorization, migration behavior, actual Student-role preservation and
 Mentor runtime activation remain **not verified**, not implicitly passing.
