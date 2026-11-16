@@ -22,7 +22,7 @@ func TestIDEStudentRoleReadIsDefaultOffAndRequiresDedicatedToken(t *testing.T) {
 	if err != nil || !cfg.IDEStudentRoleEnabled || cfg.IDEStudentRoleToken != token {
 		t.Fatalf("valid role read configuration rejected: %#v %v", cfg, err)
 	}
-	for _, bad := range []string{"short", strings.Repeat("x",31), "change-me"+strings.Repeat("x",40), strings.Repeat("x",48)+" "} {
+	for _, bad := range []string{"short", strings.Repeat("x", 31), "change-me" + strings.Repeat("x", 40), strings.Repeat("x", 48) + " "} {
 		t.Setenv("RBAC_IDE_STUDENT_ROLE_TOKEN", bad)
 		if _, err := Load(); err == nil {
 			t.Fatalf("bad role read credential accepted (len=%d)", len(bad))

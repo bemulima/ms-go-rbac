@@ -71,9 +71,9 @@ func (handler *IDEStudentRoleHandler) read(w http.ResponseWriter, r *http.Reques
 	}
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(struct {
-		Schema string `json:"schema"`
+		Schema    string `json:"schema"`
 		StudentID string `json:"student_id"`
-		Role string `json:"role"`
+		Role      string `json:"role"`
 	}{"rbac-ide-student-role.v1", studentID, role})
 }
 

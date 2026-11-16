@@ -11,8 +11,8 @@ import (
 )
 
 type Router struct {
-	adminHandlers *adminhandlers.AdminHandlers
-	apiHandlers   *apihandlers.APIHandlers
+	adminHandlers  *adminhandlers.AdminHandlers
+	apiHandlers    *apihandlers.APIHandlers
 	ideStudentRole *private.IDEStudentRoleHandler
 }
 
