@@ -120,6 +120,23 @@ func (uc *PrincipalPermissionUsecase) HasKnowledgeGraphReview(ctx context.Contex
 	return uc.permissionRepo.HasDefaultPermission(ctx, role, domain.KnowledgeGraphReviewPermission, "")
 }
 
+// HasMCPStudentRole checks only the current unambiguous canonical default
+// Student role. The legacy GetByRole fallback to other scopes is NOT suitable
+// for an external OAuth/MCP decision. This is not an MCP scope grant.
+func (uc *PrincipalPermissionUsecase) HasMCPStudentRole(ctx context.Context, principalID string) (bool, error) {
+	if ctx == nil || ctx.Err() != nil || !domain.ValidPrincipalID(principalID) || principalID != strings.ToLower(principalID) {
+		return false, domain.ErrUnauthenticated
+	}
+	if uc == nil || uc.roleRepo == nil {
+		return false, domain.ErrAuthorityUnavailable
+	}
+	role, err := uc.roleRepo.GetDefaultRole(ctx, principalID)
+	if err != nil {
+		return false, err
+	}
+	return role == domain.MCPStudentRole, nil
+}
+
 func permissionIdentifier(perm model.Permission) string {
 	switch {
 	case perm.Action == "" && perm.ResourceKind == "":
