@@ -72,7 +72,7 @@ func TestMCPStudentScopeProofRequiresExactAuthSignedPilotScopeSet(t *testing.T) 
 		{"duplicate scopes", func(c map[string]any) { c["scopes"] = []string{"profile:read", "profile:read"} }},
 		{"unsorted scopes", func(c map[string]any) { c["scopes"] = []string{"tasks:read", "profile:read"} }},
 		{"write scope", func(c map[string]any) { c["scopes"] = []string{"tasks:write"} }},
-		{"unknown scope", func(c map[string]any) { c["scopes"] = []string{"lessons:read"} }},
+		{"unknown scope", func(c map[string]any) { c["scopes"] = []string{"teacher:ask"} }},
 		{"scope case", func(c map[string]any) { c["scopes"] = []string{"Profile:read"} }},
 		{"too many", func(c map[string]any) {
 			c["scopes"] = []string{"courses:read", "profile:read", "tasks:read", "write:read"}

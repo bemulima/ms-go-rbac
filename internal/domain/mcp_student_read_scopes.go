@@ -3,32 +3,32 @@ package domain
 // Pilot MCP Student scopes have no implied grants. Each requires its own
 // explicit default-scope RBAC permission and separate Auth/owner checks.
 const (
-	MCPStudentCalendarReadScope = "calendar:read"
-	MCPStudentProfileReadScope  = "profile:read"
-	MCPStudentCoursesReadScope  = "courses:read"
+	MCPStudentCalendarReadScope  = "calendar:read"
+	MCPStudentProfileReadScope   = "profile:read"
+	MCPStudentCoursesReadScope   = "courses:read"
 	MCPStudentKnowledgeReadScope = "knowledge:read"
-	MCPStudentLessonsReadScope = "lessons:read"
-	MCPStudentTasksReadScope    = "tasks:read"
+	MCPStudentLessonsReadScope   = "lessons:read"
+	MCPStudentTasksReadScope     = "tasks:read"
 
-	MCPStudentInstancesStartScope = "instances:start"
-	MCPStudentWorkspaceWriteScope = "workspace:write"
+	MCPStudentInstancesStartScope   = "instances:start"
+	MCPStudentWorkspaceWriteScope   = "workspace:write"
 	MCPStudentSubmissionsWriteScope = "submissions:write"
-	MCPStudentValidationRunScope = "validation:run"
+	MCPStudentValidationRunScope    = "validation:run"
 
-	MCPStudentCalendarReadPermission = "mcp.calendar.read"
-	MCPStudentProfileReadPermission  = "mcp.profile.read"
-	MCPStudentCoursesReadPermission  = "mcp.courses.read"
+	MCPStudentCalendarReadPermission  = "mcp.calendar.read"
+	MCPStudentProfileReadPermission   = "mcp.profile.read"
+	MCPStudentCoursesReadPermission   = "mcp.courses.read"
 	MCPStudentKnowledgeReadPermission = "mcp.knowledge.read"
-	MCPStudentLessonsReadPermission = "mcp.lessons.read"
-	MCPStudentTasksReadPermission    = "mcp.tasks.read"
+	MCPStudentLessonsReadPermission   = "mcp.lessons.read"
+	MCPStudentTasksReadPermission     = "mcp.tasks.read"
 
-	MCPStudentInstancesStartPermission = "mcp.instances.start"
-	MCPStudentWorkspaceWritePermission = "mcp.workspace.write"
+	MCPStudentInstancesStartPermission   = "mcp.instances.start"
+	MCPStudentWorkspaceWritePermission   = "mcp.workspace.write"
 	MCPStudentSubmissionsWritePermission = "mcp.submissions.write"
-	MCPStudentValidationRunPermission = "mcp.validation.run"
+	MCPStudentValidationRunPermission    = "mcp.validation.run"
 
 	MCPStudentReadScopeLimit = 6
-	MCPStudentAllScopeLimit = 10
+	MCPStudentAllScopeLimit  = 10
 )
 
 // MCPStudentReadScopePermission accepts only exact read-only pilot scopes.
@@ -87,7 +87,6 @@ func ValidMCPStudentAllowedReadScopes(requested, allowed []string) bool {
 	return true
 }
 
-
 // MCPStudentScopePermission supports the four independently consented write
 // scopes in addition to V0 reads. RBAC must find an actual default-scope
 // permission for each requested scope; this mapping never grants one.
@@ -110,23 +109,32 @@ func MCPStudentScopePermission(scope string) (string, bool) {
 }
 
 func ValidMCPStudentScopeSet(scopes []string) bool {
-	if len(scopes) == 0 || len(scopes) > MCPStudentAllScopeLimit { return false }
+	if len(scopes) == 0 || len(scopes) > MCPStudentAllScopeLimit {
+		return false
+	}
 	previous := ""
 	for _, scope := range scopes {
-		if _, ok := MCPStudentScopePermission(scope); !ok || scope <= previous { return false }
+		if _, ok := MCPStudentScopePermission(scope); !ok || scope <= previous {
+			return false
+		}
 		previous = scope
 	}
 	return true
 }
 
 func ValidMCPStudentAllowedScopes(requested, allowed []string) bool {
-	if !ValidMCPStudentScopeSet(requested) || allowed == nil || len(allowed) > len(requested) { return false }
+	if !ValidMCPStudentScopeSet(requested) || allowed == nil || len(allowed) > len(requested) {
+		return false
+	}
 	i := 0
 	for _, scope := range allowed {
-		for i < len(requested) && requested[i] < scope { i++ }
-		if i == len(requested) || requested[i] != scope { return false }
+		for i < len(requested) && requested[i] < scope {
+			i++
+		}
+		if i == len(requested) || requested[i] != scope {
+			return false
+		}
 		i++
 	}
 	return true
 }
-

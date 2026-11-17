@@ -207,4 +207,3 @@ func TestMCPStudentReadScopesDenyMalformedUnauthorizedAndOutageInputs(t *testing
 		t.Fatalf("missing permission store authorized: %#v, %v", allowed, err)
 	}
 }
-

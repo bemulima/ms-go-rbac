@@ -142,7 +142,9 @@ func (uc *PrincipalPermissionUsecase) HasMCPStudentRole(ctx context.Context, pri
 // scope. This is a source-only policy evaluator, NOT a signed RPC endpoint,
 // Auth consent decision or domain object authorization.
 func (uc *PrincipalPermissionUsecase) AllowedMCPStudentReadScopes(ctx context.Context, principalID string, requested []string) ([]string, error) {
-	if !domain.ValidMCPStudentReadScopeSet(requested) { return nil, domain.ErrUnauthenticated }
+	if !domain.ValidMCPStudentReadScopeSet(requested) {
+		return nil, domain.ErrUnauthenticated
+	}
 	return uc.AllowedMCPStudentScopes(ctx, principalID, requested)
 }
 

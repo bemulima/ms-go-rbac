@@ -24,7 +24,7 @@ func TestMCP53MutationScopesRequireIndependentDefaultStudentPermission(t *testin
 		t.Fatal("MCP write grammar or read-only compatibility violated")
 	}
 	permissions := &mcpReadPermissionFixture{granted: map[string]bool{
-		domain.MCPStudentCoursesReadPermission: true,
+		domain.MCPStudentCoursesReadPermission:    true,
 		domain.MCPStudentInstancesStartPermission: true,
 	}}
 	uc := NewPrincipalPermissionUsecase(permissionPrincipalFixture{defaultRole: domain.MCPStudentRole}, permissions)

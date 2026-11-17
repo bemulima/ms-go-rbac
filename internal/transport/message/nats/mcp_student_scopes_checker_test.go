@@ -130,7 +130,7 @@ func TestMCPStudentScopesCheckerRejectsUntrustedCallerFieldsAndWriteScopes(t *te
 		t.Fatalf("caller-controlled RPC fields reached verifier: %d", verifier.calls)
 	}
 
-	for _, invalidScopes := range [][]string{{"tasks:write"}, {"lessons:read"}, {"tasks:read", "profile:read"}} {
+	for _, invalidScopes := range [][]string{{"tasks:write"}, {"teacher:ask"}, {"tasks:read", "profile:read"}} {
 		permissions := &mcpScopesPermissionFixture{granted: map[string]bool{domain.MCPStudentTasksReadPermission: true}}
 		signer := &mcpScopesSignerFixture{}
 		checker := MCPStudentScopesChecker{
