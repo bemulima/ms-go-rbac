@@ -114,6 +114,47 @@ func TestMCPStudentReadScopesDenyWrongRoleAndAmbiguousDefaultAssignment(t *testi
 	}
 }
 
+func TestMCP53PrivateContentRequiresIndependentStudentPermission(t *testing.T) {
+	requested := []string{domain.MCPStudentCoursesReadScope, domain.MCPStudentKnowledgeReadScope, domain.MCPStudentLessonsReadScope}
+	if !domain.ValidMCPStudentReadScopeSet(requested) || !domain.ValidMCPStudentScopeSet(requested) {
+		t.Fatal("new scopes absent from exact signed Auth/RBAC grammar")
+	}
+	permissions := &mcpReadPermissionFixture{granted: map[string]bool{
+		domain.MCPStudentCoursesReadPermission: true,
+	}}
+	uc := NewPrincipalPermissionUsecase(permissionPrincipalFixture{defaultRole: domain.MCPStudentRole}, permissions)
+	allowed, err := uc.AllowedMCPStudentReadScopes(context.Background(), mcpScopeTestStudent, requested)
+	if err != nil || !reflect.DeepEqual(allowed, []string{domain.MCPStudentCoursesReadScope}) {
+		t.Fatalf("courses:read incorrectly elevated to private content: %#v %v", allowed, err)
+	}
+	if len(permissions.queries) != len(requested) ||
+		permissions.queries[1] != "student/"+domain.MCPStudentKnowledgeReadPermission+"/" ||
+		permissions.queries[2] != "student/"+domain.MCPStudentLessonsReadPermission+"/" {
+		t.Fatalf("not all private-content permissions checked independently: %#v", permissions.queries)
+	}
+	permissions.granted[domain.MCPStudentKnowledgeReadPermission] = true
+	allowed, err = uc.AllowedMCPStudentReadScopes(context.Background(), mcpScopeTestStudent, requested)
+	if err != nil || !reflect.DeepEqual(allowed, []string{domain.MCPStudentCoursesReadScope, domain.MCPStudentKnowledgeReadScope}) {
+		t.Fatalf("knowledge permission lost or implied lesson permission: %#v %v", allowed, err)
+	}
+	permissions.granted[domain.MCPStudentLessonsReadPermission] = true
+	allowed, err = uc.AllowedMCPStudentReadScopes(context.Background(), mcpScopeTestStudent, requested)
+	if err != nil || !reflect.DeepEqual(allowed, requested) {
+		t.Fatalf("explicit permissions not evaluated: %#v %v", allowed, err)
+	}
+	permissions.failOn = domain.MCPStudentKnowledgeReadPermission
+	allowed, err = uc.AllowedMCPStudentReadScopes(context.Background(), mcpScopeTestStudent, requested)
+	if len(allowed) != 0 || !errors.Is(err, domain.ErrAuthorityUnavailable) {
+		t.Fatalf("partial scope accepted after owner error: %#v %v", allowed, err)
+	}
+	permissions.failOn = ""
+	permissions.granted[domain.MCPStudentKnowledgeReadPermission] = false
+	allowed, err = uc.AllowedMCPStudentReadScopes(context.Background(), mcpScopeTestStudent, requested)
+	if err != nil || !reflect.DeepEqual(allowed, []string{domain.MCPStudentCoursesReadScope, domain.MCPStudentLessonsReadScope}) {
+		t.Fatalf("revoked graph read permission persisted: %#v %v", allowed, err)
+	}
+}
+
 func TestMCPStudentReadScopesDenyMalformedUnauthorizedAndOutageInputs(t *testing.T) {
 	permissions := &mcpReadPermissionFixture{granted: map[string]bool{
 		domain.MCPStudentProfileReadPermission: true,
@@ -166,3 +207,4 @@ func TestMCPStudentReadScopesDenyMalformedUnauthorizedAndOutageInputs(t *testing
 		t.Fatalf("missing permission store authorized: %#v, %v", allowed, err)
 	}
 }
+

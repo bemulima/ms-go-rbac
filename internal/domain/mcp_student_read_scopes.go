@@ -6,6 +6,8 @@ const (
 	MCPStudentCalendarReadScope = "calendar:read"
 	MCPStudentProfileReadScope  = "profile:read"
 	MCPStudentCoursesReadScope  = "courses:read"
+	MCPStudentKnowledgeReadScope = "knowledge:read"
+	MCPStudentLessonsReadScope = "lessons:read"
 	MCPStudentTasksReadScope    = "tasks:read"
 
 	MCPStudentInstancesStartScope = "instances:start"
@@ -16,6 +18,8 @@ const (
 	MCPStudentCalendarReadPermission = "mcp.calendar.read"
 	MCPStudentProfileReadPermission  = "mcp.profile.read"
 	MCPStudentCoursesReadPermission  = "mcp.courses.read"
+	MCPStudentKnowledgeReadPermission = "mcp.knowledge.read"
+	MCPStudentLessonsReadPermission = "mcp.lessons.read"
 	MCPStudentTasksReadPermission    = "mcp.tasks.read"
 
 	MCPStudentInstancesStartPermission = "mcp.instances.start"
@@ -23,8 +27,8 @@ const (
 	MCPStudentSubmissionsWritePermission = "mcp.submissions.write"
 	MCPStudentValidationRunPermission = "mcp.validation.run"
 
-	MCPStudentReadScopeLimit = 4
-	MCPStudentAllScopeLimit = 8
+	MCPStudentReadScopeLimit = 6
+	MCPStudentAllScopeLimit = 10
 )
 
 // MCPStudentReadScopePermission accepts only exact read-only pilot scopes.
@@ -37,6 +41,10 @@ func MCPStudentReadScopePermission(scope string) (string, bool) {
 		return MCPStudentProfileReadPermission, true
 	case MCPStudentCoursesReadScope:
 		return MCPStudentCoursesReadPermission, true
+	case MCPStudentKnowledgeReadScope:
+		return MCPStudentKnowledgeReadPermission, true
+	case MCPStudentLessonsReadScope:
+		return MCPStudentLessonsReadPermission, true
 	case MCPStudentTasksReadScope:
 		return MCPStudentTasksReadPermission, true
 	default:
@@ -121,3 +129,4 @@ func ValidMCPStudentAllowedScopes(requested, allowed []string) bool {
 	}
 	return true
 }
+
