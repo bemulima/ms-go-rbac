@@ -52,7 +52,7 @@ type mcpStudentScopeDecisionClaims struct {
 func (s *MCPStudentScopeDecisionSigner) SignMCPStudentScopeDecision(proof domain.MCPStudentScopeProof, rawProof string, allowed []string) (string, error) {
 	if s == nil || s.privateKey == nil || len(rawProof) == 0 || len(rawProof) > maxReviewerPermissionProofBytes ||
 		!validCanonicalReviewerUUID(proof.Subject) || !validCanonicalReviewerUUID(proof.JWTID) ||
-		!domain.ValidMCPStudentAllowedReadScopes(proof.Requested, allowed) {
+		!domain.ValidMCPStudentAllowedScopes(proof.Requested, allowed) {
 		return "", domain.ErrAuthorityUnavailable
 	}
 	proofHash := sha256.Sum256([]byte(rawProof))

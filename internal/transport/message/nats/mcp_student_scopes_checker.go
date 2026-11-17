@@ -59,7 +59,7 @@ func (c MCPStudentScopesChecker) handle(ctx context.Context, data []byte) mcpStu
 		}
 		return mcpStudentScopesResponse{Error: "MCP Student scope lookup denied"}
 	}
-	allowed, err := c.Principal.AllowedMCPStudentReadScopes(ctx, proof.Subject, proof.Requested)
+	allowed, err := c.Principal.AllowedMCPStudentScopes(ctx, proof.Subject, proof.Requested)
 	if err != nil {
 		return mcpStudentScopesResponse{Error: "MCP Student scope lookup unavailable"}
 	}

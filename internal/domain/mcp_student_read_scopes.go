@@ -8,12 +8,23 @@ const (
 	MCPStudentCoursesReadScope  = "courses:read"
 	MCPStudentTasksReadScope    = "tasks:read"
 
+	MCPStudentInstancesStartScope = "instances:start"
+	MCPStudentWorkspaceWriteScope = "workspace:write"
+	MCPStudentSubmissionsWriteScope = "submissions:write"
+	MCPStudentValidationRunScope = "validation:run"
+
 	MCPStudentCalendarReadPermission = "mcp.calendar.read"
 	MCPStudentProfileReadPermission  = "mcp.profile.read"
 	MCPStudentCoursesReadPermission  = "mcp.courses.read"
 	MCPStudentTasksReadPermission    = "mcp.tasks.read"
 
+	MCPStudentInstancesStartPermission = "mcp.instances.start"
+	MCPStudentWorkspaceWritePermission = "mcp.workspace.write"
+	MCPStudentSubmissionsWritePermission = "mcp.submissions.write"
+	MCPStudentValidationRunPermission = "mcp.validation.run"
+
 	MCPStudentReadScopeLimit = 4
+	MCPStudentAllScopeLimit = 8
 )
 
 // MCPStudentReadScopePermission accepts only exact read-only pilot scopes.
@@ -64,6 +75,49 @@ func ValidMCPStudentAllowedReadScopes(requested, allowed []string) bool {
 			return false
 		}
 		requestedIndex++
+	}
+	return true
+}
+
+
+// MCPStudentScopePermission supports the four independently consented write
+// scopes in addition to V0 reads. RBAC must find an actual default-scope
+// permission for each requested scope; this mapping never grants one.
+func MCPStudentScopePermission(scope string) (string, bool) {
+	if permission, ok := MCPStudentReadScopePermission(scope); ok {
+		return permission, true
+	}
+	switch scope {
+	case MCPStudentInstancesStartScope:
+		return MCPStudentInstancesStartPermission, true
+	case MCPStudentWorkspaceWriteScope:
+		return MCPStudentWorkspaceWritePermission, true
+	case MCPStudentSubmissionsWriteScope:
+		return MCPStudentSubmissionsWritePermission, true
+	case MCPStudentValidationRunScope:
+		return MCPStudentValidationRunPermission, true
+	default:
+		return "", false
+	}
+}
+
+func ValidMCPStudentScopeSet(scopes []string) bool {
+	if len(scopes) == 0 || len(scopes) > MCPStudentAllScopeLimit { return false }
+	previous := ""
+	for _, scope := range scopes {
+		if _, ok := MCPStudentScopePermission(scope); !ok || scope <= previous { return false }
+		previous = scope
+	}
+	return true
+}
+
+func ValidMCPStudentAllowedScopes(requested, allowed []string) bool {
+	if !ValidMCPStudentScopeSet(requested) || allowed == nil || len(allowed) > len(requested) { return false }
+	i := 0
+	for _, scope := range allowed {
+		for i < len(requested) && requested[i] < scope { i++ }
+		if i == len(requested) || requested[i] != scope { return false }
+		i++
 	}
 	return true
 }

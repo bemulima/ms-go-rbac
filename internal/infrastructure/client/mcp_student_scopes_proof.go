@@ -92,7 +92,7 @@ func (v *AuthMCPStudentScopeProofVerifier) VerifyMCPStudentScopeProof(ctx contex
 	if claims.Issuer != v.issuer || claims.Audience != domain.MCPStudentScopeProofAudience ||
 		claims.Type != domain.MCPStudentScopeProofType || claims.Purpose != domain.MCPStudentScopeProofPurpose ||
 		!validCanonicalReviewerUUID(claims.Subject) || !validCanonicalReviewerUUID(claims.JWTID) ||
-		!domain.ValidMCPStudentReadScopeSet(claims.Scopes) {
+		!domain.ValidMCPStudentScopeSet(claims.Scopes) {
 		return denied, domain.ErrUnauthenticated
 	}
 	now := v.now().UTC().Unix()

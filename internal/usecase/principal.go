@@ -142,7 +142,14 @@ func (uc *PrincipalPermissionUsecase) HasMCPStudentRole(ctx context.Context, pri
 // scope. This is a source-only policy evaluator, NOT a signed RPC endpoint,
 // Auth consent decision or domain object authorization.
 func (uc *PrincipalPermissionUsecase) AllowedMCPStudentReadScopes(ctx context.Context, principalID string, requested []string) ([]string, error) {
-	if ctx == nil || ctx.Err() != nil || !domain.ValidPrincipalID(principalID) || principalID != strings.ToLower(principalID) || !domain.ValidMCPStudentReadScopeSet(requested) {
+	if !domain.ValidMCPStudentReadScopeSet(requested) { return nil, domain.ErrUnauthenticated }
+	return uc.AllowedMCPStudentScopes(ctx, principalID, requested)
+}
+
+// AllowedMCPStudentScopes evaluates explicit canonical default-scope permissions
+// for read and separately consented mutation scopes; it never infers a grant.
+func (uc *PrincipalPermissionUsecase) AllowedMCPStudentScopes(ctx context.Context, principalID string, requested []string) ([]string, error) {
+	if ctx == nil || ctx.Err() != nil || !domain.ValidPrincipalID(principalID) || principalID != strings.ToLower(principalID) || !domain.ValidMCPStudentScopeSet(requested) {
 		return nil, domain.ErrUnauthenticated
 	}
 	if uc == nil || uc.roleRepo == nil || uc.permissionRepo == nil {
@@ -164,7 +171,7 @@ func (uc *PrincipalPermissionUsecase) AllowedMCPStudentReadScopes(ctx context.Co
 		if ctx.Err() != nil {
 			return nil, domain.ErrAuthorityUnavailable
 		}
-		permission, _ := domain.MCPStudentReadScopePermission(scope)
+		permission, _ := domain.MCPStudentScopePermission(scope)
 		granted, err := uc.permissionRepo.HasDefaultPermission(ctx, domain.MCPStudentRole, permission, "")
 		if err != nil || ctx.Err() != nil {
 			return nil, domain.ErrAuthorityUnavailable
