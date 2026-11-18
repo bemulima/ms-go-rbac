@@ -3,6 +3,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -57,6 +58,14 @@ func privateFile(path string,max int) ([]byte,error) {
 	if err!=nil || len(data)==0 || len(data)>max {return nil,errors.New("private file denied")}
 	return data,nil
 }
+// Signing-key validation must happen before opening PostgreSQL or writing a role.
+// A later signing error must not leave an unsigned privileged grant behind.
+func grantSigningKeysReady(authKey, grantKey []byte) bool {
+	return len(authKey) >= 32 && len(authKey) <= 4096 &&
+		len(grantKey) >= 32 && len(grantKey) <= 4096 &&
+		!bytes.Equal(authKey, grantKey)
+}
+
 func readMarker() (ownership,error) {
 	var marker ownership
 	raw,err:=privateFile(markerFile,4096)
@@ -81,7 +90,7 @@ func execute() error {
 	authKey,err:=privateFile(os.Getenv("RBAC_CAT49_AUTH_PROOF_KEY_FILE"),4096)
 	if err!=nil {return err}
 	grantKey,err:=privateFile(os.Getenv("RBAC_CAT49_GRANT_SIGNING_KEY_FILE"),4096)
-	if err!=nil || string(authKey)==string(grantKey) {return errors.New("CAT49 separate proof keys required")}
+	if err!=nil || !grantSigningKeysReady(authKey, grantKey) {return errors.New("CAT49 invalid or reused proof keys")}
 	raw,err:=io.ReadAll(io.LimitReader(os.Stdin,4097))
 	if err!=nil || len(raw)>4096 {return errors.New("CAT49 registration proof input denied")}
 	proof,err:=usecase.VerifyCAT49Registration(raw,authKey,marker.RunID,marker.AuthDatabase)
