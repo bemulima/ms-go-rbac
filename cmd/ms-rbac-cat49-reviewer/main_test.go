@@ -21,3 +21,24 @@ func TestCAT49ReviewOwnerMarkerRejectsForeignDeployment(t *testing.T) {
 		t.Run(name,func(t *testing.T){v:=base;mutate(&v);if v.valid(){t.Fatal("unsafe marker accepted")}})
 	}
 }
+
+func TestCAT49RejectsUnsignedRoleGrantPreflight(t *testing.T) {
+	validAuth := []byte("auth-proof-secret-with-more-than-32-bytes")
+	validGrant := []byte("grant-signing-secret-with-more-than-32-bytes")
+	if !grantSigningKeysReady(validAuth, validGrant) {
+		t.Fatal("valid independent signing keys were denied")
+	}
+	for name, keys := range map[string]struct{ auth, grant []byte }{
+		"missing grant": {validAuth, nil},
+		"short grant": {validAuth, []byte("too-short")},
+		"short auth": {[]byte("too-short"), validGrant},
+		"same signing key": {validAuth, validAuth},
+		"oversized grant": {validAuth, make([]byte, 4097)},
+	} {
+		t.Run(name, func(t *testing.T) {
+			if grantSigningKeysReady(keys.auth, keys.grant) {
+				t.Fatal("unsafe key pair accepted before privilege write")
+			}
+		})
+	}
+}
