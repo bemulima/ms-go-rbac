@@ -12,10 +12,11 @@ records a unique immutable grant receipt atomically in the same transaction.
 The DB transaction shares the signup principal lock, rejects a second reviewer
 in the same run, role drift, replay changes and takeover of existing Student.
 
-The source is an owner primitive, NOT an executable: it is never wired to
-HTTP/NATS/server/CLI. A dedicated independently accepted CAT-49 operator
-entrypoint, Auth owner signer, actual DB marker verification and key custody
-remain required before any future use. Do not use the rejected V1 STUDENT
+The source is an owner primitive exposed only to the separate, default-OFF
+`cmd/ms-rbac-cat49-reviewer` CLI, never to HTTP/NATS/server. An independent
+positive security/operator approval of the exact CLI and Auth owner signer,
+actual disposable DB identity, signed owner marker and private key custody
+are still required BEFORE any execution. Do not use the rejected V1 STUDENT
 fixture or repoint the canonical lw_rbac operator CLI.
 
 Security approval and real disposable PostgreSQL tests are NOT_RUN.
