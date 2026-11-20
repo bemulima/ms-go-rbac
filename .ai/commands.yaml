@@ -5,25 +5,7 @@ commands:
     requires_approval: false
     risk: in-memory-transaction-protocol-only-no-sql
   - name: cat49-reviewer-persistence-postgres
-    run: "go test -tags=integration -count=1 -v ./internal/infrastructure/persistence/postgres -run '^TestCAT49ReviewerSQLAtomicReplayConflictAndDrift  - {name: operator-sql-acceptance, run: "go test -tags=integration ./internal/infrastructure/persistence/postgres ./cmd/ms-rbac-operator-bootstrap -run 'TestOperatorBootstrapSQL(ConcurrentReceiptAndDrift|AtomicityAndDenials)|TestOperatorCLILiveIsolatedDatabaseGuards' -count=1 -v", requires_approval: true, risk: isolated-owned-test-database-write}
-  - {name: operator-sql-source-check, run: "env -u RBAC_SIGNUP_TEST_DATABASE_URL go test -tags=integration ./internal/infrastructure/persistence/postgres -run '^TestOperatorBootstrapSQLConcurrentReceiptAndDrift$' -v", requires_approval: false, risk: compile-and-skip-no-database}
-  - {name: operator-bootstrap-tests, run: go test ./cmd/ms-rbac-operator-bootstrap ./internal/transport/http ./internal/infrastructure/persistence/postgres, requires_approval: false, risk: isolated-test-harness}
-  - {name: agent-policy, run: ./scripts/check-agent-policy.sh, requires_approval: false, risk: verification}
-  - {name: format-check, run: 'test -z "$(gofmt -l $(git ls-files ''*.go''))"', requires_approval: false, risk: verification}
-  - {name: vet, run: go vet ./..., requires_approval: false, risk: verification}
-  - {name: test, run: go test ./..., requires_approval: false, risk: verification}
-  - {name: test-http-integration, run: go run ./cmd/ms-rbac-http-integration, requires_approval: true, risk: disposable-database-write}
-  - {name: signup-contract-regression, run: 'go test ./internal/infrastructure/persistence/postgres -run "TestAuthRBACStudentProvisioningV1Contract|TestSignupProvisioningSQL"', requires_approval: false, risk: disposable-integration-test}
-  - {name: run, run: go run ./cmd/ms-rbac-service, requires_approval: true, risk: lifecycle}
-  - {name: migrate-up, run: task migrate-up, requires_approval: true, risk: database-write}
-  - {name: migrate-up-with-legacy-fixtures, run: task migrate-up-with-legacy-fixtures, requires_approval: true, risk: database-write}
-  - {name: migrate-down, run: task migrate-down, requires_approval: true, risk: destructive-database-write}
-  - {name: migrate-status, run: task migrate-status, requires_approval: true, risk: database-read}
-  - {name: migrate-status-legacy, run: task migrate-status-legacy, requires_approval: true, risk: database-read}
-  - {name: migrate-native, run: 'task migrate:native', requires_approval: true, risk: database-write}
-  - {name: migrate-native-legacy-fixtures, run: task migrate-native-legacy-fixtures, requires_approval: true, risk: database-write}
-  - {name: run-native, run: 'task run:native', requires_approval: true, risk: lifecycle}
-"
+    run: "go test -tags=integration -count=1 -v ./internal/infrastructure/persistence/postgres -run '^TestCAT49ReviewerSQLAtomicReplayConflictAndDrift$'"
     requires_approval: true
     risk: separately-approved-new-cat49-disposable-postgresql-role-and-receipt-writes
     required_environment: [RBAC_CAT49_SQL_APPROVAL, RBAC_CAT49_SQL_OWNER_MARKER_FILE, RBAC_CAT49_SQL_DATABASE_URL]
