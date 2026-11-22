@@ -112,6 +112,15 @@ func bootstrap() (*http.Server, error) {
 			log.Printf("nats subscribe failed (rbac.checkRole): %v", err)
 		}
 
+		// CAT-49 Practice Catalog requires an exact global/default-scope Student read.
+		// This is internal NATS read-only; broker subject ACLs remain a deployment gate.
+		defaultStudentChecker := natstransport.DefaultStudentRoleChecker{
+			Conn: conn, Roles: principalRoleRepo,
+		}
+		if err := defaultStudentChecker.Listen(); err != nil {
+			log.Printf("nats subscribe failed (rbac.checkDefaultStudentRole): %v", err)
+		}
+
 		permissionChecker := natstransport.PermissionChecker{
 			Conn: conn, Subject: "rbac.checkPermission", Queue: "ms-go-rbac",
 			ProofVerifier: reviewerProofVerifier, DecisionSigner: reviewerDecisionSigner, Permission: principalPermissionUC,
