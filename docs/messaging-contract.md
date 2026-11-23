@@ -82,6 +82,103 @@ Ambiguous default-scope role bindings, verification failures, or storage
 failures deny the lookup; dependency details are not returned. The lookup
 itself creates no grants and does not activate reviewer publication.
 
+## MCP Student signed role readback
+
+Parent: [MCP Epic #53](https://github.com/bemulima/learning-platform-business/issues/53).
+`MCPStudentRoleChecker` is registered only with explicit
+`MCP_STUDENT_RBAC_ENABLED=true` and the required NATS/decision settings.
+Its Core NATS request/reply subject is `rbac.checkMCPStudentRole`
+(queue `ms-go-rbac`). Each of the role, scope, legacy role and CAT Reviewer
+checks has its own subject and contract. Runtime admission requires an
+approved Auth-issued proof, decision consumer and broker subject ACLs.
+
+The only request field is `{"proof":"<JWT>"}` (max 9 KiB envelope). An Auth
+RS256 proof uses the existing configured Auth public verification key and
+issuer but **separate, exact** audience `ms-go-rbac-mcp-student-role`,
+type `mcp_student_role_check`, purpose `AUTH_RBAC_MCP_STUDENT_ROLE_V1`, and
+`role=student`. Its exact JWT header is `alg=RS256, typ=JWT`, with claims
+`iss,aud,sub,typ,purpose,role,jti,iat,exp`, canonical lowercase nonzero UUID
+`sub` and `jti`, at most 30 seconds from `iat` to `exp`, at most 5 seconds
+of future `iat` skew. The raw role claim is a fixed request purpose, **not
+evidence of RBAC assignment**. Extra or duplicated fields, unsigned `ok`,
+wrong-purpose reviewer JWTs, wrong keys, and public user headers are denied.
+
+RBAC checks the **current, unique role at the canonical default user/global
+scope** via `GetDefaultRole`. It returns signed `DENY` when that role is
+absent or not exactly `student` (including `admin`). Other-scope fallback
+from `GetByRole` is never consulted. An ambiguous default role, unavailable
+storage, malformed signature, or missing signing key returns only a generic
+error, not a successful unsigned decision.
+
+For a valid proof and successful lookup the reply has exactly
+`{"decision_jwt":"<RS256 JWT>"}`. It uses issuer `ms-go-rbac`, audience
+`ms-go-auth-mcp-student-role-decision`, type
+`mcp_student_role_decision`, purpose
+`RBAC_AUTH_MCP_STUDENT_ROLE_DECISION_V1`, fixed role `student`, `ALLOW` or
+`DENY` decision, a fresh canonical nonzero response `jti`, the verified
+request `request_jti`, a lowercase SHA-256 `request_digest` of the complete
+raw Auth proof, and integer `iat/exp` limited to 15 seconds. The exact JWT
+fields are `iss,aud,sub,typ,purpose,role,decision,jti,request_jti,request_digest,iat,exp`.
+Only RBAC holds the key configured by
+`RBAC_MCP_STUDENT_ROLE_DECISION_PRIVATE_KEY`. Auth must
+validate its matching public key, strict response shape, signature, audience,
+purpose, subject, request binding, freshness and replay before any token
+exchange.
+
+**This is a role-only decision**. It does not grant `courses:read`,
+`tasks:write`, or any other MCP scope and cannot populate
+`RBACStudentScopes` in Auth token intent. Auth requires the separate scopes
+decision and must join it with current client/consent and platform policy.
+
+## MCP Student read-scope policy
+
+The internal read-only evaluator requires the canonical Student role and its
+own explicit current role-permission link for each scope. It maps
+`calendar:read`, `courses:read`, `knowledge:read`, `lessons:read`,
+`profile:read` and `tasks:read` to their corresponding `mcp.<resource>.read`
+permissions. Every link uses empty `resource_kind` at the default zero
+resource ID. The migration does not seed these permissions.
+Absence means DENY; `admin`, ambiguous/non-default roles, unknown or write
+scopes, and unavailable storage cannot authorize read scopes. The requested
+set must be strictly sorted and duplicate-free and contain one to six read
+scopes. Storage errors yield no authorized subset.
+
+See [the original pilot policy](mcp00-student-read-scope-policy.md) and
+[private learning permissions](mcp53-private-learning-read-permissions.md)
+for contract history. Auth and domain owners enforce their own
+client/consent/platform-policy and object ACLs.
+
+## MCP Student signed scopes readback
+
+The default-off Core NATS subject is `rbac.checkMCPStudentScopes`
+(queue `ms-go-rbac`). It accepts only the exact
+`{"proof":"<JWT>"}` request. The signed Auth proof has distinct exact
+audience `ms-go-rbac-mcp-student-scopes`, purpose
+`AUTH_RBAC_MCP_STUDENT_SCOPES_V1`, type `mcp_student_scope_check`, and nine
+claims: `iss,aud,sub,typ,purpose,scopes,jti,iat,exp`. A request must
+contain one to ten sorted, distinct recognized scopes. The evaluator supports
+the six reads above and four individually granted write scopes.
+`instances:start`, `workspace:write`, `submissions:write` and
+`validation:run` require `mcp.instances.start`, `mcp.workspace.write`,
+`mcp.submissions.write` and `mcp.validation.run`, respectively. JWT
+signature, strict shape, canonical subject,
+freshness and purpose are verified before policy evaluation. The role-only
+Auth proof cannot replace it.
+
+On successful evaluation the response has only a signed `decision_jwt` with
+exact `requested_scopes` and `allowed_scopes`, fresh `jti`, bound
+`request_jti` and SHA-256 of the exact raw proof, 15-second TTL and distinct
+audience/type/purpose. RBAC signs **only** the explicit permission-granted
+subset (which can be empty); a missing key, ambiguous role, failed proof or
+permission store outage returns a generic error without a signed decision.
+The decision key `RBAC_MCP_STUDENT_SCOPE_DECISION_PRIVATE_KEY` stays
+RBAC-only. Explicitly enabled Mentor uses distinct key material.
+
+The [original producer contract](mcp00-student-scope-decision-source.md)
+documents claims history. Auth must independently verify the signed scopes,
+client/consent/platform policy and fresh grants. Each domain owner enforces
+its live object ACL.
+
 ## Dedicated Auth signup proof
 
 The application boundary is

@@ -39,7 +39,7 @@ func prepareMentorOwner(cfg config.Config) (*mentorOwnerPrepared, error) {
 		AdminDecisionPublicKeyPEM: c.AdminDecisionPublicKey, ReadbackDecisionPrivateKeyPEM: c.ReadbackDecisionPrivateKey,
 		ReadbackDecisionPublicKeyPEM: c.ReadbackDecisionPublicKey,
 	}
-	if !validMentorCompositionKeys(composition) || !mentorKeysSeparateFromLegacy(composition, cfg) {
+	if !validMentorCompositionKeys(composition) || !mentorKeysSeparateFromOtherAuthorities(composition, cfg) {
 		return nil, domain.ErrAuthorityUnavailable
 	}
 	u, err := url.Parse(c.NATSURL)
@@ -122,17 +122,24 @@ func prepareMentorOwner(cfg config.Config) (*mentorOwnerPrepared, error) {
 	return &mentorOwnerPrepared{composition: composition, broker: opts}, nil
 }
 
-func mentorKeysSeparateFromLegacy(composition MentorOwnerCompositionConfig, cfg config.Config) bool {
-	var legacy []*rsa.PublicKey
+func mentorKeysSeparateFromOtherAuthorities(composition MentorOwnerCompositionConfig, cfg config.Config) bool {
+	var otherKeys []*rsa.PublicKey
 	if cfg.AuthJWTPublicKey != "" {
 		key := mentorCompositionPublicKey(cfg.AuthJWTPublicKey)
 		if key == nil {
 			return false
 		}
-		legacy = append(legacy, key)
+		otherKeys = append(otherKeys, key)
 	}
+	var privateKeys []string
 	if cfg.ReviewerPermissionDecisionPrivateKey != "" {
-		block := mentorCompositionPEM(cfg.ReviewerPermissionDecisionPrivateKey)
+		privateKeys = append(privateKeys, cfg.ReviewerPermissionDecisionPrivateKey)
+	}
+	if cfg.MCPStudentRBACEnabled {
+		privateKeys = append(privateKeys, cfg.MCPStudentRoleDecisionPrivateKey, cfg.MCPStudentScopeDecisionPrivateKey)
+	}
+	for _, material := range privateKeys {
+		block := mentorCompositionPEM(material)
 		if block == nil {
 			return false
 		}
@@ -147,7 +154,7 @@ func mentorKeysSeparateFromLegacy(composition MentorOwnerCompositionConfig, cfg 
 		if key == nil || key.Validate() != nil {
 			return false
 		}
-		legacy = append(legacy, &key.PublicKey)
+		otherKeys = append(otherKeys, &key.PublicKey)
 	}
 	for _, material := range []string{composition.AuthAdminLookupPublicKeyPEM, composition.AuthRoleDecisionPublicKeyPEM,
 		composition.MentorReadbackPublicKeyPEM, composition.AdminDecisionPublicKeyPEM, composition.ReadbackDecisionPublicKeyPEM} {
@@ -155,8 +162,8 @@ func mentorKeysSeparateFromLegacy(composition MentorOwnerCompositionConfig, cfg 
 		if key == nil {
 			return false
 		}
-		for _, old := range legacy {
-			if old.N.Cmp(key.N) == 0 {
+		for _, other := range otherKeys {
+			if other.N.Cmp(key.N) == 0 {
 				return false
 			}
 		}

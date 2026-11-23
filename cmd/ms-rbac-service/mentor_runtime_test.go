@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"crypto/rand"
+	"crypto/rsa"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/base64"
@@ -22,6 +24,35 @@ import (
 	natsgo "github.com/nats-io/nats.go"
 	"github.com/nats-io/nkeys"
 )
+
+func TestMentorOwnerRuntimeKeepsMCPDecisionKeysSeparate(t *testing.T) {
+	cfg := mentorRuntimeConfig(t)
+	cfg.MCPStudentRoleDecisionPrivateKey = cfg.MentorOwner.AdminDecisionPrivateKey
+	if prepared, err := prepareMentorOwner(cfg); err != nil || prepared == nil {
+		t.Fatal("disabled MCP must not change Mentor preflight")
+	}
+	cfg.MCPStudentRBACEnabled = true
+	roleKey, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		t.Fatal(err)
+	}
+	scopeKey, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		t.Fatal(err)
+	}
+	cfg.MCPStudentScopeDecisionPrivateKey = mentorCompositionPrivatePEM(scopeKey)
+	if prepared, err := prepareMentorOwner(cfg); err != domain.ErrAuthorityUnavailable || prepared != nil {
+		t.Fatal("Mentor decision signer must not be reused for MCP role decisions")
+	}
+	cfg.MCPStudentRoleDecisionPrivateKey = mentorCompositionPrivatePEM(roleKey)
+	if prepared, err := prepareMentorOwner(cfg); err != nil || prepared == nil {
+		t.Fatal("independently keyed MCP and Mentor must coexist")
+	}
+	cfg.MCPStudentScopeDecisionPrivateKey = cfg.MentorOwner.ReadbackDecisionPrivateKey
+	if prepared, err := prepareMentorOwner(cfg); err != domain.ErrAuthorityUnavailable || prepared != nil {
+		t.Fatal("Mentor decision signer must not be reused for MCP scope decisions")
+	}
+}
 
 func TestMentorOwnerRuntimePreflightDisabledAndSecureOptions(t *testing.T) {
 	prepared, err := prepareMentorOwner(config.Config{MentorOwner: config.MentorOwnerConfig{NATSURL: "invalid", NATSCredentialsFile: "/missing"}})
