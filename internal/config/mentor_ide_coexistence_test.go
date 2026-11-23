@@ -13,13 +13,13 @@ func TestMentorOwnerAndIDEStudentRoleConfigurationCoexist(t *testing.T) {
 	t.Setenv("RBAC_MENTOR_NATS_CREDENTIALS_FILE", "/operator/mentor.creds")
 	t.Setenv("RBAC_MENTOR_NATS_CA_FILE", "/operator/mentor-ca.pem")
 	for name, value := range map[string]string{
-		"AUTH_ADMIN_LOOKUP_PUBLIC_KEY": "lookup",
+		"AUTH_ADMIN_LOOKUP_PUBLIC_KEY":  "lookup",
 		"AUTH_ROLE_DECISION_PUBLIC_KEY": "decision",
-		"READBACK_REQUEST_PUBLIC_KEY": "request",
-		"ADMIN_DECISION_PRIVATE_KEY": "admin-private",
-		"ADMIN_DECISION_PUBLIC_KEY": "admin-public",
+		"READBACK_REQUEST_PUBLIC_KEY":   "request",
+		"ADMIN_DECISION_PRIVATE_KEY":    "admin-private",
+		"ADMIN_DECISION_PUBLIC_KEY":     "admin-public",
 		"READBACK_DECISION_PRIVATE_KEY": "readback-private",
-		"READBACK_DECISION_PUBLIC_KEY": "readback-public",
+		"READBACK_DECISION_PUBLIC_KEY":  "readback-public",
 	} {
 		t.Setenv("RBAC_MENTOR_"+name, value)
 	}
