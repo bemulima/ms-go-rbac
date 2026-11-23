@@ -1,5 +1,19 @@
 # Messaging contract
 
+## Default-off Mentor owner RPCs
+
+The additive [RBAC_MENTOR_ROLE_MUTATION_RPC_V1](../.ai/contracts/mentor-role-mutation-rpc-v1.md)
+specifies `rbac.applyMentorRole.v1`: one strict Auth-signed `proof` request and
+only an ACK or fixed error response. The actual mutation use case performs
+proof admission and current-Admin/receipt/fence/scoped assignment through its
+atomic store. ACK is not permission; Mentor still requires fresh signed scoped
+readback. The [explicit runtime opt-in](mentor-owner-runtime.md) mounts this and
+the existing canonical-Admin and scoped-readback consumers on a separate secured
+connection only when `RBAC_MENTOR_OWNER_ENABLED=true`. Default behavior and
+legacy RPCs remain unchanged; SQL/runtime acceptance is NOT_RUN.
+
+## Existing active RPCs
+
 rbac.assign-role, rbac.checkRole, and rbac.checkPermission are queue-group Core
 NATS request/reply subjects (queue ms-go-rbac). Assignment and role-check
 responses retain their existing ok/error shape; permission success responds
@@ -68,15 +82,15 @@ Ambiguous default-scope role bindings, verification failures, or storage
 failures deny the lookup; dependency details are not returned. The lookup
 itself creates no grants and does not activate reviewer publication.
 
-## MCP Student signed role readback — DORMANT candidate (MCP-00C3D1)
+## MCP Student signed role readback
 
 Parent: [MCP Epic #53](https://github.com/bemulima/learning-platform-business/issues/53).
-`MCPStudentRoleChecker` is source-only and **not registered in bootstrap**.
-The distinct future Core NATS request/reply subject is
-`rbac.checkMCPStudentRole` (queue `ms-go-rbac`); it is NOT a variant of the
-legacy unsigned `rbac.checkRole` or the active reviewer `rbac.checkPermission`.
-No operator should route traffic to it until both owners have approved the
-Auth-issued proof and Auth-side decision verifier/consumer.
+`MCPStudentRoleChecker` is registered only with explicit
+`MCP_STUDENT_RBAC_ENABLED=true` and the required NATS/decision settings.
+Its Core NATS request/reply subject is `rbac.checkMCPStudentRole`
+(queue `ms-go-rbac`). Each of the role, scope, legacy role and CAT Reviewer
+checks has its own subject and contract. Runtime admission requires an
+approved Auth-issued proof, decision consumer and broker subject ACLs.
 
 The only request field is `{"proof":"<JWT>"}` (max 9 KiB envelope). An Auth
 RS256 proof uses the existing configured Auth public verification key and
@@ -105,46 +119,49 @@ For a valid proof and successful lookup the reply has exactly
 request `request_jti`, a lowercase SHA-256 `request_digest` of the complete
 raw Auth proof, and integer `iat/exp` limited to 15 seconds. The exact JWT
 fields are `iss,aud,sub,typ,purpose,role,decision,jti,request_jti,request_digest,iat,exp`.
-Only RBAC holds the future **dedicated** private decision key; Auth must
+Only RBAC holds the key configured by
+`RBAC_MCP_STUDENT_ROLE_DECISION_PRIVATE_KEY`. Auth must
 validate its matching public key, strict response shape, signature, audience,
 purpose, subject, request binding, freshness and replay before any token
-exchange. Configuration and runtime wiring are deliberately deferred.
+exchange.
 
 **This is a role-only decision**. It does not grant `courses:read`,
 `tasks:write`, or any other MCP scope and cannot populate
-`RBACStudentScopes` in Auth token intent. Auth must separately implement a
-reviewed scope-to-RBAC/owner-policy mapping, then join it with its fresh
-client/consent snapshot. No OAuth token or MCP endpoint is activated.
+`RBACStudentScopes` in Auth token intent. Auth requires the separate scopes
+decision and must join it with current client/consent and platform policy.
 
-## MCP Student pilot read-scope policy — DORMANT (MCP-00C3D3)
+## MCP Student read-scope policy
 
-This is an internal **source-only** evaluator layered after the canonical
-Student role lookup, not a new request/reply subject or JWT decision. The
-exact pilot mappings are `profile:read` → `mcp.profile.read`, `courses:read`
-→ `mcp.courses.read`, and `tasks:read` → `mcp.tasks.read`; all map to empty
-`resource_kind` at the canonical default zero resource ID. Each must have its
-own explicit current `student` role-permission link; none are seeded here.
+The internal read-only evaluator requires the canonical Student role and its
+own explicit current role-permission link for each scope. It maps
+`calendar:read`, `courses:read`, `knowledge:read`, `lessons:read`,
+`profile:read` and `tasks:read` to their corresponding `mcp.<resource>.read`
+permissions. Every link uses empty `resource_kind` at the default zero
+resource ID. The migration does not seed these permissions.
 Absence means DENY; `admin`, ambiguous/non-default roles, unknown or write
 scopes, and unavailable storage cannot authorize read scopes. The requested
-set must be strictly sorted and duplicate-free and contain one to three pilot
-scopes. Errors never yield partially allowed scopes.
+set must be strictly sorted and duplicate-free and contain one to six read
+scopes. Storage errors yield no authorized subset.
 
-See [pilot policy](mcp00-student-read-scope-policy.md) for the exact local
-contract and the still-missing signed Auth↔RBAC scope request/decision,
-Auth client/consent/platform-policy intersection, and domain-owner object ACL.
-The existing signed role-only candidate stays dormant and must not be used to
-mint token scope claims. No MCP runtime is enabled by this policy.
+See [the original pilot policy](mcp00-student-read-scope-policy.md) and
+[private learning permissions](mcp53-private-learning-read-permissions.md)
+for contract history. Auth and domain owners enforce their own
+client/consent/platform-policy and object ACLs.
 
-## MCP Student signed scopes readback — DORMANT RBAC producer (MCP-00C3D4A)
+## MCP Student signed scopes readback
 
-The additional, **unsubscribed** Core NATS subject is
-`rbac.checkMCPStudentScopes` (queue `ms-go-rbac`). It accepts only the exact
+The default-off Core NATS subject is `rbac.checkMCPStudentScopes`
+(queue `ms-go-rbac`). It accepts only the exact
 `{"proof":"<JWT>"}` request. The signed Auth proof has distinct exact
 audience `ms-go-rbac-mcp-student-scopes`, purpose
 `AUTH_RBAC_MCP_STUDENT_SCOPES_V1`, type `mcp_student_scope_check`, and nine
-claims: `iss,aud,sub,typ,purpose,scopes,jti,iat,exp`. All one to three
-requested scopes must be sorted, distinct and among the three explicit
-read-only pilot scopes above. JWT signature, strict shape, canonical subject,
+claims: `iss,aud,sub,typ,purpose,scopes,jti,iat,exp`. A request must
+contain one to ten sorted, distinct recognized scopes. The evaluator supports
+the six reads above and four individually granted write scopes.
+`instances:start`, `workspace:write`, `submissions:write` and
+`validation:run` require `mcp.instances.start`, `mcp.workspace.write`,
+`mcp.submissions.write` and `mcp.validation.run`, respectively. JWT
+signature, strict shape, canonical subject,
 freshness and purpose are verified before policy evaluation. The role-only
 Auth proof cannot replace it.
 
@@ -154,12 +171,13 @@ exact `requested_scopes` and `allowed_scopes`, fresh `jti`, bound
 audience/type/purpose. RBAC signs **only** the explicit permission-granted
 subset (which can be empty); a missing key, ambiguous role, failed proof or
 permission store outage returns a generic error without a signed decision.
-The decision private key remains RBAC-only and is **not provisioned** here.
+The decision key `RBAC_MCP_STUDENT_SCOPE_DECISION_PRIVATE_KEY` stays
+RBAC-only. Explicitly enabled Mentor uses distinct key material.
 
-The [producer contract](mcp00-student-scope-decision-source.md) documents all
-claims and the still-missing Auth consumer. Auth must separately verify the
-signed scopes, client/consent/platform policy, fresh grant and owner ACL.
-No OAuth tokens, bootstrap subscriptions or data access are activated.
+The [original producer contract](mcp00-student-scope-decision-source.md)
+documents claims history. Auth must independently verify the signed scopes,
+client/consent/platform policy and fresh grants. Each domain owner enforces
+its live object ACL.
 
 ## Dedicated Auth signup proof
 

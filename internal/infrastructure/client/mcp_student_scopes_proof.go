@@ -13,7 +13,7 @@ import (
 	"github.com/example/ms-rbac-service/internal/domain"
 )
 
-// AuthMCPStudentScopeProofVerifier is a dormant verifier for the distinct
+// AuthMCPStudentScopeProofVerifier verifies the distinct
 // Auth-signed scope request. Role-only and reviewer proofs cannot be reused.
 type AuthMCPStudentScopeProofVerifier struct {
 	publicKey *rsa.PublicKey

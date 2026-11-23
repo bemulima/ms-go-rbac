@@ -102,9 +102,11 @@ func TestExplicitLegacyProfileStillCreatesItsHistoricalAssignments(t *testing.T)
 	if err := pool.QueryRow(ctx, `SELECT count(*) FROM principal_role`).Scan(&assignments); err != nil {
 		t.Fatal(err)
 	}
-	if roles != len(model.CanonicalRoles()) || principals != 7 || assignments != 7 {
-		t.Fatalf("legacy seed rows: roles=%d principals=%d assignments=%d; want roles=%d, principals=7, assignments=7", roles, principals, assignments, len(model.CanonicalRoles()))
+	wantRoles := len(model.CanonicalRoles()) + 1 // 005 adds one marker-owned Mentor role, not a default role.
+	if roles != wantRoles || principals != 7 || assignments != 7 {
+		t.Fatalf("legacy seed rows: roles=%d principals=%d assignments=%d; want roles=%d, principals=7, assignments=7", roles, principals, assignments, wantRoles)
 	}
+	assertCanonicalAndMentorMetadata(t, ctx, pool)
 }
 
 func TestHistoricalSchemaAdoptionRecordsAndPreservesSeedDisposition(t *testing.T) {
@@ -698,26 +700,11 @@ func assertSchemaProfilePostconditions(t *testing.T, ctx context.Context, pool *
 	if err := pool.QueryRow(ctx, `SELECT count(*) FROM pg_tables WHERE schemaname = 'public' AND tablename = 'future_schema_probe'`).Scan(&futureTableCount); err != nil {
 		t.Fatal(err)
 	}
-	if roleCount != len(model.CanonicalRoles()) || principalCount != 0 || assignmentCount != 0 || futureTableCount != 1 {
-		t.Fatalf("schema profile postconditions: roles=%d principals=%d assignments=%d future_schema_probe=%d; want roles=%d, principals=0, assignments=0, future_schema_probe=1", roleCount, principalCount, assignmentCount, futureTableCount, len(model.CanonicalRoles()))
+	wantRoles := len(model.CanonicalRoles()) + 1 // 005 adds metadata only, never principal assignments.
+	if roleCount != wantRoles || principalCount != 0 || assignmentCount != 0 || futureTableCount != 1 {
+		t.Fatalf("schema profile postconditions: roles=%d principals=%d assignments=%d future_schema_probe=%d; want roles=%d, principals=0, assignments=0, future_schema_probe=1", roleCount, principalCount, assignmentCount, futureTableCount, wantRoles)
 	}
-	for _, expected := range model.CanonicalRoles() {
-		var actualTitle string
-		if err := pool.QueryRow(ctx, `SELECT title FROM role WHERE key = $1`, expected.Key).Scan(&actualTitle); err != nil {
-			t.Fatalf("read canonical role %q: %v", expected.Key, err)
-		}
-		if actualTitle != expected.Title {
-			t.Errorf("canonical role %q title = %q, want %q", expected.Key, actualTitle, expected.Title)
-		}
-	}
-
-	var coreCount int
-	if err := pool.QueryRow(ctx, `SELECT count(*) FROM service WHERE key = 'core' AND title = 'Core Service'`).Scan(&coreCount); err != nil {
-		t.Fatal(err)
-	}
-	if coreCount != 1 {
-		t.Fatalf("canonical core service rows = %d, want 1", coreCount)
-	}
+	assertCanonicalAndMentorMetadata(t, ctx, pool)
 
 	var baseDisposition, legacyDisposition, futureDisposition migrationDisposition
 	if err := pool.QueryRow(ctx, `SELECT
@@ -728,5 +715,50 @@ func assertSchemaProfilePostconditions(t *testing.T, ctx context.Context, pool *
 	}
 	if baseDisposition != dispositionApplied || legacyDisposition != dispositionExcluded || futureDisposition != dispositionApplied {
 		t.Fatalf("migration ledger dispositions: base=%q legacy=%q future=%q; want %q,%q,%q", baseDisposition, legacyDisposition, futureDisposition, dispositionApplied, dispositionExcluded, dispositionApplied)
+	}
+}
+
+func assertCanonicalAndMentorMetadata(t *testing.T, ctx context.Context, pool *pgxpool.Pool) {
+	t.Helper()
+	for _, expected := range model.CanonicalRoles() {
+		var actualTitle string
+		if err := pool.QueryRow(ctx, `SELECT title FROM role WHERE key = $1`, expected.Key).Scan(&actualTitle); err != nil {
+			t.Fatalf("read canonical role %q: %v", expected.Key, err)
+		}
+		if actualTitle != expected.Title {
+			t.Errorf("canonical role %q title = %q, want %q", expected.Key, actualTitle, expected.Title)
+		}
+	}
+
+	core := model.CanonicalCoreService()
+	var coreCount int
+	if err := pool.QueryRow(ctx, `SELECT count(*) FROM service WHERE id = $1 AND key = $2 AND title = $3`, core.ID, core.Key, core.Title).Scan(&coreCount); err != nil {
+		t.Fatal(err)
+	}
+	if coreCount != 1 {
+		t.Fatalf("exact canonical core service rows = %d, want 1", coreCount)
+	}
+
+	// Matching logical keys alone cannot establish 005 ownership. The exact
+	// marker identities must join the canonical Mentor metadata and its only
+	// service-role mapping; an unrelated seventh role cannot satisfy this test.
+	var markers, exactOwnedScopes, ownedMappings int
+	if err := pool.QueryRow(ctx, `SELECT
+		(SELECT count(*) FROM public.mentor_role_scope),
+		(SELECT count(*) FROM public.mentor_role_scope AS marker
+		 JOIN public.role AS r ON r.id = marker.role_id
+		 JOIN public.service AS s ON s.id = marker.service_id
+		 JOIN public.service_role AS mapping ON mapping.role_id = marker.role_id AND mapping.service_id = marker.service_id
+		 WHERE marker.singleton = true
+		   AND r.key = 'mentor' AND r.title = 'Mentor'
+		   AND s.key = 'ms-go-mentor' AND s.title = 'Mentor Service'
+		   AND marker.role_id <> '00000000-0000-0000-0000-000000000000'::uuid
+		   AND marker.service_id NOT IN ('00000000-0000-0000-0000-000000000000'::uuid, $1::uuid)),
+		(SELECT count(*) FROM public.service_role AS mapping
+		 JOIN public.mentor_role_scope AS marker ON mapping.role_id = marker.role_id OR mapping.service_id = marker.service_id)`, core.ID).Scan(&markers, &exactOwnedScopes, &ownedMappings); err != nil {
+		t.Fatal(err)
+	}
+	if markers != 1 || exactOwnedScopes != 1 || ownedMappings != 1 {
+		t.Fatalf("Mentor metadata: markers=%d exact_owned_scopes=%d owned_mappings=%d; want exactly 1 of each", markers, exactOwnedScopes, ownedMappings)
 	}
 }

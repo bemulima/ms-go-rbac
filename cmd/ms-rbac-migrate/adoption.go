@@ -702,10 +702,6 @@ func classifySeedFootprint(ctx context.Context, q catalogReader) (seedState, err
 	}
 	rows.Close()
 
-	principalIDs := make([]string, 0, len(currentSeedGrants))
-	for _, grant := range currentSeedGrants {
-		principalIDs = append(principalIDs, grant.principal)
-	}
 	var assignments []string
 	rows, err = q.Query(ctx, `
 		SELECT pr.principal_id::text, pr.principal_kind::text, COALESCE(r.key,''),
@@ -714,7 +710,7 @@ func classifySeedFootprint(ctx context.Context, q catalogReader) (seedState, err
 		FROM principal_role pr
 		LEFT JOIN role r ON r.id = pr.role_id
 		WHERE pr.principal_id::text = ANY($1::text[])
-		ORDER BY pr.principal_id, pr.role_id`, principalIDs)
+		ORDER BY pr.principal_id, pr.role_id`, legacySeedPrincipalIDs())
 	if err != nil {
 		return seedAmbiguous, err
 	}
@@ -742,6 +738,14 @@ func classifySeedFootprint(ctx context.Context, q catalogReader) (seedState, err
 		return seedManager, nil
 	}
 	return seedAmbiguous, nil
+}
+
+func legacySeedPrincipalIDs() []string {
+	principals := make([]string, 0, len(currentSeedGrants))
+	for _, grant := range currentSeedGrants {
+		principals = append(principals, grant.principal)
+	}
+	return principals
 }
 
 func isCompleteSeed(roles map[string]string, services, assignments []string, expectedRoles []seedRole, expectedGrants []seedGrant, allowCurrentModerator bool) bool {

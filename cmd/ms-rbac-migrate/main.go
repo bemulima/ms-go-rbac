@@ -42,6 +42,7 @@ type migrationProfile string
 const (
 	profileSchema migrationProfile = "schema"
 	profileLegacy migrationProfile = "legacy"
+	profileMCP    migrationProfile = "mcp"
 )
 
 type migration struct {
@@ -66,8 +67,10 @@ func main() {
 	if len(os.Args) > 1 {
 		action = os.Args[1]
 	}
-	if action != "status" && action != "status-legacy" && action != "up" && action != "up-with-legacy-fixtures" && action != "down" {
-		log.Fatalf("usage: ms-rbac-migrate [status|status-legacy|up|up-with-legacy-fixtures|down]")
+	switch action {
+	case "status", "status-legacy", "status-mcp", "up", "up-with-legacy-fixtures", "up-mcp", "down":
+	default:
+		log.Fatalf("usage: ms-rbac-migrate [status|status-legacy|status-mcp|up|up-with-legacy-fixtures|up-mcp|down]")
 	}
 
 	dsn := os.Getenv("DB_DSN")
@@ -77,6 +80,19 @@ func main() {
 	migrations, err := discoverMigrations("migrations")
 	if err != nil {
 		log.Fatalf("discover migrations: %v", err)
+	}
+	profile := profileSchema
+	switch action {
+	case "status-legacy", "up-with-legacy-fixtures", "down":
+		profile = profileLegacy
+	case "status-mcp", "up-mcp":
+		profile = profileMCP
+	}
+	if profile == profileMCP {
+		migrations, err = mcpProfileMigrations(migrations)
+		if err != nil {
+			log.Fatalf("select MCP migrations: %v", err)
+		}
 	}
 
 	ctx := context.Background()
@@ -95,19 +111,22 @@ func main() {
 	}
 
 	switch action {
-	case "status":
-		printStatus(current, migrations, profileSchema)
-	case "status-legacy":
-		printStatus(current, migrations, profileLegacy)
-	case "up":
-		if err := apply(ctx, pool, current, migrations, profileSchema); err != nil {
+	case "status", "status-legacy", "status-mcp":
+		if profile == profileMCP {
+			if err := validateMCPMigrationState(ctx, pool, current); err != nil {
+				log.Fatalf("inspect MCP migration state: %v", err)
+			}
+		}
+		printStatus(current, migrations, profile)
+	case "up", "up-mcp":
+		if err := apply(ctx, pool, current, migrations, profile); err != nil {
 			log.Fatalf("apply migrations: %v", err)
 		}
 		current, err = inspect(ctx, pool)
 		if err != nil {
 			log.Fatalf("inspect migration state after apply: %v", err)
 		}
-		printStatus(current, migrations, profileSchema)
+		printStatus(current, migrations, profile)
 	case "up-with-legacy-fixtures":
 		if err := apply(ctx, pool, current, migrations, profileLegacy); err != nil {
 			log.Fatalf("apply legacy migrations: %v", err)
@@ -224,7 +243,7 @@ func apply(ctx context.Context, pool *pgxpool.Pool, current state, migrations []
 	if err != nil {
 		return err
 	}
-	if profile == profileSchema && !hasMigration(selected, baseSchemaMigration) {
+	if excludesLegacySeed(profile) && !hasMigration(selected, baseSchemaMigration) {
 		return fmt.Errorf("schema profile requires %s", baseSchemaMigration)
 	}
 
@@ -249,6 +268,11 @@ func apply(ctx context.Context, pool *pgxpool.Pool, current state, migrations []
 	if err != nil {
 		return fmt.Errorf("refresh migration state under lock: %w", err)
 	}
+	if profile == profileMCP {
+		if err := validateMCPMigrationState(ctx, lockConn, current); err != nil {
+			return err
+		}
+	}
 	current, err = prepareMigrationHistory(ctx, lockConn, current, migrations)
 	if err != nil {
 		return err
@@ -262,7 +286,7 @@ func apply(ctx context.Context, pool *pgxpool.Pool, current state, migrations []
 
 	for _, item := range migrations {
 		disposition, recorded := current.dispositions[item.version]
-		if item.version == legacyPrincipalSeed && profile == profileSchema {
+		if item.version == legacyPrincipalSeed && excludesLegacySeed(profile) {
 			if !recorded {
 				current, err = resolveLegacyDisposition(ctx, lockConn, current, migrations)
 				if err != nil {
@@ -307,8 +331,8 @@ func apply(ctx context.Context, pool *pgxpool.Pool, current state, migrations []
 		current.applied[item.version] = true
 		current.dispositions[item.version] = dispositionApplied
 		fmt.Printf("applied %s\n", item.version)
-		if item.version == baseSchemaMigration && profile == profileSchema {
-			if profile == profileSchema && hasMigration(migrations, legacyPrincipalSeed) {
+		if item.version == baseSchemaMigration && excludesLegacySeed(profile) {
+			if hasMigration(migrations, legacyPrincipalSeed) {
 				if err := recordDisposition(ctx, lockConn, legacyPrincipalSeed, dispositionExcluded); err != nil {
 					return err
 				}
@@ -332,11 +356,18 @@ func hasMigration(migrations []migration, version string) bool {
 }
 
 func migrationsForProfile(migrations []migration, profile migrationProfile) ([]migration, error) {
-	if profile != profileSchema && profile != profileLegacy {
+	if !excludesLegacySeed(profile) && profile != profileLegacy {
 		return nil, fmt.Errorf("unsupported migration profile %q", profile)
 	}
 	if profile == profileLegacy {
 		return append([]migration(nil), migrations...), nil
+	}
+	if profile == profileMCP {
+		var err error
+		migrations, err = mcpProfileMigrations(migrations)
+		if err != nil {
+			return nil, err
+		}
 	}
 	selected := make([]migration, 0, len(migrations))
 	for _, item := range migrations {
@@ -346,6 +377,10 @@ func migrationsForProfile(migrations []migration, profile migrationProfile) ([]m
 		selected = append(selected, item)
 	}
 	return selected, nil
+}
+
+func excludesLegacySeed(profile migrationProfile) bool {
+	return profile == profileSchema || profile == profileMCP
 }
 
 func ensureReferenceData(ctx context.Context, pool *pgxpool.Pool) error {
@@ -555,7 +590,8 @@ func printStatus(current state, migrations []migration, profile migrationProfile
 			}
 		} else if current.historyExists && item.version == legacyPrincipalSeed && current.applied[baseSchemaMigration] {
 			status = "unresolved"
-		} else if !current.historyExists && item.version == legacyPrincipalSeed && profile == profileSchema {
+		} else if item.version == legacyPrincipalSeed &&
+			(profile == profileMCP || (!current.historyExists && excludesLegacySeed(profile))) {
 			status = "will-be-excluded"
 		}
 		fmt.Printf("%s %s\n", status, item.version)

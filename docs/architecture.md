@@ -11,3 +11,33 @@ The NATS role assignment consumer now admits only a dedicated Auth Ed25519-signe
 The reviewer permission RPC accepts only a short-lived Auth RS256 proof. RBAC pins the configured Auth issuer, a fixed audience, proof purpose/type, exact permission, subject/JTI shape, and lifetime before deriving the principal from `sub`. It evaluates only the unique canonical default-scope role and returns false for missing grants; ambiguous role bindings or dependency failures deny the lookup.
 
 Operator-only initial grants use PrincipalRoleUsecase.Bootstrap and the existing assignment persistence helper, committing an immutable receipt with the grant. See operator-bootstrap.md. No HTTP/NATS administrative grant is composed.
+
+Mentor's dedicated source-only mutation follows domain/usecase/outbound-adapter
+boundaries: a fresh Auth proof enters MentorRoleMutation; its atomic store
+rechecks current canonical Admin and writes only the dedicated Mentor scope,
+immutable receipt and terminal fence. See mentor-role-owner.md. The usecase,
+store and prior signed lookup providers remain disabled in default bootstrap.
+No public mutation route, active PDP path or legacy role-management authority
+is added by these files.
+
+The source-only `rbac.applyMentorRole.v1` handler accepts only the exact Auth
+proof envelope and calls this concrete mutation use case under a bounded
+context. It exposes neither historical receipt nor role state; an unsigned ACK
+never replaces signed readback. Fixed error categories use exact owner
+sentinels, with mixed/wrapped failures kept unavailable. Its consumer has no
+direct lifecycle; the atomic store and migrations are unchanged.
+
+The signed Mentor scoped-role readback uses dedicated service proof admission,
+a narrow usecase, a coherent read-only PostgreSQL snapshot and nonce/digest-bound
+reply signing. It does not recheck the historical Admin or mutate roles.
+Provider and consumer remain disabled by default; see mentor-scoped-role-readback.md.
+
+An explicit default-off source constructor now assembles the three existing
+Mentor consumers in `cmd/ms-rbac-service`, using an already-owned pool and
+dedicated validated keys. Its fixed dispatcher preserves the actual subject;
+the constructor itself performs no I/O. The separate
+[explicit runtime](mentor-owner-runtime.md) now maps configuration, validates
+keys and credentials before opening resources, and mounts these three consumers
+only behind `RBAC_MENTOR_OWNER_ENABLED=true` on a dedicated authenticated TLS
+connection. Legacy transport behavior stays unchanged. Construction/lifecycle
+tests prove source wiring and denials, not SQL, broker ACLs or mounted acceptance.

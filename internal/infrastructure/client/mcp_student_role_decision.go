@@ -15,9 +15,8 @@ import (
 	"github.com/example/ms-rbac-service/internal/domain"
 )
 
-// MCPStudentRoleDecisionSigner is deliberately not wired into service startup.
-// Its future key is RBAC-only, and its audience cannot authorize reviewer or
-// generic role APIs. It asserts a role, NEVER an MCP scope entitlement.
+// MCPStudentRoleDecisionSigner uses an RBAC-only key and a dedicated audience.
+// The default-off role handler asserts a role and confers no scope entitlement.
 type MCPStudentRoleDecisionSigner struct {
 	privateKey *rsa.PrivateKey
 	now        func() time.Time

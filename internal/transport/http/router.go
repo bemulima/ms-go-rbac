@@ -11,12 +11,19 @@ import (
 )
 
 type Router struct {
-	adminHandlers *adminhandlers.AdminHandlers
-	apiHandlers   *apihandlers.APIHandlers
+	adminHandlers  *adminhandlers.AdminHandlers
+	apiHandlers    *apihandlers.APIHandlers
+	ideStudentRole *private.IDEStudentRoleHandler
 }
 
 func NewRouter(adminHandlers *adminhandlers.AdminHandlers, apiHandlers *apihandlers.APIHandlers) *Router {
 	return &Router{adminHandlers: adminHandlers, apiHandlers: apiHandlers}
+}
+
+// SetIDEStudentRoleRead configures the optional, dedicated IDE28 private read.
+// Nil/default leaves the endpoint entirely absent.
+func (r *Router) SetIDEStudentRoleRead(handler *private.IDEStudentRoleHandler) {
+	r.ideStudentRole = handler
 }
 
 func (r *Router) Handler() http.Handler {
@@ -32,6 +39,7 @@ func (r *Router) Handler() http.Handler {
 
 	privateMux := http.NewServeMux()
 	private.RegisterRoutes(privateMux)
+	private.RegisterIDEStudentRoleRoutes(privateMux, r.ideStudentRole)
 	mux.Handle("/private/", http.StripPrefix("/private", privateMux))
 
 	// No network caller currently has a verified role-management authority.

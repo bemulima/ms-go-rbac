@@ -61,6 +61,30 @@ and before later migrations. `status` reports database, role, superuser,
 public-table count, and per-migration disposition without reading principal
 assignment details.
 
+The runner keys history by full forward SQL filename. The general schema
+applies `005_cat49_disposable_reviewer_grant.up.sql` followed by
+`005_mentor_role_owner.up.sql`. These files own independent schemas and keep
+their published filenames. The CAT migration adds the immutable Reviewer
+receipt schema. Its separately approved operator CLI owns any actual
+[Reviewer authorization](cat49-reviewer-operator-cli.md).
+
+### MCP-53 disposable schema
+
+With a separately approved owned disposable `DB_DSN`, use
+`ms-rbac-migrate status-mcp` and `ms-rbac-migrate up-mcp` from the pinned
+source root. The status header reports `profile=mcp`. This profile applies
+`001_init.sql`, records `002_seed_default_roles_and_principals.up.sql` as
+intentionally excluded, then applies `003_signup_provisioning_receipts.up.sql`
+and `004_operator_bootstrap_receipts.up.sql`. Both 005 files remain outside
+this profile and have no dispositional entries in its ledger. The runner
+accepts a fresh database or an exact applied prefix of this ledger and blocks
+unsupported/adopted history and untracked public tables. The write path checks
+the ledger under the migration lock and refuses existing fixed legacy principal
+assignments. Reference data consists of canonical roles and the core service.
+This profile creates no principal assignments or permissions. The admission
+manifest must identify the disposable database, migration role and separately
+approved real Auth/RBAC Student fixtures.
+
 The runner accepts `DB_DSN`, so it can target the Docker Compose `postgres`
 endpoint or the shared native PostgreSQL endpoint without changing migration
 files. Rollback keeps the advisory lock, down SQL, and ledger update on one
@@ -132,3 +156,22 @@ they do not migrate, reset or clean tables and do not claim full Auth issuance.
 
 ## Operator receipts (004, source only until approved migration)
 operator_bootstrap_receipt commits exact operator intent, prior-role expectation and timestamp atomically with the existing default-scope principal assignment. Request IDs and principals are unique; receipts reject UPDATE/DELETE. A global transaction advisory lock serializes CLI grants. Same intent verifies current assignment before replay; drift/conflict never repairs roles. Populated down migration refuses rollback. No startup/automatic grants.
+
+## Mentor owner metadata, receipts and terminal fence (005, source only)
+
+See [the owning mutation contract](mentor-role-owner.md). Additive 005 creates
+dedicated Mentor role/service metadata only when their keys are absent, an
+immutable marker of the created IDs, immutable command receipts, and one
+bilaterally indexed terminal revision fence. It creates no principal grants,
+permissions or hierarchy and does not alter 001–004 or base reference data.
+
+The new unmounted adapter serializes current canonical Admin, exact Mentor
+assignment, receipt and fence under metadata-first table locks in an explicit
+READ COMMITTED transaction. Replay rechecks current authority and physical
+assignment; historical approval cannot restore a revoked grant. Default
+Student and unrelated scopes remain untouched.
+
+005 DOWN refuses history, drift, metadata usages and unknown foreign-key
+consumers; it only removes an empty owner schema and the exact marker-owned
+metadata. Migration source checks and pgx transaction fixtures are not actual
+PostgreSQL acceptance. No 005 SQL or runtime activation has been executed.

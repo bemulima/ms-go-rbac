@@ -1,5 +1,13 @@
 schema_version: 1
 documentation: docs/messaging-contract.md
+mentor_owner_opt_in:
+  flag: RBAC_MENTOR_OWNER_ENABLED
+  default: false
+  documentation: docs/mentor-owner-runtime.md
+  subjects: [rbac.checkMentorCanonicalAdmin.v1, rbac.applyMentorRole.v1, rbac.checkRoleScoped.v1]
+  queue: ms-go-rbac
+  transport: dedicated verified TLS and NATS user credentials; no anonymous or legacy fallback
+  runtime_acceptance: NOT_RUN
 core_nats_rpc:
   consumes:
     - {subject: rbac.assign-role, queue: ms-go-rbac, request: [key_id, payload, signature], response: [ok, error]}
@@ -39,7 +47,7 @@ reviewer_permission_lookup:
     maximum_lifetime_seconds: 30
     no_signer: fail_closed
 mcp_student_role_candidate:
-  status: dormant_source_only_not_subscribed
+  status: default_off_explicit_opt_in
   epic: https://github.com/bemulima/learning-platform-business/issues/53
   rpc_subject: rbac.checkMCPStudentRole
   queue: ms-go-rbac
@@ -72,20 +80,23 @@ mcp_student_role_candidate:
     decisions: [ALLOW, DENY]
     ttl_seconds: 15
     binding: [verified_request_jti, sha256_of_exact_raw_proof]
-    future_dedicated_private_key: required_not_configured
-    auth_public_key_verifier: not_implemented
+    private_key_config: RBAC_MCP_STUDENT_ROLE_DECISION_PRIVATE_KEY
+    auth_public_key_verifier: required_at_auth
   mcp_scope_grant: none_role_only
-  bootstrap_subscription: forbidden_until_auth_consumer_accepted
+  bootstrap_subscription: MCP_STUDENT_RBAC_ENABLED
 mcp_student_read_scope_policy_candidate:
   epic: https://github.com/bemulima/learning-platform-business/issues/53
-  status: dormant_source_only_not_externally_callable
+  status: internal_read_only_evaluator
   documentation: docs/mcp00-student-read-scope-policy.md
   prerequisite: unique_current_canonical_default_student_role
-  request: canonical_lowercase_nonzero_principal_uuid_and_sorted_unique_pilot_scopes
-  scope_limit: 3
+  request: canonical_lowercase_nonzero_principal_uuid_and_sorted_unique_read_scopes
+  scope_limit: 6
   explicit_default_role_permissions:
+    - {scope: "calendar:read", role: student, action: mcp.calendar.read, resource_kind: empty, resource_id: canonical_zero}
     - {scope: "profile:read", role: student, action: mcp.profile.read, resource_kind: empty, resource_id: canonical_zero}
     - {scope: "courses:read", role: student, action: mcp.courses.read, resource_kind: empty, resource_id: canonical_zero}
+    - {scope: "knowledge:read", role: student, action: mcp.knowledge.read, resource_kind: empty, resource_id: canonical_zero}
+    - {scope: "lessons:read", role: student, action: mcp.lessons.read, resource_kind: empty, resource_id: canonical_zero}
     - {scope: "tasks:read", role: student, action: mcp.tasks.read, resource_kind: empty, resource_id: canonical_zero}
   grants_seeded: false
   unknown_or_write_scopes: denied
@@ -93,12 +104,12 @@ mcp_student_read_scope_policy_candidate:
   missing_permission: denied
   missing_or_ambiguous_role: denied
   dependency_failure: no_partial_scopes
-  signed_scope_decision: dormant_producer_candidate_only
-  auth_consent_client_platform_intersection: not_implemented
-  domain_object_acl: required_at_domain_owner_not_implemented_here
-  bootstrap_subscription: forbidden
+  signed_scope_decision: mcp_student_scope_decision_candidate
+  auth_consent_client_platform_intersection: required_at_auth
+  domain_object_acl: required_at_domain_owner
+  bootstrap_subscription: no_direct_subscription
 mcp_student_scope_decision_candidate:
-  status: dormant_source_only_not_subscribed
+  status: default_off_explicit_opt_in
   epic: https://github.com/bemulima/learning-platform-business/issues/53
   documentation: docs/mcp00-student-scope-decision-source.md
   rpc_subject: rbac.checkMCPStudentScopes
@@ -111,7 +122,7 @@ mcp_student_scope_decision_candidate:
     type: mcp_student_scope_check
     purpose: AUTH_RBAC_MCP_STUDENT_SCOPES_V1
     identity: canonical_lowercase_nonzero_uuid
-    scopes: strictly_sorted_unique_pilot_read_only_1_to_3
+    scopes: strictly_sorted_unique_approved_read_and_write_1_to_10
     maximum_lifetime_seconds: 30
     future_iat_skew_seconds: 5
     auth_public_key_config: AUTH_JWT_PUBLIC_KEY
@@ -130,15 +141,20 @@ mcp_student_scope_decision_candidate:
     response_jti: fresh_canonical_lowercase_nonzero_uuid
     request_binding: [verified_request_jti, sha256_exact_raw_auth_proof]
     ttl_seconds: 15
-    future_dedicated_private_key: required_not_configured
-    auth_public_key_verifier: not_implemented
-  unknown_or_write_scopes: denied
+    private_key_config: RBAC_MCP_STUDENT_SCOPE_DECISION_PRIVATE_KEY
+    auth_public_key_verifier: required_at_auth
+  explicit_default_role_write_permissions:
+    - {scope: "instances:start", role: student, action: mcp.instances.start, resource_kind: empty, resource_id: canonical_zero}
+    - {scope: "workspace:write", role: student, action: mcp.workspace.write, resource_kind: empty, resource_id: canonical_zero}
+    - {scope: "submissions:write", role: student, action: mcp.submissions.write, resource_kind: empty, resource_id: canonical_zero}
+    - {scope: "validation:run", role: student, action: mcp.validation.run, resource_kind: empty, resource_id: canonical_zero}
+  unlisted_scopes: denied
   missing_permission: signed_empty_or_partial_subset
   ambiguous_role_or_store_failure: generic_error_no_signed_decision
   grants_seeded: false
-  auth_client_consent_platform_policy: not_implemented
+  auth_client_consent_platform_policy: required_at_auth
   domain_owner_acl: required_separately
-  bootstrap_subscription: forbidden
+  bootstrap_subscription: MCP_STUDENT_RBAC_ENABLED
 signup_assignment:
   contract: AUTH_RBAC_STUDENT_PROVISIONING_V1
   contract_documentation: .ai/contracts/auth-rbac-student-provisioning-v1.md
