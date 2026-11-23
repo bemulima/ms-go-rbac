@@ -61,6 +61,30 @@ and before later migrations. `status` reports database, role, superuser,
 public-table count, and per-migration disposition without reading principal
 assignment details.
 
+The runner keys history by full forward SQL filename. The general schema
+applies `005_cat49_disposable_reviewer_grant.up.sql` followed by
+`005_mentor_role_owner.up.sql`. These files own independent schemas and keep
+their published filenames. The CAT migration adds the immutable Reviewer
+receipt schema. Its separately approved operator CLI owns any actual
+[Reviewer authorization](cat49-reviewer-operator-cli.md).
+
+### MCP-53 disposable schema
+
+With a separately approved owned disposable `DB_DSN`, use
+`ms-rbac-migrate status-mcp` and `ms-rbac-migrate up-mcp` from the pinned
+source root. The status header reports `profile=mcp`. This profile applies
+`001_init.sql`, records `002_seed_default_roles_and_principals.up.sql` as
+intentionally excluded, then applies `003_signup_provisioning_receipts.up.sql`
+and `004_operator_bootstrap_receipts.up.sql`. Both 005 files remain outside
+this profile and have no dispositional entries in its ledger. The runner
+accepts a fresh database or an exact applied prefix of this ledger and blocks
+unsupported/adopted history and untracked public tables. The write path checks
+the ledger under the migration lock and refuses existing fixed legacy principal
+assignments. Reference data consists of canonical roles and the core service.
+This profile creates no principal assignments or permissions. The admission
+manifest must identify the disposable database, migration role and separately
+approved real Auth/RBAC Student fixtures.
+
 The runner accepts `DB_DSN`, so it can target the Docker Compose `postgres`
 endpoint or the shared native PostgreSQL endpoint without changing migration
 files. Rollback keeps the advisory lock, down SQL, and ledger update on one

@@ -135,3 +135,40 @@ func TestReviewerSuperAdminRequiresExactVerifiedDefaultRole(t *testing.T) {
 		}
 	}
 }
+
+func TestMCPStudentRoleChecksOnlyCanonicalDefaultStudent(t *testing.T) {
+	const id = "00000000-0000-4000-8000-000000000901"
+	for _, tc := range []struct {
+		name, fallback, defaultRole string
+		want                        bool
+	}{
+		{"student at default", "", "student", true},
+		{"student at nondefault only", "student", "", false},
+		{"admin is not student", "", "admin", false},
+		{"different case", "", "STUDENT", false},
+		{"space is not canonical", "", "student ", false},
+		{"no role", "", "", false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			uc := NewPrincipalPermissionUsecase(permissionPrincipalFixture{role: tc.fallback, defaultRole: tc.defaultRole}, permissionRoleFixture{})
+			got, err := uc.HasMCPStudentRole(context.Background(), id)
+			if err != nil || got != tc.want {
+				t.Fatalf("HasMCPStudentRole = (%v, %v), want (%v, nil)", got, err, tc.want)
+			}
+		})
+	}
+	uc := NewPrincipalPermissionUsecase(permissionPrincipalFixture{defaultRole: "student"}, permissionRoleFixture{})
+	for _, id := range []string{"not-a-uuid", "00000000-0000-0000-0000-000000000000", "00000000-0000-4000-8000-00000000090A"} {
+		if allowed, err := uc.HasMCPStudentRole(context.Background(), id); allowed || !errors.Is(err, domain.ErrUnauthenticated) {
+			t.Fatalf("invalid subject %q = (%v, %v)", id, allowed, err)
+		}
+	}
+	ambiguous := NewPrincipalPermissionUsecase(permissionPrincipalFixture{defaultErr: domain.ErrAmbiguousPrincipalRole}, permissionRoleFixture{})
+	if allowed, err := ambiguous.HasMCPStudentRole(context.Background(), "00000000-0000-4000-8000-000000000901"); allowed || !errors.Is(err, domain.ErrAmbiguousPrincipalRole) {
+		t.Fatalf("ambiguous role = (%v, %v)", allowed, err)
+	}
+	var missing *PrincipalPermissionUsecase
+	if allowed, err := missing.HasMCPStudentRole(context.Background(), "00000000-0000-4000-8000-000000000901"); allowed || !errors.Is(err, domain.ErrAuthorityUnavailable) {
+		t.Fatalf("missing store = (%v, %v)", allowed, err)
+	}
+}

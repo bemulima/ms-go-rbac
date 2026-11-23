@@ -46,6 +46,115 @@ reviewer_permission_lookup:
     lifetime_seconds: 15
     maximum_lifetime_seconds: 30
     no_signer: fail_closed
+mcp_student_role_candidate:
+  status: default_off_explicit_opt_in
+  epic: https://github.com/bemulima/learning-platform-business/issues/53
+  rpc_subject: rbac.checkMCPStudentRole
+  queue: ms-go-rbac
+  request_fields: [proof]
+  proof:
+    algorithm: RS256
+    header: {alg: RS256, typ: JWT}
+    claims: [iss, aud, sub, typ, purpose, role, jti, iat, exp]
+    audience: ms-go-rbac-mcp-student-role
+    type: mcp_student_role_check
+    purpose: AUTH_RBAC_MCP_STUDENT_ROLE_V1
+    role: student
+    maximum_lifetime_seconds: 30
+    future_iat_skew_seconds: 5
+    subject_and_jti: canonical_lowercase_nonzero_uuid
+    auth_public_key_config: AUTH_JWT_PUBLIC_KEY
+    auth_issuer_config: AUTH_JWT_ISSUER
+    unsigned_or_raw_student_id: denied
+  role_lookup: unique_current_canonical_default_user_global_role_only
+  decision:
+    envelope: [decision_jwt]
+    algorithm: RS256
+    header: {alg: RS256, typ: JWT}
+    claims: [iss, aud, sub, typ, purpose, role, decision, jti, request_jti, request_digest, iat, exp]
+    issuer: ms-go-rbac
+    audience: ms-go-auth-mcp-student-role-decision
+    type: mcp_student_role_decision
+    purpose: RBAC_AUTH_MCP_STUDENT_ROLE_DECISION_V1
+    fixed_role: student
+    decisions: [ALLOW, DENY]
+    ttl_seconds: 15
+    binding: [verified_request_jti, sha256_of_exact_raw_proof]
+    private_key_config: RBAC_MCP_STUDENT_ROLE_DECISION_PRIVATE_KEY
+    auth_public_key_verifier: required_at_auth
+  mcp_scope_grant: none_role_only
+  bootstrap_subscription: MCP_STUDENT_RBAC_ENABLED
+mcp_student_read_scope_policy_candidate:
+  epic: https://github.com/bemulima/learning-platform-business/issues/53
+  status: internal_read_only_evaluator
+  documentation: docs/mcp00-student-read-scope-policy.md
+  prerequisite: unique_current_canonical_default_student_role
+  request: canonical_lowercase_nonzero_principal_uuid_and_sorted_unique_read_scopes
+  scope_limit: 6
+  explicit_default_role_permissions:
+    - {scope: "calendar:read", role: student, action: mcp.calendar.read, resource_kind: empty, resource_id: canonical_zero}
+    - {scope: "profile:read", role: student, action: mcp.profile.read, resource_kind: empty, resource_id: canonical_zero}
+    - {scope: "courses:read", role: student, action: mcp.courses.read, resource_kind: empty, resource_id: canonical_zero}
+    - {scope: "knowledge:read", role: student, action: mcp.knowledge.read, resource_kind: empty, resource_id: canonical_zero}
+    - {scope: "lessons:read", role: student, action: mcp.lessons.read, resource_kind: empty, resource_id: canonical_zero}
+    - {scope: "tasks:read", role: student, action: mcp.tasks.read, resource_kind: empty, resource_id: canonical_zero}
+  grants_seeded: false
+  unknown_or_write_scopes: denied
+  admin_bypass: forbidden
+  missing_permission: denied
+  missing_or_ambiguous_role: denied
+  dependency_failure: no_partial_scopes
+  signed_scope_decision: mcp_student_scope_decision_candidate
+  auth_consent_client_platform_intersection: required_at_auth
+  domain_object_acl: required_at_domain_owner
+  bootstrap_subscription: no_direct_subscription
+mcp_student_scope_decision_candidate:
+  status: default_off_explicit_opt_in
+  epic: https://github.com/bemulima/learning-platform-business/issues/53
+  documentation: docs/mcp00-student-scope-decision-source.md
+  rpc_subject: rbac.checkMCPStudentScopes
+  queue: ms-go-rbac
+  request_fields: [proof]
+  proof:
+    header: {alg: RS256, typ: JWT}
+    claims: [iss, aud, sub, typ, purpose, scopes, jti, iat, exp]
+    audience: ms-go-rbac-mcp-student-scopes
+    type: mcp_student_scope_check
+    purpose: AUTH_RBAC_MCP_STUDENT_SCOPES_V1
+    identity: canonical_lowercase_nonzero_uuid
+    scopes: strictly_sorted_unique_approved_read_and_write_1_to_10
+    maximum_lifetime_seconds: 30
+    future_iat_skew_seconds: 5
+    auth_public_key_config: AUTH_JWT_PUBLIC_KEY
+    raw_identity_and_scopes_in_rpc: denied
+  decision:
+    envelope: [decision_jwt]
+    algorithm: RS256
+    header: {alg: RS256, typ: JWT}
+    claims: [iss, aud, sub, typ, purpose, requested_scopes, allowed_scopes, jti, request_jti, request_digest, iat, exp]
+    issuer: ms-go-rbac
+    audience: ms-go-auth-mcp-student-scopes-decision
+    type: mcp_student_scopes_decision
+    purpose: RBAC_AUTH_MCP_STUDENT_SCOPES_DECISION_V1
+    requested: exact_verified_proof_scopes
+    allowed: exact_current_default_student_role_permission_subset_or_empty
+    response_jti: fresh_canonical_lowercase_nonzero_uuid
+    request_binding: [verified_request_jti, sha256_exact_raw_auth_proof]
+    ttl_seconds: 15
+    private_key_config: RBAC_MCP_STUDENT_SCOPE_DECISION_PRIVATE_KEY
+    auth_public_key_verifier: required_at_auth
+  explicit_default_role_write_permissions:
+    - {scope: "instances:start", role: student, action: mcp.instances.start, resource_kind: empty, resource_id: canonical_zero}
+    - {scope: "workspace:write", role: student, action: mcp.workspace.write, resource_kind: empty, resource_id: canonical_zero}
+    - {scope: "submissions:write", role: student, action: mcp.submissions.write, resource_kind: empty, resource_id: canonical_zero}
+    - {scope: "validation:run", role: student, action: mcp.validation.run, resource_kind: empty, resource_id: canonical_zero}
+  unlisted_scopes: denied
+  missing_permission: signed_empty_or_partial_subset
+  ambiguous_role_or_store_failure: generic_error_no_signed_decision
+  grants_seeded: false
+  auth_client_consent_platform_policy: required_at_auth
+  domain_owner_acl: required_separately
+  bootstrap_subscription: MCP_STUDENT_RBAC_ENABLED
 signup_assignment:
   contract: AUTH_RBAC_STUDENT_PROVISIONING_V1
   contract_documentation: .ai/contracts/auth-rbac-student-provisioning-v1.md
