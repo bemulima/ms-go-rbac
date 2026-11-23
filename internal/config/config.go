@@ -23,6 +23,7 @@ type Config struct {
 	CacheTTL                             time.Duration
 	IDEStudentRoleEnabled                bool
 	IDEStudentRoleToken                  string
+	MentorOwner                          MentorOwnerConfig
 }
 
 // Load reads configuration from environment variables applying defaults where necessary.
@@ -64,6 +65,10 @@ func Load() (Config, error) {
 		}
 		cfg.IDEStudentRoleEnabled = true
 		cfg.IDEStudentRoleToken = token
+	}
+	cfg.MentorOwner, err = loadMentorOwner()
+	if err != nil {
+		return Config{}, err
 	}
 	return cfg, nil
 }

@@ -1,0 +1,89 @@
+{
+  "contract": "RBAC_MENTOR_SCOPED_ROLE_READBACK_DECISION_V1",
+  "owner": "ms-go-rbac",
+  "consumer": "ms-go-mentor",
+  "status": "source_only_default_off_executable_read_only_sql_not_run",
+  "documentation": "docs/mentor-scoped-role-readback.md",
+  "request_contract": "ms-go-mentor/.ai/contracts/scoped-role-readback-request-v1.json",
+  "subject": "rbac.checkRoleScoped.v1",
+  "algorithm": "RS256",
+  "minimum_rsa_bits": 2048,
+  "header": {
+    "alg": "RS256",
+    "typ": "JWT"
+  },
+  "maximum_token_bytes": 8192,
+  "maximum_envelope_bytes": 16384,
+  "maximum_integer_time": 9007199254740991,
+  "future_skew_seconds": 5,
+  "durable_command_issuer": "ms-go-auth",
+  "sub": "exact target_user_id; authenticates no user session",
+  "binding": "exact original Admin, target, application, committed decision revision, decision, request ID and decision digest; fixed Mentor role/service",
+  "envelope_fields": [
+    "decision_jwt"
+  ],
+  "required_claims": [
+    "iss",
+    "aud",
+    "sub",
+    "typ",
+    "purpose",
+    "subject",
+    "jti",
+    "iat",
+    "exp",
+    "admin_actor_id",
+    "application_id",
+    "application_revision",
+    "decision",
+    "request_id",
+    "decision_digest",
+    "role_key",
+    "service_key",
+    "result",
+    "state",
+    "request_jti",
+    "request_digest"
+  ],
+  "constants": {
+    "iss": "ms-go-rbac",
+    "aud": "ms-go-mentor-scoped-role-readback",
+    "typ": "mentor_role_readback_decision",
+    "purpose": "RBAC_MENTOR_SCOPED_ROLE_READBACK_DECISION_V1",
+    "subject": "rbac.checkRoleScoped.v1",
+    "role_key": "mentor",
+    "service_key": "ms-go-mentor"
+  },
+  "maximum_ttl_seconds": 15,
+  "expiry_capped_to_request": true,
+  "request_jti": "exact authenticated lookup nonce",
+  "request_digest": "lowercase sha256 of original exact compact Mentor request-proof bytes",
+  "response_jti": "fresh canonical nonzero UUID, not a durable grant identifier",
+  "results": {
+    "exact_current_APPROVE": "ALLOW/ACTIVE",
+    "exact_current_SUSPEND": "ALLOW/INACTIVE",
+    "known_absent_or_mismatch_or_superseded": "DENY/UNCONFIRMED",
+    "corruption_or_dependency_error": "no signed semantic answer; generic unavailable"
+  },
+  "receipt_id": "ms-go-auth:<exact requested request_id>, derived only after a confirmed signed response",
+  "snapshot": {
+    "isolation": "repeatable_read",
+    "access_mode": "read_only",
+    "maximum_operation_context_seconds": 5,
+    "rollback_cleanup_seconds": 1,
+    "lock_timeout_seconds": 2,
+    "statement_timeout_seconds": 4,
+    "locking": "no explicit row or table locks",
+    "search_path": "pg_catalog,public,pg_temp",
+    "checks": [
+      "marker-owned metadata",
+      "exact immutable command receipt",
+      "both current fence indexes",
+      "physical exact service-scoped assignment"
+    ]
+  },
+  "current_original_admin_rechecked": false,
+  "cache_authority": false,
+  "mutations": false,
+  "semantics": "point-in-time observation, not a cross-service revocation lock"
+}

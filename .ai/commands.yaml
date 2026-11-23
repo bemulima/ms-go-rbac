@@ -1,5 +1,18 @@
 schema_version: 1
 commands:
+  - {name: mentor-owner-runtime-tests, run: "go test ./internal/config ./cmd/ms-rbac-service -run '^TestMentorOwner(Config|Runtime)' -count=1", requires_approval: false, risk: source-only-injected-broker-no-listener-or-database}
+  - {name: mentor-owner-runtime-race, run: "go test -race ./internal/config ./cmd/ms-rbac-service -run '^TestMentorOwner(Config|Runtime)' -count=1", requires_approval: false, risk: source-only-injected-broker-no-listener-or-database}
+  - {name: mentor-owner-runtime-vet, run: "go vet ./internal/config ./cmd/ms-rbac-service", requires_approval: false, risk: targeted-source-analysis}
+  - {name: mentor-owner-runtime-build, run: "go build -buildvcs=false -o /dev/null ./cmd/ms-rbac-service", requires_approval: false, risk: source-build-only}
+  - {name: mentor-owner-composition-tests, run: "go test ./cmd/ms-rbac-service -run '^TestMentorOwnerComposition' -count=1", requires_approval: false, risk: source-only-composition-no-listener-broker-or-database}
+  - {name: mentor-owner-composition-race, run: "go test -race ./cmd/ms-rbac-service -run '^TestMentorOwnerComposition' -count=1", requires_approval: false, risk: source-only-composition-no-listener-broker-or-database}
+  - {name: mentor-role-mutation-rpc-tests, run: "go test ./internal/transport/message/nats ./internal/usecase -run '^TestMentorRoleMutationRPC' -count=1", requires_approval: false, risk: source-only-crypto-fixtures-no-database}
+  - {name: mentor-role-mutation-rpc-race, run: "go test -race ./internal/transport/message/nats ./internal/usecase -run '^TestMentorRoleMutationRPC' -count=1", requires_approval: false, risk: source-only-crypto-fixtures-no-database}
+  - {name: mentor-role-readback-tests, run: "go test ./internal/domain ./internal/usecase ./internal/infrastructure/persistence/postgres ./internal/infrastructure/client ./internal/transport/message/nats -run '^TestMentorRoleReadback' -count=1", requires_approval: false, risk: source-only-fixtures-no-database}
+  - {name: mentor-role-readback-race, run: "go test -race ./internal/domain ./internal/usecase ./internal/infrastructure/persistence/postgres ./internal/infrastructure/client ./internal/transport/message/nats -run '^TestMentorRoleReadback' -count=1", requires_approval: false, risk: source-only-fixtures-no-database}
+  - {name: mentor-role-owner-tests, run: "go test ./internal/domain ./internal/usecase ./internal/infrastructure/persistence/postgres ./cmd/ms-rbac-migrate -run '^TestMentorRole' -count=1", requires_approval: false, risk: source-only-fixtures-no-database}
+  - {name: mentor-role-owner-race, run: "go test -race ./internal/domain ./internal/usecase ./internal/infrastructure/persistence/postgres -run '^TestMentorRole' -count=1", requires_approval: false, risk: source-only-fixtures-no-database}
+  - {name: source-build-without-vcs, run: go build -buildvcs=false ./..., requires_approval: false, risk: source-build-only}
   - name: cat49-reviewer-persistence-source
     run: "go test -count=1 -v ./internal/infrastructure/persistence/postgres -run '^TestCAT49ReviewerPersistence'"
     requires_approval: false

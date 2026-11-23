@@ -1,5 +1,13 @@
 schema_version: 1
 documentation: docs/messaging-contract.md
+mentor_owner_opt_in:
+  flag: RBAC_MENTOR_OWNER_ENABLED
+  default: false
+  documentation: docs/mentor-owner-runtime.md
+  subjects: [rbac.checkMentorCanonicalAdmin.v1, rbac.applyMentorRole.v1, rbac.checkRoleScoped.v1]
+  queue: ms-go-rbac
+  transport: dedicated verified TLS and NATS user credentials; no anonymous or legacy fallback
+  runtime_acceptance: NOT_RUN
 core_nats_rpc:
   consumes:
     - {subject: rbac.assign-role, queue: ms-go-rbac, request: [key_id, payload, signature], response: [ok, error]}
