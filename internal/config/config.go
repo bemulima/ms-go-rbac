@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -20,6 +21,8 @@ type Config struct {
 	AuthModeratorIss                     string
 	AuthModeratorAud                     string
 	CacheTTL                             time.Duration
+	IDEStudentRoleEnabled                bool
+	IDEStudentRoleToken                  string
 	MentorOwner                          MentorOwnerConfig
 }
 
@@ -42,6 +45,27 @@ func Load() (Config, error) {
 		return Config{}, fmt.Errorf("invalid CACHE_TTL_SECONDS: %w", err)
 	}
 	cfg.CacheTTL = ttl
+	flag := os.Getenv("RBAC_IDE_STUDENT_ROLE_ENABLED")
+	if flag != "" && flag != "false" && flag != "true" {
+		return Config{}, fmt.Errorf("RBAC_IDE_STUDENT_ROLE_ENABLED must be true or false")
+	}
+	if flag == "true" {
+		token := os.Getenv("RBAC_IDE_STUDENT_ROLE_TOKEN")
+		lower := strings.ToLower(token)
+		if len(token) < 32 || len(token) > 4096 ||
+			strings.Contains(lower, "change-me") || strings.Contains(lower, "placeholder") ||
+			strings.Contains(lower, "replace-me") || strings.Contains(lower, "example") ||
+			strings.Contains(token, "${") {
+			return Config{}, fmt.Errorf("RBAC_IDE_STUDENT_ROLE_TOKEN invalid")
+		}
+		for _, ch := range token {
+			if ch < 33 || ch > 126 {
+				return Config{}, fmt.Errorf("RBAC_IDE_STUDENT_ROLE_TOKEN contains unsafe bytes")
+			}
+		}
+		cfg.IDEStudentRoleEnabled = true
+		cfg.IDEStudentRoleToken = token
+	}
 	cfg.MentorOwner, err = loadMentorOwner()
 	if err != nil {
 		return Config{}, err

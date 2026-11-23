@@ -15,6 +15,7 @@ import (
 	httptransport "github.com/example/ms-rbac-service/internal/transport/http"
 	adminhandlers "github.com/example/ms-rbac-service/internal/transport/http/admin/v1/handlers"
 	apihandlers "github.com/example/ms-rbac-service/internal/transport/http/api/v1/handlers"
+	privatehandlers "github.com/example/ms-rbac-service/internal/transport/http/private"
 	natstransport "github.com/example/ms-rbac-service/internal/transport/message/nats"
 	"github.com/example/ms-rbac-service/internal/usecase"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -85,6 +86,12 @@ func bootstrap() (*http.Server, error) {
 		PrincipalPermission: &apihandlers.PrincipalPermissionHandler{Usecase: principalPermissionUC},
 	}
 	router := httptransport.NewRouter(adminHandlers, apiHandlers)
+	if cfg.IDEStudentRoleEnabled {
+		router.SetIDEStudentRoleRead(&privatehandlers.IDEStudentRoleHandler{
+			Enabled: true, Token: cfg.IDEStudentRoleToken,
+			Roles: principalRoleRepo,
+		})
+	}
 
 	var legacyConn *natsgo.Conn
 	if cfg.NATSURL != "" {
