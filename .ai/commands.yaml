@@ -13,6 +13,16 @@ commands:
   - {name: mentor-role-owner-tests, run: "go test ./internal/domain ./internal/usecase ./internal/infrastructure/persistence/postgres ./cmd/ms-rbac-migrate -run '^TestMentorRole' -count=1", requires_approval: false, risk: source-only-fixtures-no-database}
   - {name: mentor-role-owner-race, run: "go test -race ./internal/domain ./internal/usecase ./internal/infrastructure/persistence/postgres -run '^TestMentorRole' -count=1", requires_approval: false, risk: source-only-fixtures-no-database}
   - {name: source-build-without-vcs, run: go build -buildvcs=false ./..., requires_approval: false, risk: source-build-only}
+  - name: cat49-reviewer-persistence-source
+    run: "go test -count=1 -v ./internal/infrastructure/persistence/postgres -run '^TestCAT49ReviewerPersistence'"
+    requires_approval: false
+    risk: in-memory-transaction-protocol-only-no-sql
+  - name: cat49-reviewer-persistence-postgres
+    run: "go test -tags=integration -count=1 -v ./internal/infrastructure/persistence/postgres -run '^TestCAT49ReviewerSQLAtomicReplayConflictAndDrift$'"
+    requires_approval: true
+    risk: separately-approved-new-cat49-disposable-postgresql-role-and-receipt-writes
+    required_environment: [RBAC_CAT49_SQL_APPROVAL, RBAC_CAT49_SQL_OWNER_MARKER_FILE, RBAC_CAT49_SQL_DATABASE_URL]
+    prerequisites: Fresh isolated CAT49-owned non-superuser RBAC test database with migration 005 and private exact owner marker; no operator CLI or canonical/shared database. Skips without explicit approval and must not be counted as PG PASS.
   - {name: operator-sql-acceptance, run: "go test -tags=integration ./internal/infrastructure/persistence/postgres ./cmd/ms-rbac-operator-bootstrap -run 'TestOperatorBootstrapSQL(ConcurrentReceiptAndDrift|AtomicityAndDenials)|TestOperatorCLILiveIsolatedDatabaseGuards' -count=1 -v", requires_approval: true, risk: isolated-owned-test-database-write}
   - {name: operator-sql-source-check, run: "env -u RBAC_SIGNUP_TEST_DATABASE_URL go test -tags=integration ./internal/infrastructure/persistence/postgres -run '^TestOperatorBootstrapSQLConcurrentReceiptAndDrift$' -v", requires_approval: false, risk: compile-and-skip-no-database}
   - {name: operator-bootstrap-tests, run: go test ./cmd/ms-rbac-operator-bootstrap ./internal/transport/http ./internal/infrastructure/persistence/postgres, requires_approval: false, risk: isolated-test-harness}
