@@ -15,6 +15,8 @@ import (
 
 const mentorMutationRawProof = "test-only.exact-raw.bytes"
 
+type mentorRoleTestContextKey struct{}
+
 type mentorMutationVerifier struct {
 	verify func(context.Context, string) (domain.MentorRoleProof, error)
 	calls  int
@@ -83,7 +85,7 @@ func TestMentorRoleMutationAdmitsBeforeStoreAndRevalidatesExactProof(t *testing.
 		mentorMutationCommand(domain.MentorRoleDecisionSuspend, 4),
 	} {
 		t.Run(command.Decision+strconv.FormatUint(command.ApplicationRevision, 10), func(t *testing.T) {
-			ctx := context.WithValue(context.Background(), struct{}{}, "invocation-value")
+			ctx := context.WithValue(context.Background(), mentorRoleTestContextKey{}, "invocation-value")
 			proof := mentorMutationProof(command)
 			wanted := mentorMutationPlan(t, command)
 			var events []string
@@ -360,7 +362,7 @@ func TestMentorRoleMutationRevalidationPreservesBothContextBoundaries(t *testing
 					cancel()
 					checkContext = context.Background()
 				case "live child context":
-					checkContext = context.WithValue(ctx, struct{}{}, "transaction-value")
+					checkContext = context.WithValue(ctx, mentorRoleTestContextKey{}, "transaction-value")
 				}
 				rechecked, err := check(checkContext)
 				if mode == "live child context" {

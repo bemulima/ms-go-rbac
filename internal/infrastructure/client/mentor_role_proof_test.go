@@ -289,7 +289,8 @@ func TestAuthMentorRoleProofVerifierRejectsNilOrMidAdmissionCancelledContext(t *
 				t.Error("nil context must deny, not panic")
 			}
 		}()
-		if proof, err := verifier.VerifyMentorRoleProof(nil, token); !errors.Is(err, domain.ErrUnauthenticated) || proof != (domain.MentorRoleProof{}) {
+		var missingContext context.Context
+		if proof, err := verifier.VerifyMentorRoleProof(missingContext, token); !errors.Is(err, domain.ErrUnauthenticated) || proof != (domain.MentorRoleProof{}) {
 			t.Fatal("nil context must fail closed")
 		}
 	})
