@@ -215,7 +215,8 @@ func TestMentorOwnerRuntimeStartupFailsClosedWithoutPartialHandlers(t *testing.T
 	}
 	pool := &mentorCompositionPoolProbe{}
 	called := false
-	if runtime, err := startMentorOwner(nil, nil, nil, func(natsgo.Options) (mentorOwnerConnection, error) { called = true; return nil, nil }); runtime != nil || err != nil || called {
+	var missingContext context.Context
+	if runtime, err := startMentorOwner(missingContext, nil, nil, func(natsgo.Options) (mentorOwnerConnection, error) { called = true; return nil, nil }); runtime != nil || err != nil || called {
 		t.Fatal("disabled start must not consult dependencies")
 	}
 	for _, stage := range []string{"dial", "nil_connection", "anonymous", "unverified_tls", "disconnected", "subscription_1", "subscription_2", "subscription_3", "flush", "last_error", "async_permission"} {

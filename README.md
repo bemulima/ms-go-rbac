@@ -18,6 +18,9 @@ This repository provides a lightweight RBAC microservice implemented in Go. The 
 
 ## Running locally
 
+The [`.env.example`](.env.example) documents the environment injected by the
+central infrastructure Compose over the existing Docker network.
+
 ```
 docker compose up -d
 task migrate-up

@@ -22,7 +22,7 @@ func TestMentorRoleReadbackLookupPreservesExactCommandAndSemanticAbsence(t *test
 	for _, c := range []domain.MentorRoleCommand{mentorMutationCommand("APPROVE", 2), mentorMutationCommand("SUSPEND", 3), mentorMutationCommand("SUSPEND", 4)} {
 		for _, confirmed := range []bool{false, true} {
 			t.Run(c.Decision+string(rune('0'+c.ApplicationRevision))+map[bool]string{false: " absent", true: " confirmed"}[confirmed], func(t *testing.T) {
-				ctx := context.WithValue(context.Background(), struct{}{}, "invocation")
+				ctx := context.WithValue(context.Background(), mentorRoleTestContextKey{}, "invocation")
 				want := domain.MentorRoleReadbackResult{Confirmed: confirmed, Active: confirmed && c.Decision == "APPROVE"}
 				reader := &mentorReadbackReaderFixture{read: func(actual context.Context, got domain.MentorRoleCommand) (domain.MentorRoleReadbackResult, error) {
 					if actual != ctx || got != c {
