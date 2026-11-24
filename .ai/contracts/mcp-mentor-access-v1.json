@@ -1,0 +1,98 @@
+{
+  "contract": "RBAC_MCP_MENTOR_ACCESS_V1",
+  "owner": "ms-go-rbac",
+  "consumer": "ms-go-auth",
+  "status": "source_implemented_default_off_live_acceptance_not_run",
+  "flag": "RBAC_MCP_MENTOR_ENABLED",
+  "default": false,
+  "subject": "rbac.checkMCPMentorAccess",
+  "queue": "ms-go-rbac",
+  "request_owner_contract": "ms-go-auth/.ai/contracts/mcp-mentor-oauth-v1.json",
+  "request_envelope_fields": [
+    "proof"
+  ],
+  "response_envelope_fields": [
+    "decision_jwt"
+  ],
+  "algorithm": "RS256",
+  "header": {
+    "alg": "RS256",
+    "typ": "JWT"
+  },
+  "minimum_rsa_bits": 2048,
+  "maximum_rsa_bits": 8192,
+  "shared_modulus_with_request_or_configured_legacy_keys": "rejected_even_when_exponents_differ",
+  "response_claims": [
+    "iss",
+    "aud",
+    "sub",
+    "persona",
+    "purpose",
+    "scope",
+    "jti",
+    "iat",
+    "exp",
+    "active",
+    "allowed",
+    "request_jti",
+    "request_digest"
+  ],
+  "constants": {
+    "iss": "ms-go-rbac",
+    "aud": "ms-go-auth-mcp-mentor-decision",
+    "persona": "MENTOR",
+    "purpose": "RBAC_AUTH_MCP_MENTOR_ACCESS_V1",
+    "scope": "mentor:profile:read"
+  },
+  "maximum_ttl_seconds": 15,
+  "expiry_capped_to_request": true,
+  "future_iat_allowed": false,
+  "request_binding": [
+    "exact verified subject",
+    "canonical request UUID jti",
+    "lowercase SHA256 exact raw proof"
+  ],
+  "decision_rules": {
+    "allowed_requires_active": true,
+    "active": "current exact APPROVE receipt/fence and physical service-scoped assignment",
+    "allowed": "active and exact marker-owned explicitly assigned profile permission",
+    "negative": "signed inactive/permission_denied observation",
+    "outage_or_corruption": "generic error; no signed semantic answer",
+    "admin_student_fallback": false
+  },
+  "permission": {
+    "action": "mcp.mentor.profile.read",
+    "resource_kind": "",
+    "resource_id": "00000000-0000-0000-0000-000000000000",
+    "role": "marker-owned mentor",
+    "service": "marker-owned ms-go-mentor",
+    "migration": "006_mcp_mentor_profile_permission",
+    "grants_seeded": false
+  },
+  "snapshot": {
+    "isolation": "repeatable_read",
+    "access_mode": "read_only",
+    "checks": [
+      "exact mentor_role_scope metadata",
+      "current target fence",
+      "immutable command receipt",
+      "bilateral application and target indexes",
+      "exact physical role assignment",
+      "explicit permission in same snapshot"
+    ],
+    "authority_cache": false
+  },
+  "config": [
+    "RBAC_MCP_MENTOR_ENABLED",
+    "RBAC_MCP_MENTOR_AUTH_ISSUER",
+    "RBAC_MCP_MENTOR_AUTH_PUBLIC_KEY",
+    "RBAC_MCP_MENTOR_DECISION_PRIVATE_KEY",
+    "NATS_URL"
+  ],
+  "startup": "enabled-only trust validation before database or broker connection",
+  "http_mutations": "remain denied",
+  "validation_limits": {
+    "live_sql": "NOT_RUN",
+    "runtime_activation": "NOT_RUN"
+  }
+}

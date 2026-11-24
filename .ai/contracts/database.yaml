@@ -1,8 +1,8 @@
 schema_version: 1
 documentation: docs/database-contract.md
 owner: ms-go-rbac
-tables: [service, role, role_hierarchy, permission, role_permission, service_role, service_permission, principal_role, principal_override, superadmin_principal, signup_provisioning_receipt, rbac_schema_migrations, operator_bootstrap_receipt, cat49_disposable_reviewer_grant, mentor_role_scope, mentor_role_command_receipt, mentor_role_fence]
-migrations: [001_init, 002_seed_default_roles_and_principals, 003_signup_provisioning_receipts, 004_operator_bootstrap_receipts, 005_cat49_disposable_reviewer_grant, 005_mentor_role_owner]
+tables: [service, role, role_hierarchy, permission, role_permission, service_role, service_permission, principal_role, principal_override, superadmin_principal, signup_provisioning_receipt, rbac_schema_migrations, operator_bootstrap_receipt, cat49_disposable_reviewer_grant, mentor_role_scope, mentor_role_command_receipt, mentor_role_fence, mcp_mentor_profile_permission]
+migrations: [001_init, 002_seed_default_roles_and_principals, 003_signup_provisioning_receipts, 004_operator_bootstrap_receipts, 005_cat49_disposable_reviewer_grant, 005_mentor_role_owner, 006_mcp_mentor_profile_permission]
 migration_ledger_identity: full_forward_sql_filename
 mcp_disposable_profile:
   status_command: status-mcp
@@ -12,3 +12,11 @@ mcp_disposable_profile:
   approval_required: true
   grants_seeded: false
 mentor_owner: {contract: RBAC_MENTOR_ROLE_OWNER_V1, documentation: docs/mentor-role-owner.md, status: source_only_unmounted_sql_not_run}
+
+mcp_mentor_profile_permission:
+  migration: 006_mcp_mentor_profile_permission
+  action: mcp.mentor.profile.read
+  grants_seeded: false
+  readback: same_repeatable_read_snapshot_as_exact_scoped_role
+  rollback: refuses_retained_assignments
+  sql_acceptance: NOT_RUN

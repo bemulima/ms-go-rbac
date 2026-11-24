@@ -7,3 +7,7 @@ Admin get/update/list and role-permission routes follow the router and handlers.
 All HTTP mutations are now unconditionally denied with 403 at the owner router, before decoding or dispatch, including PATCH /api/v1/principal-role/update and admin POST/PUT/DELETE/SET. No bearer, actor header, shared token, or ADMIN/MODERATOR role can authorize these legacy HTTP writes. There is no trustworthy HTTP role-management actor contract, so no header-only authorization was added. GET/HEAD/OPTIONS retain existing read/method behavior; /admin is not an authentication boundary for reads. Signed NATS student provisioning remains unchanged.
 
 Administrative initial grants use only the standalone [operator bootstrap CLI](operator-bootstrap.md). This source change is not effective until an explicitly approved rollout; the existing persistent runtime remains EXPOSED.
+
+## Mentor MCP Foundation
+
+See [signed exact Mentor role and permission](mcp-mentor-access.md) for the additive, default-off contract. No live schema/runtime activation is implied by source verification.
