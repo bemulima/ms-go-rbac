@@ -80,6 +80,9 @@ func (r *MCPMentorAccessReader) ReadMCPMentorAccess(ctx context.Context, subject
 			} else if requestedScope == domain.MCPMentorCohortRespondScope {
 				action = domain.MCPMentorCohortRespondAction
 				marker = "public.mcp_mentor_cohort_response_permission"
+			} else if requestedScope == domain.MCPMentorDialogWriteScope {
+				action = domain.MCPMentorDialogWriteAction
+				marker = "public.mcp_mentor_dialog_write_permission"
 			} else if requestedScope == domain.MCPMentorStudentFeedbackScope {
 				action = domain.MCPMentorStudentFeedbackAction
 				marker = "public.mcp_mentor_student_feedback_permission"
@@ -91,6 +94,9 @@ func (r *MCPMentorAccessReader) ReadMCPMentorAccess(ctx context.Context, subject
 			}
 			if finalAction := domain.MCPMentorSkillFinalReviewAction(requestedScope); finalAction != "" {
 				workspaceAction, scopeMarker = finalAction, "public.mcp_mentor_skill_final_review_permission"
+			}
+			if taskAction := domain.MCPMentorTaskAssignmentAction(requestedScope); taskAction != "" {
+				workspaceAction, scopeMarker = taskAction, "public.mcp_mentor_task_assignment_permission"
 			}
 			if workspaceAction != "" {
 				err = readTx.QueryRow(ctx, `SELECT EXISTS (

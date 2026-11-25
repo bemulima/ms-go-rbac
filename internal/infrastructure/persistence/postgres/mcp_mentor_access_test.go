@@ -13,6 +13,8 @@ import (
 // In-memory transaction protocol only: SQL execution/migration evidence is
 // intentionally reserved for a separately authorized disposable database.
 type mcpMentorReadDB struct {
+	taskAssignmentScope     string
+	dialogWrite             bool
 	studentFeedback         bool
 	cohortRespond           bool
 	offers                  bool
@@ -57,11 +59,22 @@ func (tx *mcpMentorReadTx) QueryRow(ctx context.Context, query string, args ...a
 		} else if tx.db.cohortRespond {
 			action = domain.MCPMentorCohortRespondAction
 			marker = "public.mcp_mentor_cohort_response_permission"
+		} else if tx.db.dialogWrite {
+			action = domain.MCPMentorDialogWriteAction
+			marker = "public.mcp_mentor_dialog_write_permission"
 		} else if tx.db.studentFeedback {
 			action = domain.MCPMentorStudentFeedbackAction
 			marker = "public.mcp_mentor_student_feedback_permission"
 		}
 		expectedArgs := 3
+		if tx.db.taskAssignmentScope != "" {
+			expectedArgs = 4
+			action = domain.MCPMentorTaskAssignmentAction(tx.db.taskAssignmentScope)
+			marker = "public.mcp_mentor_task_assignment_permission"
+			if len(args) != expectedArgs || args[3] != tx.db.taskAssignmentScope || !strings.Contains(query, "marker.scope=$4") {
+				return mentorStoreRow{err: errors.New("missing exact task assignment scope binding")}
+			}
+		}
 		if tx.db.workspaceScope != "" {
 			expectedArgs = 4
 			action = domain.MCPMentorWorkspaceReadAction(tx.db.workspaceScope)
@@ -276,6 +289,34 @@ func TestMCPMentorStudentFeedbackNeedsExactPermission(t *testing.T) {
 		result, err := NewMCPMentorAccessReader(db).ReadMCPMentorAccess(context.Background(), command.TargetUserID, domain.MCPMentorStudentFeedbackScope)
 		if err != nil || !result.Active || result.Allowed != assigned || db.permissionReads != 1 || base.commitCount != 1 {
 			t.Fatalf("student feedback did not use its exact permission: %+v %v", result, err)
+		}
+	}
+}
+
+func TestMCPMentorDialogWriteNeedsExactPermission(t *testing.T) {
+	command := mentorStoreProof("APPROVE", 2).Command
+	for _, assigned := range []bool{false, true} {
+		base := newMentorReadbackDBFixture()
+		base.current(command)
+		db := &mcpMentorReadDB{base: base, dialogWrite: true, permission: assigned}
+		result, err := NewMCPMentorAccessReader(db).ReadMCPMentorAccess(context.Background(), command.TargetUserID, domain.MCPMentorDialogWriteScope)
+		if err != nil || !result.Active || result.Allowed != assigned || db.permissionReads != 1 || base.commitCount != 1 {
+			t.Fatalf("dialog write did not use its exact permission: %+v %v", result, err)
+		}
+	}
+}
+
+func TestMCPMentorTaskAssignmentUsesExactPermission(t *testing.T) {
+	command := mentorStoreProof("APPROVE", 2).Command
+	for _, scope := range []string{"mentor:students:assign", "mentor:cohorts:assign"} {
+		base := newMentorReadbackDBFixture()
+		base.current(command)
+		for _, assigned := range []bool{false, true} {
+			db := &mcpMentorReadDB{base: base, taskAssignmentScope: scope, permission: assigned}
+			result, err := NewMCPMentorAccessReader(db).ReadMCPMentorAccess(context.Background(), command.TargetUserID, scope)
+			if err != nil || !result.Active || result.Allowed != assigned || db.permissionReads != 1 {
+				t.Fatalf("task assignment scope %s did not use its exact permission: %+v %v", scope, result, err)
+			}
 		}
 	}
 }

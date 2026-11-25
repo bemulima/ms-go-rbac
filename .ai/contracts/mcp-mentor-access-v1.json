@@ -69,7 +69,10 @@
     "mentor:notifications:read",
     "mentor:dialogs:read",
     "mentor:cohorts:respond",
-    "mentor:students:feedback"
+    "mentor:students:feedback",
+    "mentor:dialogs:write",
+    "mentor:students:assign",
+    "mentor:cohorts:assign"
   ],
   "maximum_ttl_seconds": 15,
   "expiry_capped_to_request": true,

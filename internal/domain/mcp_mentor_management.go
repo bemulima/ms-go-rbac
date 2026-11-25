@@ -3,8 +3,21 @@ package domain
 const MCPMentorCohortRespondScope = "mentor:cohorts:respond"
 const MCPMentorCohortRespondAction = "mcp.mentor.cohorts.respond"
 
+const MCPMentorDialogWriteScope = "mentor:dialogs:write"
+const MCPMentorDialogWriteAction = "mcp.mentor.dialogs.write"
+
 const MCPMentorStudentFeedbackScope = "mentor:students:feedback"
 const MCPMentorStudentFeedbackAction = "mcp.mentor.students.feedback"
+
+func MCPMentorTaskAssignmentAction(scope string) string {
+	switch scope {
+	case "mentor:students:assign":
+		return "mcp.mentor.students.assign"
+	case "mentor:cohorts:assign":
+		return "mcp.mentor.cohorts.assign"
+	}
+	return ""
+}
 
 func MCPMentorManagementAction(scope string) string {
 	switch scope {

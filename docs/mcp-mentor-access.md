@@ -137,3 +137,7 @@ Migration 011 registers separately marked permission rows
 explicit assignment to the current scoped Mentor role, using the same
 repeatable read as the existing access fence. The migration grants nothing
 automatically. Draft or read permissions do not authorize any of these scopes.
+
+Migration 016 owns the `mcp.mentor.dialogs.write` permission marker for the
+exact Auth `mentor:dialogs:write` scope. The reader requires the current Mentor
+role and that dedicated permission. The migration creates no role grants.

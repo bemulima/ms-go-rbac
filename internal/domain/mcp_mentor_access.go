@@ -21,7 +21,7 @@ const (
 )
 
 func ValidMCPMentorScope(scope string) bool {
-	return scope == MCPMentorProfileScope || scope == MCPMentorOffersScope || scope == MCPMentorSkillDraftScope || MCPMentorWorkspaceReadAction(scope) != "" || MCPMentorAuthoringAction(scope) != "" || MCPMentorManagementAction(scope) != "" || MCPMentorSkillFinalReviewAction(scope) != "" || scope == MCPMentorCohortRespondScope || scope == MCPMentorStudentFeedbackScope
+	return scope == MCPMentorProfileScope || scope == MCPMentorOffersScope || scope == MCPMentorSkillDraftScope || MCPMentorWorkspaceReadAction(scope) != "" || MCPMentorAuthoringAction(scope) != "" || MCPMentorManagementAction(scope) != "" || MCPMentorTaskAssignmentAction(scope) != "" || MCPMentorSkillFinalReviewAction(scope) != "" || scope == MCPMentorCohortRespondScope || scope == MCPMentorStudentFeedbackScope || scope == MCPMentorDialogWriteScope
 }
 
 func MCPMentorWorkspaceReadAction(scope string) string {
