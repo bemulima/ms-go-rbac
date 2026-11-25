@@ -75,10 +75,18 @@ func (r *MCPMentorAccessReader) ReadMCPMentorAccess(ctx context.Context, subject
 				action = domain.MCPMentorOffersPermission
 				marker = "public.mcp_mentor_offers_permission"
 			}
-			err = readTx.QueryRow(ctx, `SELECT EXISTS (
-				SELECT 1 FROM public.role_permission rp JOIN public.permission p ON p.id=rp.permission_id JOIN `+marker+` marker ON marker.permission_id=p.id AND marker.singleton
-				WHERE rp.role_id=$1 AND rp.resource_id=$2 AND p.action=$3 AND p.resource_kind=''
-			)`, scope.roleID, defaultResourceID, action).Scan(&result.Allowed)
+			if workspaceAction := domain.MCPMentorWorkspaceReadAction(requestedScope); workspaceAction != "" {
+				err = readTx.QueryRow(ctx, `SELECT EXISTS (
+					SELECT 1 FROM public.role_permission rp JOIN public.permission p ON p.id=rp.permission_id
+					JOIN public.mcp_mentor_workspace_read_permission marker ON marker.permission_id=p.id AND marker.scope=$4
+					WHERE rp.role_id=$1 AND rp.resource_id=$2 AND p.action=$3 AND p.resource_kind=''
+				)`, scope.roleID, defaultResourceID, workspaceAction, requestedScope).Scan(&result.Allowed)
+			} else {
+				err = readTx.QueryRow(ctx, `SELECT EXISTS (
+					SELECT 1 FROM public.role_permission rp JOIN public.permission p ON p.id=rp.permission_id JOIN `+marker+` marker ON marker.permission_id=p.id AND marker.singleton
+					WHERE rp.role_id=$1 AND rp.resource_id=$2 AND p.action=$3 AND p.resource_kind=''
+				)`, scope.roleID, defaultResourceID, action).Scan(&result.Allowed)
+			}
 			if err != nil {
 				return denied, domain.ErrAuthorityUnavailable
 			}

@@ -15,7 +15,23 @@ const (
 )
 
 func ValidMCPMentorScope(scope string) bool {
-	return scope == MCPMentorProfileScope || scope == MCPMentorOffersScope
+	return scope == MCPMentorProfileScope || scope == MCPMentorOffersScope || MCPMentorWorkspaceReadAction(scope) != ""
+}
+
+func MCPMentorWorkspaceReadAction(scope string) string {
+	switch scope {
+	case "mentor:reviews:read":
+		return "mcp.mentor.reviews.read"
+	case "mentor:students:read":
+		return "mcp.mentor.students.read"
+	case "mentor:cohorts:read":
+		return "mcp.mentor.cohorts.read"
+	case "mentor:schedule:read":
+		return "mcp.mentor.schedule.read"
+	case "mentor:skills:read":
+		return "mcp.mentor.skills.read"
+	}
+	return ""
 }
 
 // This is a point-in-time role and explicit permission observation, not an

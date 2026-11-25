@@ -14,6 +14,7 @@ import (
 // intentionally reserved for a separately authorized disposable database.
 type mcpMentorReadDB struct {
 	offers          bool
+	workspaceScope  string
 	base            *mentorReadbackDBFixture
 	permission      bool
 	failPermission  bool
@@ -44,7 +45,16 @@ func (tx *mcpMentorReadTx) QueryRow(ctx context.Context, query string, args ...a
 			action = domain.MCPMentorOffersPermission
 			marker = "public.mcp_mentor_offers_permission"
 		}
-		if len(args) != 3 || args[0] != tx.db.base.state.roleID || args[1] != defaultResourceID || args[2] != action || !strings.Contains(query, marker) || !strings.Contains(query, "p.resource_kind=''") {
+		expectedArgs := 3
+		if tx.db.workspaceScope != "" {
+			expectedArgs = 4
+			action = "mcp.mentor.cohorts.read"
+			marker = "public.mcp_mentor_workspace_read_permission"
+			if len(args) != expectedArgs || args[3] != tx.db.workspaceScope || !strings.Contains(query, "marker.scope=$4") {
+				return mentorStoreRow{err: errors.New("missing exact workspace scope binding")}
+			}
+		}
+		if len(args) != expectedArgs || args[0] != tx.db.base.state.roleID || args[1] != defaultResourceID || args[2] != action || !strings.Contains(query, marker) || !strings.Contains(query, "p.resource_kind=''") {
 			return mentorStoreRow{err: errors.New("escaped exact Mentor permission")}
 		}
 		return mentorStoreRow{values: []any{tx.permission}}
@@ -119,5 +129,19 @@ func TestMCPMentorOffersChecksOnlyItsMarkedPermission(t *testing.T) {
 	result, err := NewMCPMentorAccessReader(db).ReadMCPMentorAccess(context.Background(), command.TargetUserID, domain.MCPMentorOffersScope)
 	if err != nil || !result.Active || result.Allowed || db.permissionReads != 1 {
 		t.Fatalf("profile permission substituted for offers: %+v %v", result, err)
+	}
+}
+
+func TestMCPMentorWorkspacePermissionUsesExactMarkerScope(t *testing.T) {
+	command := mentorStoreProof("APPROVE", 2).Command
+	for _, assigned := range []bool{false, true} {
+		base := newMentorReadbackDBFixture()
+		base.current(command)
+		scope := "mentor:cohorts:read"
+		db := &mcpMentorReadDB{base: base, workspaceScope: scope, permission: assigned}
+		result, err := NewMCPMentorAccessReader(db).ReadMCPMentorAccess(context.Background(), command.TargetUserID, scope)
+		if err != nil || !result.Active || result.Allowed != assigned || db.permissionReads != 1 || base.commitCount != 1 {
+			t.Fatalf("workspace scope changed explicit permission: %+v %v", result, err)
+		}
 	}
 }

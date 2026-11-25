@@ -96,3 +96,13 @@ profile cannot authorize offers. Offers require the explicit marker-owned
 tuple, checked in the same read-only snapshot. Migration 007 records the
 permission without issuing any grants. Rollback refuses active assignments
 to that permission. The role check and all Student behavior remain as before.
+
+## MENT-07B workspace permissions
+
+Migration `008_mcp_mentor_workspace_read_permissions` registers exact
+scope markers for `mcp.mentor.students.read`, `mcp.mentor.cohorts.read`,
+`mcp.mentor.schedule.read`, `mcp.mentor.skills.read` and
+`mcp.mentor.reviews.read`. Access requires the current approved Mentor role and
+an explicit assignment of the permission corresponding to the signed scope in
+the same repeatable-read snapshot. A marker alone grants nothing. Rollback
+refuses retained permission assignments.
