@@ -34,7 +34,7 @@ func (c MCPMentorAccessChecker) handle(ctx context.Context, data []byte) mcpStud
 	if err != nil {
 		return denied
 	}
-	result, err := c.Reader.ReadMCPMentorAccess(ctx, proof.Subject)
+	result, err := c.Reader.ReadMCPMentorAccess(ctx, proof.Subject, proof.Scope)
 	if err != nil || ctx.Err() != nil {
 		return denied
 	}

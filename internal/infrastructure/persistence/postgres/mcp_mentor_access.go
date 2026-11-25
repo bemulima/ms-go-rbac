@@ -10,16 +10,16 @@ import (
 
 // MCPMentorAccessReader uses the same owner marker, immutable receipt, bilateral
 // fence and physical-assignment checks as Mentor's signed role readback. The
-// explicit profile permission is read in that SAME read-only snapshot.
+// explicit requested permission is read in that SAME read-only snapshot.
 type MCPMentorAccessReader struct{ db mentorRoleStoreDB }
 
 func NewMCPMentorAccessReader(db mentorRoleStoreDB) *MCPMentorAccessReader {
 	return &MCPMentorAccessReader{db: db}
 }
 
-func (r *MCPMentorAccessReader) ReadMCPMentorAccess(ctx context.Context, subject string) (domain.MCPMentorAccess, error) {
+func (r *MCPMentorAccessReader) ReadMCPMentorAccess(ctx context.Context, subject, requestedScope string) (domain.MCPMentorAccess, error) {
 	denied := domain.MCPMentorAccess{}
-	if r == nil || mentorStoreNil(r.db) || ctx == nil || ctx.Err() != nil || !mentorStoreUUID(subject) {
+	if r == nil || mentorStoreNil(r.db) || ctx == nil || ctx.Err() != nil || !mentorStoreUUID(subject) || !domain.ValidMCPMentorScope(requestedScope) {
 		return denied, domain.ErrAuthorityUnavailable
 	}
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
@@ -69,10 +69,16 @@ func (r *MCPMentorAccessReader) ReadMCPMentorAccess(ctx context.Context, subject
 			// The permission must be attached to this exact marker-owned Mentor
 			// role. A similarly named permission, scoped override or Admin role
 			// cannot authorize MCP. This migration creates no default grants.
+			action := domain.MCPMentorProfilePermission
+			marker := "public.mcp_mentor_profile_permission"
+			if requestedScope == domain.MCPMentorOffersScope {
+				action = domain.MCPMentorOffersPermission
+				marker = "public.mcp_mentor_offers_permission"
+			}
 			err = readTx.QueryRow(ctx, `SELECT EXISTS (
-				SELECT 1 FROM public.role_permission rp JOIN public.permission p ON p.id=rp.permission_id JOIN public.mcp_mentor_profile_permission marker ON marker.permission_id=p.id AND marker.singleton
+				SELECT 1 FROM public.role_permission rp JOIN public.permission p ON p.id=rp.permission_id JOIN `+marker+` marker ON marker.permission_id=p.id AND marker.singleton
 				WHERE rp.role_id=$1 AND rp.resource_id=$2 AND p.action=$3 AND p.resource_kind=''
-			)`, scope.roleID, defaultResourceID, domain.MCPMentorProfilePermission).Scan(&result.Allowed)
+			)`, scope.roleID, defaultResourceID, action).Scan(&result.Allowed)
 			if err != nil {
 				return denied, domain.ErrAuthorityUnavailable
 			}

@@ -42,8 +42,9 @@
     "aud": "ms-go-auth-mcp-mentor-decision",
     "persona": "MENTOR",
     "purpose": "RBAC_AUTH_MCP_MENTOR_ACCESS_V1",
-    "scope": "mentor:profile:read"
+    "scope": "exact supported Mentor scope"
   },
+  "supported_scopes": ["mentor:profile:read", "mentor:offers:read"],
   "maximum_ttl_seconds": 15,
   "expiry_capped_to_request": true,
   "future_iat_allowed": false,
@@ -55,11 +56,12 @@
   "decision_rules": {
     "allowed_requires_active": true,
     "active": "current exact APPROVE receipt/fence and physical service-scoped assignment",
-    "allowed": "active and exact marker-owned explicitly assigned profile permission",
+    "allowed": "active and exact marker-owned explicitly assigned permission for the verified scope",
     "negative": "signed inactive/permission_denied observation",
     "outage_or_corruption": "generic error; no signed semantic answer",
     "admin_student_fallback": false
   },
+  "offers_permission": {"action": "mcp.mentor.offers.read", "migration": "007_mcp_mentor_offers_permission", "default_grant": false},
   "permission": {
     "action": "mcp.mentor.profile.read",
     "resource_kind": "",

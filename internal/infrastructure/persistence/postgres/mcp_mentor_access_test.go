@@ -13,6 +13,7 @@ import (
 // In-memory transaction protocol only: SQL execution/migration evidence is
 // intentionally reserved for a separately authorized disposable database.
 type mcpMentorReadDB struct {
+	offers          bool
 	base            *mentorReadbackDBFixture
 	permission      bool
 	failPermission  bool
@@ -37,7 +38,13 @@ func (tx *mcpMentorReadTx) QueryRow(ctx context.Context, query string, args ...a
 		if tx.db.failPermission {
 			return mentorStoreRow{err: errors.New("private SQL diagnostic")}
 		}
-		if len(args) != 3 || args[0] != tx.db.base.state.roleID || args[1] != defaultResourceID || args[2] != domain.MCPMentorProfilePermission || !strings.Contains(query, "public.mcp_mentor_profile_permission") || !strings.Contains(query, "p.resource_kind=''") {
+		action := domain.MCPMentorProfilePermission
+		marker := "public.mcp_mentor_profile_permission"
+		if tx.db.offers {
+			action = domain.MCPMentorOffersPermission
+			marker = "public.mcp_mentor_offers_permission"
+		}
+		if len(args) != 3 || args[0] != tx.db.base.state.roleID || args[1] != defaultResourceID || args[2] != action || !strings.Contains(query, marker) || !strings.Contains(query, "p.resource_kind=''") {
 			return mentorStoreRow{err: errors.New("escaped exact Mentor permission")}
 		}
 		return mentorStoreRow{values: []any{tx.permission}}
@@ -61,7 +68,7 @@ func TestMCPMentorAccessRequiresCurrentScopedRoleAndExplicitPermission(t *testin
 				base.current(command)
 			}
 			db := &mcpMentorReadDB{base: base, permission: test.permission}
-			result, err := NewMCPMentorAccessReader(db).ReadMCPMentorAccess(context.Background(), command.TargetUserID)
+			result, err := NewMCPMentorAccessReader(db).ReadMCPMentorAccess(context.Background(), command.TargetUserID, domain.MCPMentorProfileScope)
 			if err != nil || result != test.expected || base.badProtocol || base.commitCount != 1 || base.rollbackCount != 0 {
 				t.Fatalf("result=%+v err=%v protocol=%v", result, err, base.badProtocol)
 			}
@@ -74,7 +81,7 @@ func TestMCPMentorAccessRequiresCurrentScopedRoleAndExplicitPermission(t *testin
 	base.current(command)
 	base.current(mentorStoreProof("SUSPEND", 3).Command)
 	db := &mcpMentorReadDB{base: base, permission: true}
-	result, err := NewMCPMentorAccessReader(db).ReadMCPMentorAccess(context.Background(), command.TargetUserID)
+	result, err := NewMCPMentorAccessReader(db).ReadMCPMentorAccess(context.Background(), command.TargetUserID, domain.MCPMentorProfileScope)
 	if err != nil || result.Active || result.Allowed || db.permissionReads != 0 {
 		t.Fatal("historical approval survived current suspension")
 	}
@@ -96,10 +103,21 @@ func TestMCPMentorAccessCorruptionAndDependencyErrorsWithholdAuthority(t *testin
 			base.current(command)
 			db := &mcpMentorReadDB{base: base, permission: true}
 			test.edit(db)
-			result, err := NewMCPMentorAccessReader(db).ReadMCPMentorAccess(context.Background(), command.TargetUserID)
+			result, err := NewMCPMentorAccessReader(db).ReadMCPMentorAccess(context.Background(), command.TargetUserID, domain.MCPMentorProfileScope)
 			if err != domain.ErrAuthorityUnavailable || result != (domain.MCPMentorAccess{}) || base.rollbackCount != 1 {
 				t.Fatalf("unsafe snapshot authorized: %+v %v", result, err)
 			}
 		})
+	}
+}
+
+func TestMCPMentorOffersChecksOnlyItsMarkedPermission(t *testing.T) {
+	command := mentorStoreProof("APPROVE", 2).Command
+	base := newMentorReadbackDBFixture()
+	base.current(command)
+	db := &mcpMentorReadDB{base: base, offers: true}
+	result, err := NewMCPMentorAccessReader(db).ReadMCPMentorAccess(context.Background(), command.TargetUserID, domain.MCPMentorOffersScope)
+	if err != nil || !result.Active || result.Allowed || db.permissionReads != 1 {
+		t.Fatalf("profile permission substituted for offers: %+v %v", result, err)
 	}
 }

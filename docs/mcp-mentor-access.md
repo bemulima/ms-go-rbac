@@ -8,7 +8,7 @@ live SQL/broker acceptance or authorize activation.
 
 ## Exact authority
 
-The only supported scope is `mentor:profile:read`, mapped to
+The foundation scope `mentor:profile:read` maps to
 `mcp.mentor.profile.read` with empty permission resource kind and canonical
 zero resource ID. Permission requires an explicit `role_permission` assignment
 to the marker-owned `mentor` role. Migration 006 creates only owned permission
@@ -20,7 +20,7 @@ The reader uses one repeatable-read, read-only transaction. It validates the
 existing `mentor_role_scope` role/service marker, current target fence, exact
 immutable command receipt, matching application/target indexes and physical
 assignment at the exact `user`/zero-tenant/`ms-go-mentor`/`global`/zero-resource
-tuple. It then reads the explicit marker-owned profile permission in that same
+tuple. It then reads the explicit marker-owned permission for the verified scope in that same
 snapshot. Current suspension or authoritative absence returns inactive/denied.
 Metadata corruption, a dangling receipt, assignment drift, cancellation or
 database failure yields no signed semantic decision. Historical approval,
@@ -37,7 +37,7 @@ own consent/client/account state. Mentor repeats its owner checks for the read.
 The request envelope contains exactly `proof`. No raw actor, scope or role is
 accepted beside it. The Auth-owned proof uses dedicated RS256/JWT signing,
 the exact configured HTTPS `/mentor` issuer, audience `ms-go-rbac-mcp-mentor`,
-purpose `AUTH_RBAC_MCP_MENTOR_ACCESS_V 1`, persona `MENTOR`, fixed profile scope,
+purpose `AUTH_RBAC_MCP_MENTOR_ACCESS_V 1`, persona `MENTOR`, exact supported scope,
 canonical nonzero UUID `sub`/`jti` and integer `iat`/`exp`. Lifetime is at most 15
 seconds; future issue times are denied. Student, owner-approval and role-mutation
 proofs cannot substitute for this proof.
@@ -48,10 +48,10 @@ Success is exactly `{decision_jwt}`. The signed reply fields are:
 | --- | --- |
 | `iss` | `ms-go-rbac` |
 | `aud` | `ms-go-auth-mcp-mentor-decision` |
-| `sub`, `persona`, `scope` | Verified request subject, `MENTOR`, `mentor:profile:read` |
+| `sub`, `persona`, `scope` | Verified request subject, `MENTOR`, exact verified scope |
 | `purpose` | `RBAC_AUTH_MCP_MENTOR_ACCESS_V 1` |
 | `active` | Exact current approved scoped role. |
-| `allowed` | Role active and explicit profile permission present. |
+| `allowed` | Role active and explicit permission for the requested scope present. |
 | `request_jti`, `request_digest` | Verified request nonce and lowercase SHA-256 of the exact compact proof. |
 | `jti` | Fresh canonical nonzero UUID. |
 | `iat`, `exp` | Integer seconds, maximum 15-second reply, expiry capped to request. |
@@ -86,3 +86,13 @@ digest/time fences, permission-off and suspension results, metadata/receipt/
 physical corruption and same-snapshot transaction protocol. These protocol
 fixtures do not execute SQL. Actual PostgreSQL migration, rollback and
 concurrency acceptance and full cross-owner deployment remain NOT_RUN here.
+
+### MENT-07B offers permission
+
+The signed request scope can also be exactly `mentor:offers:read`.
+The signed decision echoes the verified scope, and a positive decision for
+profile cannot authorize offers. Offers require the explicit marker-owned
+`mcp.mentor.offers.read` role permission at the same exact role and resource
+tuple, checked in the same read-only snapshot. Migration 007 records the
+permission without issuing any grants. Rollback refuses active assignments
+to that permission. The role check and all Student behavior remain as before.

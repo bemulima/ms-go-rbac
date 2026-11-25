@@ -89,15 +89,15 @@ func (a *MCPMentorAuthority) VerifyMCPMentorProof(ctx context.Context, raw strin
 		return denied, domain.ErrUnauthenticated
 	}
 	now := a.now().UTC().Unix()
-	if c.Issuer != a.issuer || c.Audience != domain.MCPMentorProofAudience || c.Persona != "MENTOR" || c.Purpose != domain.MCPMentorProofPurpose || c.Scope != domain.MCPMentorProfileScope || !validCanonicalReviewerUUID(c.Subject) || !validCanonicalReviewerUUID(c.JWTID) || c.IssuedAt <= 0 || c.IssuedAt > now || c.ExpiresAt <= now || c.ExpiresAt-c.IssuedAt > 15 || c.ExpiresAt > 1<<53-1 || ctx.Err() != nil {
+	if c.Issuer != a.issuer || c.Audience != domain.MCPMentorProofAudience || c.Persona != "MENTOR" || c.Purpose != domain.MCPMentorProofPurpose || !domain.ValidMCPMentorScope(c.Scope) || !validCanonicalReviewerUUID(c.Subject) || !validCanonicalReviewerUUID(c.JWTID) || c.IssuedAt <= 0 || c.IssuedAt > now || c.ExpiresAt <= now || c.ExpiresAt-c.IssuedAt > 15 || c.ExpiresAt > 1<<53-1 || ctx.Err() != nil {
 		return denied, domain.ErrUnauthenticated
 	}
 	digest := sha256.Sum256([]byte(raw))
-	return domain.MCPMentorProof{Subject: c.Subject, JWTID: c.JWTID, Digest: hex.EncodeToString(digest[:]), ExpiresAt: c.ExpiresAt}, nil
+	return domain.MCPMentorProof{Subject: c.Subject, JWTID: c.JWTID, Digest: hex.EncodeToString(digest[:]), ExpiresAt: c.ExpiresAt, Scope: c.Scope}, nil
 }
 
 func (a *MCPMentorAuthority) SignMCPMentorDecision(p domain.MCPMentorProof, access domain.MCPMentorAccess) (string, error) {
-	if a == nil || a.private == nil || a.now == nil || !validCanonicalReviewerUUID(p.Subject) || !validCanonicalReviewerUUID(p.JWTID) || len(p.Digest) != 64 || (access.Allowed && !access.Active) {
+	if a == nil || a.private == nil || a.now == nil || !domain.ValidMCPMentorScope(p.Scope) || !validCanonicalReviewerUUID(p.Subject) || !validCanonicalReviewerUUID(p.JWTID) || len(p.Digest) != 64 || (access.Allowed && !access.Active) {
 		return "", domain.ErrAuthorityUnavailable
 	}
 	now := a.now().UTC().Unix()
@@ -115,7 +115,7 @@ func (a *MCPMentorAuthority) SignMCPMentorDecision(p domain.MCPMentorProof, acce
 		Allowed       bool   `json:"allowed"`
 		RequestJWTID  string `json:"request_jti"`
 		RequestDigest string `json:"request_digest"`
-	}{mcpMentorProofClaims{"ms-go-rbac", domain.MCPMentorDecisionAudience, p.Subject, "MENTOR", domain.MCPMentorDecisionPurpose, domain.MCPMentorProfileScope, jti, now, expiry}, access.Active, access.Allowed, p.JWTID, p.Digest}
+	}{mcpMentorProofClaims{"ms-go-rbac", domain.MCPMentorDecisionAudience, p.Subject, "MENTOR", domain.MCPMentorDecisionPurpose, p.Scope, jti, now, expiry}, access.Active, access.Allowed, p.JWTID, p.Digest}
 	body, err := json.Marshal(c)
 	if err != nil {
 		return "", domain.ErrAuthorityUnavailable

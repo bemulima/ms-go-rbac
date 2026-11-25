@@ -139,3 +139,28 @@ func TestMCPMentorAuthorityRejectsSharedModuliAcrossPurposes(t *testing.T) {
 		t.Fatal("legacy decision private key reused")
 	}
 }
+
+func TestMCPMentorOffersDecisionKeepsVerifiedRequestScope(t *testing.T) {
+	authKey, _, authPublic := mcpMentorCryptoKey(t)
+	_, rbacPrivate, _ := mcpMentorCryptoKey(t)
+	authority, err := NewMCPMentorAuthority(authPublic, "https://api.example.test/mentor", rbacPrivate)
+	if err != nil {
+		t.Fatal(err)
+	}
+	now := time.Now().UTC().Truncate(time.Second)
+	authority.now = func() time.Time { return now }
+	claims := mcpMentorClaims(now)
+	claims["scope"] = domain.MCPMentorOffersScope
+	proof, err := authority.VerifyMCPMentorProof(context.Background(), mcpMentorSigned(t, authKey, claims))
+	if err != nil || proof.Scope != domain.MCPMentorOffersScope {
+		t.Fatalf("offers request not admitted with exact scope: %v", err)
+	}
+	signed, err := authority.SignMCPMentorDecision(proof, domain.MCPMentorAccess{Active: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	body, err := decodeJWTPart(strings.Split(signed, ".")[1])
+	if err != nil || json.Unmarshal(body, &claims) != nil || claims["scope"] != domain.MCPMentorOffersScope || claims["allowed"] != false {
+		t.Fatal("denied offers decision lost exact scope")
+	}
+}
