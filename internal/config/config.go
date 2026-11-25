@@ -21,6 +21,10 @@ type Config struct {
 	MCPStudentRBACEnabled                bool
 	MCPStudentRoleDecisionPrivateKey     string
 	MCPStudentScopeDecisionPrivateKey    string
+	MCPMentorEnabled                     bool
+	MCPMentorAuthIssuer                  string
+	MCPMentorAuthPublicKey               string
+	MCPMentorDecisionPrivateKey          string
 	AuthModeratorIss                     string
 	AuthModeratorAud                     string
 	CacheTTL                             time.Duration
@@ -42,6 +46,9 @@ func Load() (Config, error) {
 		ReviewerPermissionDecisionPrivateKey: os.Getenv("RBAC_REVIEWER_PERMISSION_DECISION_PRIVATE_KEY"),
 		MCPStudentRoleDecisionPrivateKey:     os.Getenv("RBAC_MCP_STUDENT_ROLE_DECISION_PRIVATE_KEY"),
 		MCPStudentScopeDecisionPrivateKey:    os.Getenv("RBAC_MCP_STUDENT_SCOPE_DECISION_PRIVATE_KEY"),
+		MCPMentorAuthIssuer:                  os.Getenv("RBAC_MCP_MENTOR_AUTH_ISSUER"),
+		MCPMentorAuthPublicKey:               os.Getenv("RBAC_MCP_MENTOR_AUTH_PUBLIC_KEY"),
+		MCPMentorDecisionPrivateKey:          os.Getenv("RBAC_MCP_MENTOR_DECISION_PRIVATE_KEY"),
 		AuthModeratorIss:                     os.Getenv("AUTH_MODERATOR_JWT_ISS"),
 		AuthModeratorAud:                     os.Getenv("AUTH_MODERATOR_JWT_AUD"),
 	}
@@ -55,6 +62,11 @@ func Load() (Config, error) {
 		return Config{}, fmt.Errorf("invalid MCP_STUDENT_RBAC_ENABLED: %w", err)
 	}
 	cfg.MCPStudentRBACEnabled = mcpEnabled
+	mentorMCP := os.Getenv("RBAC_MCP_MENTOR_ENABLED")
+	if mentorMCP != "" && mentorMCP != "false" && mentorMCP != "true" {
+		return Config{}, fmt.Errorf("RBAC_MCP_MENTOR_ENABLED must be true or false")
+	}
+	cfg.MCPMentorEnabled = mentorMCP == "true"
 	flag := os.Getenv("RBAC_IDE_STUDENT_ROLE_ENABLED")
 	if flag != "" && flag != "false" && flag != "true" {
 		return Config{}, fmt.Errorf("RBAC_IDE_STUDENT_ROLE_ENABLED must be true or false")

@@ -175,3 +175,7 @@ Student and unrelated scopes remain untouched.
 consumers; it only removes an empty owner schema and the exact marker-owned
 metadata. Migration source checks and pgx transaction fixtures are not actual
 PostgreSQL acceptance. No 005 SQL or runtime activation has been executed.
+
+## Mentor MCP Foundation
+
+See [signed exact Mentor role and permission](mcp-mentor-access.md) for the additive, default-off contract. No live schema/runtime activation is implied by source verification.

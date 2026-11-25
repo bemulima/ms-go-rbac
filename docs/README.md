@@ -3,6 +3,7 @@
 This repository owns RBAC architecture and its HTTP, NATS, and database contracts.
 
 - [Architecture](architecture.md)
+- [Mentor MCP Foundation (default off)](mcp-mentor-access.md)
 - [HTTP](http-contract.md)
 - [Messaging](messaging-contract.md)
 - [Original MCP Student read-scope policy](mcp00-student-read-scope-policy.md)

@@ -17,3 +17,8 @@ mutation_policy:
   administrative_grants: standalone_operator_cli_only
   actor_headers_are_authority: false
   signed_student_signup: unchanged
+
+mcp_mentor_foundation:
+  documentation: docs/mcp-mentor-access.md
+  contract: .ai/contracts/mcp-mentor-access-v1.json
+  default_enabled: false

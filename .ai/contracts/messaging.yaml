@@ -172,3 +172,11 @@ signup_assignment:
   unsigned_or_caller_header_fallback: forbidden
   conflict: no principal, operation, role or scope reparenting; no different default role replacement
   incompatible_signed_role_or_scope: conflict before storage; includes non-student initial operation
+
+mcp_mentor_access:
+  subject: rbac.checkMCPMentorAccess
+  kind: Core_NATS_request_reply
+  queue: ms-go-rbac
+  proof_and_response: dedicated_RSA_purpose_nonce_digest_bound
+  contract: .ai/contracts/mcp-mentor-access-v1.json
+  default_enabled: false

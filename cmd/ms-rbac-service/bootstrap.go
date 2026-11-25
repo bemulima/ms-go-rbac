@@ -32,6 +32,9 @@ func bootstrap() (*http.Server, error) {
 	if err != nil {
 		return nil, err
 	}
+	if _, err := prepareMCPMentorAuthority(cfg); err != nil {
+		return nil, err
+	}
 	// Explicit opt-in is preflighted before any database or broker connection.
 	// Disabled mode does not consult Mentor keys, files or transport settings.
 	mentorPrepared, err := prepareMentorOwner(cfg)
@@ -74,7 +77,7 @@ func bootstrap() (*http.Server, error) {
 	principalRoleUC := usecase.NewPrincipalRoleUsecase(principalRoleRepo)
 	signupUC := usecase.NewSignupProvisioner(signupVerifier, repo.NewSignupProvisioningRepository(pool))
 	principalPermissionUC := usecase.NewPrincipalPermissionUsecase(principalRoleRepo, rolePermissionRepo)
-	if cfg.MCPStudentRBACEnabled && cfg.NATSURL == "" {
+	if (cfg.MCPStudentRBACEnabled || cfg.MCPMentorEnabled) && cfg.NATSURL == "" {
 		pool.Close()
 		return nil, fmt.Errorf("MCP Student RBAC requires NATS")
 	}
@@ -147,6 +150,13 @@ func bootstrap() (*http.Server, error) {
 				conn.Close()
 				pool.Close()
 				return nil, fmt.Errorf("MCP Student RBAC bootstrap failed: %w", err)
+			}
+		}
+		if cfg.MCPMentorEnabled {
+			if err := registerMCPMentorHandler(conn, cfg, pool); err != nil {
+				conn.Close()
+				pool.Close()
+				return nil, fmt.Errorf("MCP Mentor RBAC bootstrap failed: %w", err)
 			}
 		}
 	}
