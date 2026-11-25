@@ -114,3 +114,7 @@ Migration `009_mcp_mentor_skill_draft_permission` registers the dedicated
 `mentor:skills:write` scope. RBAC requires both the current marker-owned
 Mentor role and an explicit assignment of this permission in the same
 read-only snapshot. Rollback refuses retained assignments.
+
+Migration `013_mcp_mentor_authored_content_read` adds separate Course and
+Practice read scope markers to the existing workspace read table. Read
+permissions still require a current Mentor role and explicit assignments.

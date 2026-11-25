@@ -30,6 +30,10 @@ func MCPMentorWorkspaceReadAction(scope string) string {
 		return "mcp.mentor.cohorts.read"
 	case "mentor:schedule:read":
 		return "mcp.mentor.schedule.read"
+	case "mentor:courses:read":
+		return "mcp.mentor.courses.read"
+	case "mentor:tasks:read":
+		return "mcp.mentor.tasks.read"
 	case "mentor:skills:read":
 		return "mcp.mentor.skills.read"
 	}

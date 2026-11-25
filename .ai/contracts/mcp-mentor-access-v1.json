@@ -44,7 +44,7 @@
     "purpose": "RBAC_AUTH_MCP_MENTOR_ACCESS_V1",
     "scope": "exact supported Mentor scope"
   },
-  "supported_scopes": ["mentor:profile:read", "mentor:offers:read", "mentor:students:read", "mentor:cohorts:read", "mentor:schedule:read", "mentor:skills:read", "mentor:reviews:read", "mentor:skills:write"],
+  "supported_scopes": ["mentor:profile:read", "mentor:offers:read", "mentor:students:read", "mentor:cohorts:read", "mentor:schedule:read", "mentor:skills:read", "mentor:reviews:read", "mentor:skills:write", "mentor:courses:read", "mentor:tasks:read"],
   "maximum_ttl_seconds": 15,
   "expiry_capped_to_request": true,
   "future_iat_allowed": false,
@@ -68,7 +68,9 @@
       "mentor:cohorts:read": "mcp.mentor.cohorts.read",
       "mentor:schedule:read": "mcp.mentor.schedule.read",
       "mentor:skills:read": "mcp.mentor.skills.read",
-      "mentor:reviews:read": "mcp.mentor.reviews.read"
+      "mentor:reviews:read": "mcp.mentor.reviews.read",
+      "mentor:courses:read": "mcp.mentor.courses.read",
+      "mentor:tasks:read": "mcp.mentor.tasks.read"
     },
     "migration": "008_mcp_mentor_workspace_read_permissions",
     "default_grant": false
