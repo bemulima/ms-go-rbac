@@ -77,13 +77,33 @@ func (r *MCPMentorAccessReader) ReadMCPMentorAccess(ctx context.Context, subject
 			} else if requestedScope == domain.MCPMentorSkillDraftScope {
 				action = domain.MCPMentorSkillDraftPermission
 				marker = "public.mcp_mentor_skill_draft_permission"
+			} else if requestedScope == domain.MCPMentorCohortRespondScope {
+				action = domain.MCPMentorCohortRespondAction
+				marker = "public.mcp_mentor_cohort_response_permission"
+			} else if requestedScope == domain.MCPMentorStudentFeedbackScope {
+				action = domain.MCPMentorStudentFeedbackAction
+				marker = "public.mcp_mentor_student_feedback_permission"
 			}
-			if workspaceAction := domain.MCPMentorWorkspaceReadAction(requestedScope); workspaceAction != "" {
+			workspaceAction := domain.MCPMentorWorkspaceReadAction(requestedScope)
+			scopeMarker := "public.mcp_mentor_workspace_read_permission"
+			if authoringAction := domain.MCPMentorAuthoringAction(requestedScope); authoringAction != "" {
+				workspaceAction, scopeMarker = authoringAction, "public.mcp_mentor_authoring_permission"
+			}
+			if finalAction := domain.MCPMentorSkillFinalReviewAction(requestedScope); finalAction != "" {
+				workspaceAction, scopeMarker = finalAction, "public.mcp_mentor_skill_final_review_permission"
+			}
+			if workspaceAction != "" {
 				err = readTx.QueryRow(ctx, `SELECT EXISTS (
 					SELECT 1 FROM public.role_permission rp JOIN public.permission p ON p.id=rp.permission_id
-					JOIN public.mcp_mentor_workspace_read_permission marker ON marker.permission_id=p.id AND marker.scope=$4
+					JOIN `+scopeMarker+` marker ON marker.permission_id=p.id AND marker.scope=$4
 					WHERE rp.role_id=$1 AND rp.resource_id=$2 AND p.action=$3 AND p.resource_kind=''
 				)`, scope.roleID, defaultResourceID, workspaceAction, requestedScope).Scan(&result.Allowed)
+			} else if managementAction := domain.MCPMentorManagementAction(requestedScope); managementAction != "" {
+				err = readTx.QueryRow(ctx, `SELECT EXISTS (
+					SELECT 1 FROM public.role_permission rp JOIN public.permission p ON p.id=rp.permission_id
+					JOIN public.mcp_mentor_management_permission marker ON marker.permission_id=p.id AND marker.scope=$4
+					WHERE rp.role_id=$1 AND rp.resource_id=$2 AND p.action=$3 AND p.resource_kind=''
+				)`, scope.roleID, defaultResourceID, managementAction, requestedScope).Scan(&result.Allowed)
 			} else {
 				err = readTx.QueryRow(ctx, `SELECT EXISTS (
 					SELECT 1 FROM public.role_permission rp JOIN public.permission p ON p.id=rp.permission_id JOIN `+marker+` marker ON marker.permission_id=p.id AND marker.singleton

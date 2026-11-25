@@ -9,7 +9,9 @@ DECLARE
 BEGIN
   FOR entry IN SELECT * FROM (VALUES
     ('mentor:courses:read','mcp.mentor.courses.read'),
-    ('mentor:tasks:read','mcp.mentor.tasks.read')
+    ('mentor:tasks:read','mcp.mentor.tasks.read'),
+    ('mentor:notifications:read','mcp.mentor.notifications.read'),
+    ('mentor:dialogs:read','mcp.mentor.dialogs.read')
   ) AS supported(scope, action) LOOP
     SELECT marker.permission_id INTO STRICT owned_permission FROM public.mcp_mentor_workspace_read_permission marker
       JOIN public.permission p ON p.id=marker.permission_id WHERE marker.scope=entry.scope AND p.action=entry.action AND p.resource_kind='';

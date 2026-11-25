@@ -10,6 +10,10 @@ const (
 	MCPMentorOffersPermission     = "mcp.mentor.offers.read"
 	MCPMentorSkillDraftScope      = "mentor:skills:write"
 	MCPMentorSkillDraftPermission = "mcp.mentor.skills.write"
+	MCPMentorSkillFinalScope      = "mentor:skills:publish"
+	MCPMentorSkillFinalPermission = "mcp.mentor.skills.publish"
+	MCPMentorReviewCommentScope   = "mentor:reviews:write"
+	MCPMentorReviewDecisionScope  = "mentor:reviews:decide"
 	MCPMentorProofAudience        = "ms-go-rbac-mcp-mentor"
 	MCPMentorProofPurpose         = "AUTH_RBAC_MCP_MENTOR_ACCESS_V1"
 	MCPMentorDecisionAudience     = "ms-go-auth-mcp-mentor-decision"
@@ -17,7 +21,7 @@ const (
 )
 
 func ValidMCPMentorScope(scope string) bool {
-	return scope == MCPMentorProfileScope || scope == MCPMentorOffersScope || scope == MCPMentorSkillDraftScope || MCPMentorWorkspaceReadAction(scope) != ""
+	return scope == MCPMentorProfileScope || scope == MCPMentorOffersScope || scope == MCPMentorSkillDraftScope || MCPMentorWorkspaceReadAction(scope) != "" || MCPMentorAuthoringAction(scope) != "" || MCPMentorManagementAction(scope) != "" || MCPMentorSkillFinalReviewAction(scope) != "" || scope == MCPMentorCohortRespondScope || scope == MCPMentorStudentFeedbackScope
 }
 
 func MCPMentorWorkspaceReadAction(scope string) string {
@@ -32,6 +36,10 @@ func MCPMentorWorkspaceReadAction(scope string) string {
 		return "mcp.mentor.schedule.read"
 	case "mentor:courses:read":
 		return "mcp.mentor.courses.read"
+	case "mentor:dialogs:read":
+		return "mcp.mentor.dialogs.read"
+	case "mentor:notifications:read":
+		return "mcp.mentor.notifications.read"
 	case "mentor:tasks:read":
 		return "mcp.mentor.tasks.read"
 	case "mentor:skills:read":
@@ -55,4 +63,17 @@ type MCPMentorProofVerifier interface {
 }
 type MCPMentorDecisionSigner interface {
 	SignMCPMentorDecision(MCPMentorProof, MCPMentorAccess) (string, error)
+}
+
+func MCPMentorSkillFinalReviewAction(scope string) string {
+	switch scope {
+	case MCPMentorSkillFinalScope:
+		return MCPMentorSkillFinalPermission
+	case MCPMentorReviewCommentScope:
+		return "mcp.mentor.reviews.write"
+	case MCPMentorReviewDecisionScope:
+		return "mcp.mentor.reviews.decide"
+	default:
+		return ""
+	}
 }

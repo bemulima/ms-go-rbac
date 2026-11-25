@@ -39,7 +39,7 @@ func TestMCPProfileUsesExactMigrationSequence(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	want = append(want, "005_cat49_disposable_reviewer_grant.up.sql", "005_mentor_role_owner.up.sql", "006_mcp_mentor_profile_permission.up.sql", "007_mcp_mentor_offers_permission.up.sql", "008_mcp_mentor_workspace_read_permissions.up.sql", "009_mcp_mentor_skill_draft_permission.up.sql", "013_mcp_mentor_authored_content_read.up.sql")
+	want = append(want, "005_cat49_disposable_reviewer_grant.up.sql", "005_mentor_role_owner.up.sql", "006_mcp_mentor_profile_permission.up.sql", "007_mcp_mentor_offers_permission.up.sql", "008_mcp_mentor_workspace_read_permissions.up.sql", "009_mcp_mentor_skill_draft_permission.up.sql", "010_mcp_mentor_authoring_permissions.up.sql", "011_mcp_mentor_skill_final_permission.up.sql", "012_mcp_mentor_management_permissions.up.sql", "013_mcp_mentor_authored_content_read.up.sql", "014_mcp_mentor_cohort_response_permission.up.sql", "015_mcp_mentor_student_feedback_permission.up.sql")
 	if got := migrationVersions(general); !slices.Equal(got, want) {
 		t.Fatalf("general schema forward migrations = %v; want %v", got, want)
 	}

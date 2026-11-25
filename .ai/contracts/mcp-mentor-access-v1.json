@@ -44,7 +44,33 @@
     "purpose": "RBAC_AUTH_MCP_MENTOR_ACCESS_V1",
     "scope": "exact supported Mentor scope"
   },
-  "supported_scopes": ["mentor:profile:read", "mentor:offers:read", "mentor:students:read", "mentor:cohorts:read", "mentor:schedule:read", "mentor:skills:read", "mentor:reviews:read", "mentor:skills:write", "mentor:courses:read", "mentor:tasks:read"],
+  "supported_scopes": [
+    "mentor:profile:read",
+    "mentor:offers:read",
+    "mentor:students:read",
+    "mentor:cohorts:read",
+    "mentor:schedule:read",
+    "mentor:skills:read",
+    "mentor:reviews:read",
+    "mentor:skills:write",
+    "mentor:courses:read",
+    "mentor:tasks:read",
+    "mentor:courses:write",
+    "mentor:tasks:write",
+    "mentor:courses:publish",
+    "mentor:tasks:publish",
+    "mentor:profile:write",
+    "mentor:offers:write",
+    "mentor:students:write",
+    "mentor:cohorts:write",
+    "mentor:schedule:write",
+    "mentor:offers:publish",
+    "mentor:schedule:cancel",
+    "mentor:notifications:read",
+    "mentor:dialogs:read",
+    "mentor:cohorts:respond",
+    "mentor:students:feedback"
+  ],
   "maximum_ttl_seconds": 15,
   "expiry_capped_to_request": true,
   "future_iat_allowed": false,
@@ -61,7 +87,11 @@
     "outage_or_corruption": "generic error; no signed semantic answer",
     "admin_student_fallback": false
   },
-  "offers_permission": {"action": "mcp.mentor.offers.read", "migration": "007_mcp_mentor_offers_permission", "default_grant": false},
+  "offers_permission": {
+    "action": "mcp.mentor.offers.read",
+    "migration": "007_mcp_mentor_offers_permission",
+    "default_grant": false
+  },
   "workspace_read_permission": {
     "actions": {
       "mentor:students:read": "mcp.mentor.students.read",
@@ -75,7 +105,11 @@
     "migration": "008_mcp_mentor_workspace_read_permissions",
     "default_grant": false
   },
-  "skill_draft_permission": {"action": "mcp.mentor.skills.write", "migration": "009_mcp_mentor_skill_draft_permission", "default_grant": false},
+  "skill_draft_permission": {
+    "action": "mcp.mentor.skills.write",
+    "migration": "009_mcp_mentor_skill_draft_permission",
+    "default_grant": false
+  },
   "permission": {
     "action": "mcp.mentor.profile.read",
     "resource_kind": "",
@@ -110,5 +144,38 @@
   "validation_limits": {
     "live_sql": "NOT_RUN",
     "runtime_activation": "NOT_RUN"
+  },
+  "authoring_permissions": {
+    "migration": "010_mcp_mentor_authoring_permissions",
+    "default_grant": false,
+    "actions": {
+      "mentor:courses:write": "mcp.mentor.courses.write",
+      "mentor:tasks:write": "mcp.mentor.tasks.write",
+      "mentor:courses:publish": "mcp.mentor.courses.publish",
+      "mentor:tasks:publish": "mcp.mentor.tasks.publish"
+    }
+  },
+  "management_permissions": {
+    "actions": {
+      "mentor:profile:write": "mcp.mentor.profile.write",
+      "mentor:offers:write": "mcp.mentor.offers.write",
+      "mentor:students:write": "mcp.mentor.students.write",
+      "mentor:cohorts:write": "mcp.mentor.cohorts.write",
+      "mentor:schedule:write": "mcp.mentor.schedule.write",
+      "mentor:offers:publish": "mcp.mentor.offers.publish",
+      "mentor:schedule:cancel": "mcp.mentor.schedule.cancel"
+    },
+    "migration": "012_mcp_mentor_management_permissions",
+    "default_grant": false
+  },
+  "protected_skill_and_review": {
+    "marker": "mcp_mentor_skill_final_review_permission",
+    "migration": "011_mcp_mentor_skill_final_permission",
+    "permissions": {
+      "mentor:skills:publish": "mcp.mentor.skills.publish",
+      "mentor:reviews:write": "mcp.mentor.reviews.write",
+      "mentor:reviews:decide": "mcp.mentor.reviews.decide"
+    },
+    "automatic_grants": false
   }
 }

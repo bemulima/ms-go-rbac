@@ -13,13 +13,19 @@ import (
 // In-memory transaction protocol only: SQL execution/migration evidence is
 // intentionally reserved for a separately authorized disposable database.
 type mcpMentorReadDB struct {
-	offers          bool
-	skillDraft      bool
-	workspaceScope  string
-	base            *mentorReadbackDBFixture
-	permission      bool
-	failPermission  bool
-	permissionReads int
+	studentFeedback         bool
+	cohortRespond           bool
+	offers                  bool
+	skillDraft              bool
+	workspaceScope          string
+	authoringScope          string
+	authoringAction         string
+	managementScope         string
+	finalScope, finalAction string
+	base                    *mentorReadbackDBFixture
+	permission              bool
+	failPermission          bool
+	permissionReads         int
 }
 type mcpMentorReadTx struct {
 	pgx.Tx
@@ -48,14 +54,44 @@ func (tx *mcpMentorReadTx) QueryRow(ctx context.Context, query string, args ...a
 		} else if tx.db.skillDraft {
 			action = domain.MCPMentorSkillDraftPermission
 			marker = "public.mcp_mentor_skill_draft_permission"
+		} else if tx.db.cohortRespond {
+			action = domain.MCPMentorCohortRespondAction
+			marker = "public.mcp_mentor_cohort_response_permission"
+		} else if tx.db.studentFeedback {
+			action = domain.MCPMentorStudentFeedbackAction
+			marker = "public.mcp_mentor_student_feedback_permission"
 		}
 		expectedArgs := 3
 		if tx.db.workspaceScope != "" {
 			expectedArgs = 4
-			action = "mcp.mentor.cohorts.read"
+			action = domain.MCPMentorWorkspaceReadAction(tx.db.workspaceScope)
 			marker = "public.mcp_mentor_workspace_read_permission"
 			if len(args) != expectedArgs || args[3] != tx.db.workspaceScope || !strings.Contains(query, "marker.scope=$4") {
 				return mentorStoreRow{err: errors.New("missing exact workspace scope binding")}
+			}
+		}
+		if tx.db.authoringScope != "" {
+			expectedArgs = 4
+			authoringMarker := "public.mcp_mentor_authoring_permission"
+			action, marker = tx.db.authoringAction, authoringMarker
+			if len(args) != expectedArgs || args[3] != tx.db.authoringScope || !strings.Contains(query, "marker.scope=$4") {
+				return mentorStoreRow{err: errors.New("missing exact authoring scope binding")}
+			}
+		}
+		if tx.db.managementScope != "" {
+			expectedArgs = 4
+			action = "mcp.mentor.offers.publish"
+			marker = "public.mcp_mentor_management_permission"
+			if len(args) != expectedArgs || args[3] != tx.db.managementScope || !strings.Contains(query, "marker.scope=$4") {
+				return mentorStoreRow{err: errors.New("missing exact management scope binding")}
+			}
+		}
+		if tx.db.finalScope != "" {
+			expectedArgs = 4
+			action = tx.db.finalAction
+			marker = "public.mcp_mentor_skill_final_review_permission"
+			if len(args) != expectedArgs || args[3] != tx.db.finalScope || !strings.Contains(query, "marker.scope=$4") {
+				return mentorStoreRow{err: errors.New("missing exact sensitive scope binding")}
 			}
 		}
 		if len(args) != expectedArgs || args[0] != tx.db.base.state.roleID || args[1] != defaultResourceID || args[2] != action || !strings.Contains(query, marker) || !strings.Contains(query, "p.resource_kind=''") {
@@ -159,6 +195,87 @@ func TestMCPMentorSkillDraftPermissionIsExplicit(t *testing.T) {
 		result, err := NewMCPMentorAccessReader(db).ReadMCPMentorAccess(context.Background(), command.TargetUserID, domain.MCPMentorSkillDraftScope)
 		if err != nil || !result.Active || result.Allowed != assigned || db.permissionReads != 1 || base.commitCount != 1 {
 			t.Fatalf("draft permission decision disagreed with its explicit marker: %+v %v", result, err)
+		}
+	}
+}
+
+func TestMCPMentorAuthoringPermissionUsesAnExactScopeMarker(t *testing.T) {
+	command := mentorStoreProof("APPROVE", 2).Command
+	for scope, action := range map[string]string{
+		"mentor:courses:write":   "mcp.mentor.courses.write",
+		"mentor:tasks:write":     "mcp.mentor.tasks.write",
+		"mentor:courses:publish": "mcp.mentor.courses.publish",
+		"mentor:tasks:publish":   "mcp.mentor.tasks.publish",
+	} {
+		t.Run(scope, func(t *testing.T) {
+			for _, assigned := range []bool{false, true} {
+				base := newMentorReadbackDBFixture()
+				base.current(command)
+				db := &mcpMentorReadDB{base: base, authoringScope: scope, authoringAction: action, permission: assigned}
+				result, err := NewMCPMentorAccessReader(db).ReadMCPMentorAccess(context.Background(), command.TargetUserID, scope)
+				if err != nil || !result.Active || result.Allowed != assigned || db.permissionReads != 1 || base.commitCount != 1 {
+					t.Fatalf("authoring permission did not require exact marker: %+v %v", result, err)
+				}
+			}
+		})
+	}
+}
+
+func TestMCPMentorManagementPermissionUsesExactMarkerScope(t *testing.T) {
+	command := mentorStoreProof("APPROVE", 2).Command
+	for _, assigned := range []bool{false, true} {
+		base := newMentorReadbackDBFixture()
+		base.current(command)
+		scope := "mentor:offers:publish"
+		db := &mcpMentorReadDB{base: base, managementScope: scope, permission: assigned}
+		result, err := NewMCPMentorAccessReader(db).ReadMCPMentorAccess(context.Background(), command.TargetUserID, scope)
+		if err != nil || !result.Active || result.Allowed != assigned || db.permissionReads != 1 || base.commitCount != 1 {
+			t.Fatalf("management scope changed explicit permission: %+v %v", result, err)
+		}
+	}
+}
+
+func TestMCPMentorFinalSkillAndReviewEachRequireTheirExactPermission(t *testing.T) {
+	command := mentorStoreProof("APPROVE", 2).Command
+	for scope, action := range map[string]string{
+		"mentor:skills:publish": "mcp.mentor.skills.publish",
+		"mentor:reviews:write":  "mcp.mentor.reviews.write",
+		"mentor:reviews:decide": "mcp.mentor.reviews.decide",
+	} {
+		for _, assigned := range []bool{false, true} {
+			base := newMentorReadbackDBFixture()
+			base.current(command)
+			db := &mcpMentorReadDB{base: base, finalScope: scope, finalAction: action, permission: assigned}
+			result, err := NewMCPMentorAccessReader(db).ReadMCPMentorAccess(context.Background(), command.TargetUserID, scope)
+			if err != nil || !result.Active || result.Allowed != assigned || db.permissionReads != 1 || base.commitCount != 1 {
+				t.Fatalf("scope %s bypassed own marker binding: %+v %v", scope, result, err)
+			}
+		}
+	}
+}
+
+func TestMCPMentorCohortResponseNeedsExactPermission(t *testing.T) {
+	command := mentorStoreProof("APPROVE", 2).Command
+	for _, assigned := range []bool{false, true} {
+		base := newMentorReadbackDBFixture()
+		base.current(command)
+		db := &mcpMentorReadDB{base: base, cohortRespond: true, permission: assigned}
+		result, err := NewMCPMentorAccessReader(db).ReadMCPMentorAccess(context.Background(), command.TargetUserID, domain.MCPMentorCohortRespondScope)
+		if err != nil || !result.Active || result.Allowed != assigned || db.permissionReads != 1 || base.commitCount != 1 {
+			t.Fatalf("cohort response did not use its exact permission: %+v %v", result, err)
+		}
+	}
+}
+
+func TestMCPMentorStudentFeedbackNeedsExactPermission(t *testing.T) {
+	command := mentorStoreProof("APPROVE", 2).Command
+	for _, assigned := range []bool{false, true} {
+		base := newMentorReadbackDBFixture()
+		base.current(command)
+		db := &mcpMentorReadDB{base: base, studentFeedback: true, permission: assigned}
+		result, err := NewMCPMentorAccessReader(db).ReadMCPMentorAccess(context.Background(), command.TargetUserID, domain.MCPMentorStudentFeedbackScope)
+		if err != nil || !result.Active || result.Allowed != assigned || db.permissionReads != 1 || base.commitCount != 1 {
+			t.Fatalf("student feedback did not use its exact permission: %+v %v", result, err)
 		}
 	}
 }

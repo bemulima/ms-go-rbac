@@ -5,7 +5,7 @@ SET LOCAL search_path = pg_catalog, public, pg_temp;
 LOCK TABLE public.permission, public.mcp_mentor_workspace_read_permission IN SHARE ROW EXCLUSIVE MODE;
 ALTER TABLE public.mcp_mentor_workspace_read_permission
   DROP CONSTRAINT mcp_mentor_workspace_read_permission_scope_check,
-  ADD CONSTRAINT mcp_mentor_workspace_read_permission_scope_check CHECK (scope IN ('mentor:students:read', 'mentor:cohorts:read', 'mentor:schedule:read', 'mentor:skills:read', 'mentor:reviews:read','mentor:courses:read', 'mentor:tasks:read'));
+  ADD CONSTRAINT mcp_mentor_workspace_read_permission_scope_check CHECK (scope IN ('mentor:students:read', 'mentor:cohorts:read', 'mentor:schedule:read', 'mentor:skills:read', 'mentor:reviews:read','mentor:courses:read', 'mentor:tasks:read', 'mentor:notifications:read', 'mentor:dialogs:read'));
 DO $$
 DECLARE
   entry record;
@@ -13,7 +13,9 @@ DECLARE
 BEGIN
   FOR entry IN SELECT * FROM (VALUES
     ('mentor:courses:read','mcp.mentor.courses.read'),
-    ('mentor:tasks:read','mcp.mentor.tasks.read')
+    ('mentor:tasks:read','mcp.mentor.tasks.read'),
+    ('mentor:notifications:read','mcp.mentor.notifications.read'),
+    ('mentor:dialogs:read','mcp.mentor.dialogs.read')
   ) AS supported(scope, action) LOOP
     IF EXISTS (SELECT 1 FROM public.permission WHERE action=entry.action AND resource_kind='') THEN
       RAISE EXCEPTION 'refusing adoption of existing Mentor authored content permission';

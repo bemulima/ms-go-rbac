@@ -118,3 +118,22 @@ read-only snapshot. Rollback refuses retained assignments.
 Migration `013_mcp_mentor_authored_content_read` adds separate Course and
 Practice read scope markers to the existing workspace read table. Read
 permissions still require a current Mentor role and explicit assignments.
+
+The Mentor content authoring scopes have exact separate permission markers.
+Migration `010_mcp_mentor_authoring_permissions` creates the actions
+`mcp.mentor.courses.write`, `mcp.mentor.tasks.write`,
+`mcp.mentor.courses.publish`, and `mcp.mentor.tasks.publish`.
+Each permission must be explicitly bound to the verified Mentor role.
+
+Mentor management scopes use dedicated marker permissions registered by
+`012_mcp_mentor_management_permissions`. Registration creates no grants.
+The RBAC decision requires an exact action on the current owner-scoped role.
+
+## MENT-07D final skills and review permissions
+
+Migration 011 registers separately marked permission rows
+`mcp.mentor.skills.publish`, `mcp.mentor.reviews.write`, and
+`mcp.mentor.reviews.decide` for their exact Auth scopes. The owner checks an
+explicit assignment to the current scoped Mentor role, using the same
+repeatable read as the existing access fence. The migration grants nothing
+automatically. Draft or read permissions do not authorize any of these scopes.
