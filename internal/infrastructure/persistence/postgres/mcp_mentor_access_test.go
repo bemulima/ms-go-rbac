@@ -14,6 +14,7 @@ import (
 // intentionally reserved for a separately authorized disposable database.
 type mcpMentorReadDB struct {
 	offers          bool
+	skillDraft      bool
 	workspaceScope  string
 	base            *mentorReadbackDBFixture
 	permission      bool
@@ -44,6 +45,9 @@ func (tx *mcpMentorReadTx) QueryRow(ctx context.Context, query string, args ...a
 		if tx.db.offers {
 			action = domain.MCPMentorOffersPermission
 			marker = "public.mcp_mentor_offers_permission"
+		} else if tx.db.skillDraft {
+			action = domain.MCPMentorSkillDraftPermission
+			marker = "public.mcp_mentor_skill_draft_permission"
 		}
 		expectedArgs := 3
 		if tx.db.workspaceScope != "" {
@@ -142,6 +146,19 @@ func TestMCPMentorWorkspacePermissionUsesExactMarkerScope(t *testing.T) {
 		result, err := NewMCPMentorAccessReader(db).ReadMCPMentorAccess(context.Background(), command.TargetUserID, scope)
 		if err != nil || !result.Active || result.Allowed != assigned || db.permissionReads != 1 || base.commitCount != 1 {
 			t.Fatalf("workspace scope changed explicit permission: %+v %v", result, err)
+		}
+	}
+}
+
+func TestMCPMentorSkillDraftPermissionIsExplicit(t *testing.T) {
+	command := mentorStoreProof("APPROVE", 2).Command
+	for _, assigned := range []bool{false, true} {
+		base := newMentorReadbackDBFixture()
+		base.current(command)
+		db := &mcpMentorReadDB{base: base, skillDraft: true, permission: assigned}
+		result, err := NewMCPMentorAccessReader(db).ReadMCPMentorAccess(context.Background(), command.TargetUserID, domain.MCPMentorSkillDraftScope)
+		if err != nil || !result.Active || result.Allowed != assigned || db.permissionReads != 1 || base.commitCount != 1 {
+			t.Fatalf("draft permission decision disagreed with its explicit marker: %+v %v", result, err)
 		}
 	}
 }

@@ -1,8 +1,8 @@
 schema_version: 1
 documentation: docs/database-contract.md
 owner: ms-go-rbac
-tables: [service, role, role_hierarchy, permission, role_permission, service_role, service_permission, principal_role, principal_override, superadmin_principal, signup_provisioning_receipt, rbac_schema_migrations, operator_bootstrap_receipt, cat49_disposable_reviewer_grant, mentor_role_scope, mentor_role_command_receipt, mentor_role_fence, mcp_mentor_profile_permission, mcp_mentor_offers_permission, mcp_mentor_workspace_read_permission]
-migrations: [001_init, 002_seed_default_roles_and_principals, 003_signup_provisioning_receipts, 004_operator_bootstrap_receipts, 005_cat49_disposable_reviewer_grant, 005_mentor_role_owner, 006_mcp_mentor_profile_permission, 007_mcp_mentor_offers_permission, 008_mcp_mentor_workspace_read_permissions]
+tables: [service, role, role_hierarchy, permission, role_permission, service_role, service_permission, principal_role, principal_override, superadmin_principal, signup_provisioning_receipt, rbac_schema_migrations, operator_bootstrap_receipt, cat49_disposable_reviewer_grant, mentor_role_scope, mentor_role_command_receipt, mentor_role_fence, mcp_mentor_profile_permission, mcp_mentor_offers_permission, mcp_mentor_workspace_read_permission, mcp_mentor_skill_draft_permission]
+migrations: [001_init, 002_seed_default_roles_and_principals, 003_signup_provisioning_receipts, 004_operator_bootstrap_receipts, 005_cat49_disposable_reviewer_grant, 005_mentor_role_owner, 006_mcp_mentor_profile_permission, 007_mcp_mentor_offers_permission, 008_mcp_mentor_workspace_read_permissions, 009_mcp_mentor_skill_draft_permission]
 migration_ledger_identity: full_forward_sql_filename
 mcp_disposable_profile:
   status_command: status-mcp
@@ -35,5 +35,13 @@ mcp_mentor_workspace_read_permission:
   mapping: mcp-mentor-access-v1.json
   grants_seeded: false
   readback: exact_scope_and_action_in_same_repeatable_read_snapshot_as_scoped_role
+  rollback: refuses_retained_assignments
+  sql_acceptance: NOT_RUN
+
+mcp_mentor_skill_draft_permission:
+  migration: 009_mcp_mentor_skill_draft_permission
+  action: mcp.mentor.skills.write
+  grants_seeded: false
+  readback: same_repeatable_read_snapshot_as_exact_scoped_role
   rollback: refuses_retained_assignments
   sql_acceptance: NOT_RUN

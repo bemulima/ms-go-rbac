@@ -74,6 +74,9 @@ func (r *MCPMentorAccessReader) ReadMCPMentorAccess(ctx context.Context, subject
 			if requestedScope == domain.MCPMentorOffersScope {
 				action = domain.MCPMentorOffersPermission
 				marker = "public.mcp_mentor_offers_permission"
+			} else if requestedScope == domain.MCPMentorSkillDraftScope {
+				action = domain.MCPMentorSkillDraftPermission
+				marker = "public.mcp_mentor_skill_draft_permission"
 			}
 			if workspaceAction := domain.MCPMentorWorkspaceReadAction(requestedScope); workspaceAction != "" {
 				err = readTx.QueryRow(ctx, `SELECT EXISTS (

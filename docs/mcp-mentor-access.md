@@ -106,3 +106,11 @@ scope markers for `mcp.mentor.students.read`, `mcp.mentor.cohorts.read`,
 an explicit assignment of the permission corresponding to the signed scope in
 the same repeatable-read snapshot. A marker alone grants nothing. Rollback
 refuses retained permission assignments.
+
+## MENT-07D skill draft permission
+
+Migration `009_mcp_mentor_skill_draft_permission` registers the dedicated
+`mcp.mentor.skills.write` permission. Auth must present the exact signed
+`mentor:skills:write` scope. RBAC requires both the current marker-owned
+Mentor role and an explicit assignment of this permission in the same
+read-only snapshot. Rollback refuses retained assignments.

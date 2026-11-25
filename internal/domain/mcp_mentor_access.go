@@ -3,19 +3,21 @@ package domain
 import "context"
 
 const (
-	MCPMentorAccessSubject     = "rbac.checkMCPMentorAccess"
-	MCPMentorProfileScope      = "mentor:profile:read"
-	MCPMentorProfilePermission = "mcp.mentor.profile.read"
-	MCPMentorOffersScope       = "mentor:offers:read"
-	MCPMentorOffersPermission  = "mcp.mentor.offers.read"
-	MCPMentorProofAudience     = "ms-go-rbac-mcp-mentor"
-	MCPMentorProofPurpose      = "AUTH_RBAC_MCP_MENTOR_ACCESS_V1"
-	MCPMentorDecisionAudience  = "ms-go-auth-mcp-mentor-decision"
-	MCPMentorDecisionPurpose   = "RBAC_AUTH_MCP_MENTOR_ACCESS_V1"
+	MCPMentorAccessSubject        = "rbac.checkMCPMentorAccess"
+	MCPMentorProfileScope         = "mentor:profile:read"
+	MCPMentorProfilePermission    = "mcp.mentor.profile.read"
+	MCPMentorOffersScope          = "mentor:offers:read"
+	MCPMentorOffersPermission     = "mcp.mentor.offers.read"
+	MCPMentorSkillDraftScope      = "mentor:skills:write"
+	MCPMentorSkillDraftPermission = "mcp.mentor.skills.write"
+	MCPMentorProofAudience        = "ms-go-rbac-mcp-mentor"
+	MCPMentorProofPurpose         = "AUTH_RBAC_MCP_MENTOR_ACCESS_V1"
+	MCPMentorDecisionAudience     = "ms-go-auth-mcp-mentor-decision"
+	MCPMentorDecisionPurpose      = "RBAC_AUTH_MCP_MENTOR_ACCESS_V1"
 )
 
 func ValidMCPMentorScope(scope string) bool {
-	return scope == MCPMentorProfileScope || scope == MCPMentorOffersScope || MCPMentorWorkspaceReadAction(scope) != ""
+	return scope == MCPMentorProfileScope || scope == MCPMentorOffersScope || scope == MCPMentorSkillDraftScope || MCPMentorWorkspaceReadAction(scope) != ""
 }
 
 func MCPMentorWorkspaceReadAction(scope string) string {
